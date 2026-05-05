@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>甘特圖生成器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+[contenteditable]{outline:none;user-select:text}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'Noto Sans TC',sans-serif;background:#f0efea;color:#1a1a1a;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+#app{display:flex;flex-direction:column;height:100vh;min-height:500px}
+#tb{background:#f7f6f3;border-bottom:1px solid #d9d8d3;padding:7px 14px;display:flex;flex-direction:column;gap:5px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.trow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.grp{display:flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid #d0cfc9;border-radius:8px;background:#fff}
+.glbl{font-size:11px;color:#666;white-space:nowrap;padding-right:4px;font-weight:500}
+.grptitle{font-size:11px;color:#999;white-space:nowrap;padding-right:6px;font-weight:700;letter-spacing:.03em;border-right:1px solid #e0dfd9;margin-right:4px}
+.sep{width:1px;height:20px;background:#d9d8d3;margin:0 4px;flex-shrink:0}
+.tbtn{padding:4px 11px;font-size:12px;border:1px solid #c8c7c1;border-radius:5px;background:transparent;color:#555;cursor:pointer;white-space:nowrap;line-height:1.5;font-family:inherit;transition:all .12s}
+.tbtn:hover{background:#eceae4;color:#1a1a1a;border-color:#aaa}
+.tbtn.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:500}
+.abtn{padding:4px 12px;font-size:12px;border:1.5px solid #1a1a1a;border-radius:6px;background:#fff;color:#1a1a1a;cursor:pointer;white-space:nowrap;line-height:1.5;font-family:inherit;font-weight:500;transition:all .12s}
+.abtn:hover{background:#1a1a1a;color:#fff}
+.ebtn{padding:4px 11px;font-size:12px;border:1.5px solid #378ADD;border-radius:6px;background:#E6F1FB;color:#185FA5;cursor:pointer;white-space:nowrap;line-height:1.5;font-family:inherit;font-weight:500;transition:all .12s}
+.ebtn:hover{background:#185FA5;color:#fff}
+.fval{font-size:11px;min-width:30px;color:#666}
+input[type=range]{width:54px;cursor:pointer;accent-color:#378ADD}
+input[type=date]{font-size:12px;padding:3px 7px;border:1px solid #c8c7c1;border-radius:5px;background:#fff;color:#1a1a1a;font-family:inherit;width:130px}
+input[type=number]{font-size:12px;padding:3px 5px;border:1px solid #c8c7c1;border-radius:5px;background:#fff;color:#1a1a1a;font-family:inherit;width:52px}
+#preview{flex:1;overflow:auto;background:#e0dfd9;padding:0 18px 18px;min-height:0}
+#gc{background:#fff;min-width:fit-content;margin-top:18px;box-shadow:0 2px 12px rgba(0,0,0,.10)}
+.ct{display:block;padding:15px 20px 3px;border:none;background:transparent;font-family:inherit;font-weight:600;color:#1a1a1a;width:100%;cursor:text}
+.cs{display:block;padding:2px 20px 11px;border:none;background:transparent;font-family:inherit;color:#666;width:100%;cursor:text}
+.ct:empty:before,.cs:empty:before{content:attr(data-ph);color:#bbb;pointer-events:none;font-weight:400}
+.gnotes:empty:before{content:attr(data-ph);color:#bbb;pointer-events:none}
+.gwrap{border-top:1.5px solid #ccc}
+.wheader{display:flex;border-bottom:1px solid #ccc;background:#f6f5f0;position:sticky;top:0;z-index:10}
+.wlh{flex-shrink:0;border-right:1px solid #ccc;font-weight:600;color:#555;display:flex;align-items:center;padding:0 12px;background:#f6f5f0;position:sticky;left:0;z-index:11}
+.wlhinner{outline:none;min-width:20px;cursor:text}
+.wrcols{flex-shrink:0}
+.mrow,.wrow{display:flex}
+.mcell{border-right:1px solid #ccc;font-weight:500;color:#555;display:flex;align-items:center;padding:0 6px;height:22px;background:#f6f5f0;flex-shrink:0}
+.wcell{border-right:.5px solid #e0dfd9;display:flex;align-items:center;justify-content:center;color:#bbb;height:22px;flex-shrink:0}
+.grow{display:flex}
+.gcell{display:flex;align-items:center;gap:4px;border-bottom:.5px solid #eceae4;background:#fff;flex-shrink:0;position:sticky;left:0;z-index:5;border-right:1px solid #ccc;cursor:pointer}
+.gcell.ptype{background:#f6f5f0;font-weight:600}
+.gcell.sel{background:rgba(55,138,221,.09)!important;border-right-color:rgba(55,138,221,.4)!important;outline:1px solid rgba(55,138,221,.25)}
+.sw{width:15px;height:15px;border-radius:3px;flex-shrink:0;cursor:pointer;border:1.5px solid rgba(0,0,0,.18);transition:transform .12s,box-shadow .12s}
+.sw:hover{transform:scale(1.2);box-shadow:0 0 0 3px rgba(55,138,221,.35)}
+.gname{flex:1;min-width:0;cursor:text;background:transparent;border:none;font-family:inherit;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rbts{display:flex;gap:2px;opacity:0;transition:opacity .1s;flex-shrink:0;padding-right:3px}
+.gcell:hover .rbts{opacity:1}
+.rbtn{width:18px;height:18px;border:.5px solid #d0cfc9;border-radius:3px;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;color:#888;padding:0;font-family:inherit;line-height:1}
+.rbtn:hover{background:#eceae4;color:#1a1a1a}
+.barea{flex-shrink:0;position:relative;border-bottom:.5px solid #eceae4;background-image:repeating-linear-gradient(90deg,transparent calc(var(--ww) - .5px),#e0dfd9 calc(var(--ww) - .5px),#e0dfd9 var(--ww))}
+.bar{position:absolute;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:grab;overflow:hidden;transition:box-shadow .1s}
+.bar:hover{box-shadow:0 2px 8px rgba(0,0,0,.22)}
+.bar:active{cursor:grabbing}
+.btext{font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px;text-align:center;pointer-events:none;position:relative;z-index:1;width:100%;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+.handle{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;z-index:3}
+.handle:hover{background:rgba(255,255,255,.25)}
+.hleft{left:0;border-radius:4px 0 0 4px}
+.hright{right:0;border-radius:0 4px 4px 0}
+.tody{position:absolute;top:0;bottom:0;width:2px;background:rgba(220,60,55,.75);z-index:2;pointer-events:none}
+.gnotes{display:block;padding:9px 20px;border:none;background:transparent;width:100%;font-family:inherit;color:#555;border-top:.5px solid #e0ded9;cursor:text;min-height:34px}
+.gfooter{display:block;padding:6px 20px 11px;border:none;background:transparent;width:100%;font-family:inherit;border-top:.5px solid #e0ded9;cursor:text;color:#aaa}
+input[type=color]{position:absolute;opacity:0;width:0;height:0;pointer-events:none;top:0;left:0}
+
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+  #tb { display: none !important; }
+  body { overflow: visible !important; height: auto !important; background: #fff !important; }
+  #app { height: auto !important; }
+  #preview { overflow: visible !important; padding: 0 !important; background: #fff !important; height: auto !important; flex: none !important; }
+  #gc { margin-top: 0 !important; box-shadow: none !important; }
+  .wheader { position: static !important; }
+  .gcell { position: static !important; }
+  .wlh { position: static !important; }
+  .gcell.ptype { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #f6f5f0 !important; }
+  .bar { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .barea { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .wheader, .wlh, .mcell { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #f6f5f0 !important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="tb">
+  <div class="trow">
+    <div class="grp">
+      <span class="glbl">顯示層級</span>
+      <button class="tbtn" id="l1" onclick="setLyr(1)">大項</button>
+      <button class="tbtn" id="l2" onclick="setLyr(2)">中項</button>
+      <button class="tbtn on" id="l3" onclick="setLyr(3)">細項</button>
+    </div>
+    <div class="sep"></div>
+    <div class="grp">
+      <span class="glbl">起始日期</span>
+      <input type="date" id="sd" value="2026-05-04" onchange="S.startDate=this.value;render()">
+      <span class="glbl" style="padding-left:6px">週數</span>
+      <input type="number" id="tw" value="20" min="4" max="104" onchange="S.totalWeeks=+this.value;render()">
+      <span class="glbl" style="padding-left:6px">欄寬</span>
+      <input type="range" min="24" max="80" value="38" id="wwr" oninput="S.weekWidth=+this.value;document.getElementById('wwv').textContent=this.value+'px';render()">
+      <span class="fval" id="wwv">38px</span>
+    </div>
+    <div class="sep"></div>
+    <button class="abtn" onclick="addRoot()">＋ 大項</button>
+    <button class="abtn" onclick="addUnder('group')">＋ 中項</button>
+    <button class="abtn" onclick="addUnder('task')">＋ 細項</button>
+    <div class="sep"></div>
+    <button class="ebtn" onclick="doExportPNG()">↓ PNG</button>
+    <button class="ebtn" onclick="window.print()">⎙ 列印 PDF</button>
+    <button class="ebtn" onclick="doSaveJSON()">💾 存檔</button>
+    <label class="ebtn" style="cursor:pointer">📂 載入 JSON<input type="file" id="jf" accept=".json" onchange="doLoadJSON(this)" style="display:none"></label>
+  </div>
+  <div class="trow">
+    <div class="grp">
+      <span class="grptitle">字體大小</span>
+      <span class="glbl">任務名稱</span>
+      <input type="range" min="10" max="18" value="13" id="nfr" oninput="S.nameFs=+this.value;document.getElementById('nfv').textContent=this.value+'px';render()">
+      <span class="fval" id="nfv">13px</span>
+      <div class="sep"></div>
+      <span class="glbl">色塊文字</span>
+      <input type="range" min="8" max="16" value="11" id="bfr" oninput="S.barFs=+this.value;document.getElementById('bfv').textContent=this.value+'px';render()">
+      <span class="fval" id="bfv">11px</span>
+      <div class="sep"></div>
+      <span class="glbl">月份</span>
+      <input type="range" min="8" max="16" value="11" id="mfr" oninput="S.monthFs=+this.value;document.getElementById('mfv').textContent=this.value+'px';render()">
+      <span class="fval" id="mfv">11px</span>
+      <div class="sep"></div>
+      <span class="glbl">備註</span>
+      <input type="range" min="10" max="18" value="12" id="rfr" oninput="S.noteFs=+this.value;document.getElementById('rfv').textContent=this.value+'px';applyNoteFs()">
+      <span class="fval" id="rfv">12px</span>
+    </div>
+  </div>
+</div>
+<div id="preview">
+  <div id="gc">
+    <div contenteditable class="ct" id="gtitle" spellcheck="false" data-ph="標題" style="font-size:22px"></div>
+    <div contenteditable class="cs" id="gsub" spellcheck="false" data-ph="副標題" style="font-size:13px"></div>
+    <div class="gwrap">
+      <div class="wheader" id="wheader"></div>
+      <div id="grows"></div>
+    </div>
+    <div contenteditable class="gnotes" id="gnotes" spellcheck="false" data-ph="備註"></div>
+    <div contenteditable class="gfooter" id="gfooter" spellcheck="false">* 各階段時程可視實際執行情況滾動調整</div>
+  </div>
+</div>
+<input type="color" id="cp">
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const LW = 200;
+let selId = null, cpTarget = null, drag = null;
+let colHeaderText = '任務名稱';
+
+const PC = ['#185FA5','#0F6E56','#993C1D','#854F0B','#993556','#3B6D11'];
+const GC = ['#378ADD','#1D9E75','#D85A30','#BA7517','#D4537E','#639922'];
+const TC = ['#85B7EB','#5DCAA5','#F0997B','#FAC775','#ED93B1','#97C459'];
+const uid = () => '_' + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// Numbering: phases global, groups/tasks within their parent
+function countPhases() { return S.items.filter(x => x.type === 'phase').length; }
+function countGroups(phase) { return (phase.children || []).filter(x => x.type === 'group').length; }
+function countTasks(group) { return (group.children || []).filter(x => x.type === 'task').length; }
+
+function nextPhaseName() { return '大項' + (countPhases() + 1); }
+function nextGroupName(phase) { return '中項' + (countGroups(phase) + 1); }
+function nextTaskName(group) { return '細項' + (countTasks(group) + 1); }
+function nextPhaseColor() { return PC[countPhases() % 6]; }
+function nextGroupColor(phase) { return GC[countGroups(phase) % 6]; }
+function nextTaskColor(group) { return TC[countTasks(group) % 6]; }
+
+const S = {
+  startDate: '2026-05-04', totalWeeks: 20, visibleLayers: 3,
+  nameFs: 13, barFs: 11, noteFs: 12, monthFs: 11, weekWidth: 38,
+  items: [
+    { id:'p1', type:'phase', name:'大項1', color:'#185FA5', start:0, end:6, children:[
+      { id:'g1', type:'group', name:'中項1', color:'#378ADD', start:0, end:3, children:[
+        { id:'t1', type:'task', name:'細項1', color:'#85B7EB', start:0, end:2 },
+        { id:'t2', type:'task', name:'細項2', color:'#85B7EB', start:2, end:3 }
+      ]},
+      { id:'g2', type:'group', name:'中項2', color:'#1D9E75', start:3, end:6, children:[
+        { id:'t3', type:'task', name:'細項1', color:'#5DCAA5', start:3, end:5 },
+        { id:'t4', type:'task', name:'細項2', color:'#5DCAA5', start:4, end:6 }
+      ]}
+    ]},
+    { id:'p2', type:'phase', name:'大項2', color:'#0F6E56', start:6, end:16, children:[
+      { id:'g3', type:'group', name:'中項1', color:'#EF9F27', start:6, end:12, children:[
+        { id:'t5', type:'task', name:'細項1', color:'#FAC775', start:6, end:10 },
+        { id:'t6', type:'task', name:'細項2', color:'#FAC775', start:10, end:12 }
+      ]},
+      { id:'g4', type:'group', name:'中項2', color:'#D4537E', start:6, end:14, children:[
+        { id:'t7', type:'task', name:'細項1', color:'#ED93B1', start:6, end:11 },
+        { id:'t8', type:'task', name:'細項2', color:'#ED93B1', start:9, end:14 }
+      ]},
+      { id:'g5', type:'group', name:'中項3', color:'#639922', start:12, end:16, children:[
+        { id:'t9', type:'task', name:'細項1', color:'#97C459', start:12, end:14 },
+        { id:'t10', type:'task', name:'細項2', color:'#97C459', start:14, end:16 }
+      ]}
+    ]},
+    { id:'p3', type:'phase', name:'大項3', color:'#854F0B', start:16, end:20, children:[
+      { id:'g6', type:'group', name:'中項1', color:'#BA7517', start:16, end:19, children:[
+        { id:'t11', type:'task', name:'細項1', color:'#FAC775', start:16, end:18 },
+        { id:'t12', type:'task', name:'細項2', color:'#FAC775', start:17, end:19 }
+      ]},
+      { id:'g7', type:'group', name:'中項2', color:'#993556', start:19, end:20, children:[
+        { id:'t13', type:'task', name:'細項1', color:'#D4537E', start:19, end:20 }
+      ]}
+    ]}
+  ]
+};
+
+function find(id, arr) {
+  arr = arr || S.items;
+  for (const it of arr) {
+    if (it.id === id) return it;
+    if (it.children) { const f = find(id, it.children); if (f) return f; }
+  }
+}
+
+function flat() {
+  const rows = [];
+  function walk(it, d) {
+    if (d > S.visibleLayers) return;
+    rows.push({ it, d });
+    if (it.children) it.children.forEach(c => walk(c, d + 1));
+  }
+  S.items.forEach(it => walk(it, 1));
+  return rows;
+}
+
+function weekDate(i) {
+  const d = new Date(S.startDate + 'T00:00:00');
+  d.setDate(d.getDate() + i * 7);
+  return d;
+}
+function todayWk() {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const s = new Date(S.startDate + 'T00:00:00');
+  return (now - s) / (7 * 864e5);
+}
+function applyNoteFs() {
+  document.getElementById('gnotes').style.fontSize = S.noteFs + 'px';
+  document.getElementById('gfooter').style.fontSize = Math.max(10, S.noteFs - 1) + 'px';
+}
+
+function render() {
+  const rows = flat(), ww = S.weekWidth, TW = S.totalWeeks * ww;
+  document.getElementById('gc').style.setProperty('--ww', ww + 'px');
+  applyNoteFs();
+
+  const months = []; let cur = null;
+  for (let i = 0; i < S.totalWeeks; i++) {
+    const d = weekDate(i), mk = d.getFullYear() * 12 + d.getMonth();
+    if (!cur || cur.mk !== mk) { cur = { mk, label: d.toLocaleDateString('zh-TW', { month: 'long' }), count: 0 }; months.push(cur); }
+    cur.count++;
+  }
+  let mH = '', wH = '';
+  for (const m of months) mH += `<div class="mcell" style="width:${m.count*ww}px;font-size:${S.monthFs}px">${m.label}</div>`;
+  for (let i = 0; i < S.totalWeeks; i++) {
+    const d = weekDate(i);
+    wH += `<div class="wcell" style="width:${ww}px;font-size:${S.monthFs}px">${d.getMonth()+1}/${String(d.getDate()).padStart(2,'0')}</div>`;
+  }
+  document.getElementById('wheader').innerHTML =
+    `<div class="wlh" style="width:${LW}px;height:44px;font-size:${S.nameFs}px"><span class="wlhinner" contenteditable spellcheck="false" id="colhdr">${esc(colHeaderText)}</span></div>` +
+    `<div class="wrcols" style="width:${TW}px"><div class="mrow">${mH}</div><div class="wrow">${wH}</div></div>`;
+
+  const colhdr = document.getElementById('colhdr');
+  if (colhdr) {
+    colhdr.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); colhdr.blur(); } });
+    colhdr.addEventListener('blur', () => { colHeaderText = colhdr.innerText.trim() || colHeaderText; });
+  }
+
+  const tw = todayWk();
+  const tdm = (tw >= 0 && tw <= S.totalWeeks) ? `<div class="tody" style="left:${tw * ww}px"></div>` : '';
+  let html = '';
+  rows.forEach(({ it, d }, idx) => {
+    const h = d === 1 ? 38 : d === 2 ? 32 : 27;
+    const pad = d === 1 ? 10 : d === 2 ? 24 : 40;
+    const tc = d === 1 ? 'ptype' : '';
+    const ss = Math.min(it.start, S.totalWeeks - 1), se = Math.min(it.end, S.totalWeeks);
+    const bL = ss * ww, bW = Math.max(ww, (se - ss) * ww);
+    const addB = it.type !== 'task' ? `<button class="rbtn" title="新增子項" data-add="${it.id}">+</button>` : '';
+    const bgS = idx % 2 === 1 && d > 1 ? 'background:#faf9f7' : '';
+    html += `<div class="grow">
+<div class="gcell ${tc}" style="width:${LW}px;height:${h}px;padding:0 4px 0 ${pad}px;${bgS}" data-id="${it.id}">
+  <div class="sw" style="background:${it.color}" data-sw="${it.id}" title="點擊更改顏色"></div>
+  <div class="gname" contenteditable spellcheck="false" data-nm="${it.id}" style="font-size:${S.nameFs}px">${esc(it.name)}</div>
+  <div class="rbts">${addB}<button class="rbtn" title="刪除" data-del="${it.id}">×</button></div>
+</div>
+<div class="barea" style="width:${TW}px;height:${h}px">
+  ${tdm}
+  <div class="bar" data-bar="${it.id}" style="left:${bL}px;width:${bW}px;height:${h-8}px;top:4px;background:${it.color}">
+    <div class="handle hleft" data-hl="${it.id}" data-side="L"></div>
+    <div class="btext" style="font-size:${S.barFs}px">${esc(it.name)}</div>
+    <div class="handle hright" data-hl="${it.id}" data-side="R"></div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('grows').innerHTML = html;
+  ['l1','l2','l3'].forEach((id, i) => document.getElementById(id).classList.toggle('on', i + 1 === S.visibleLayers));
+  document.getElementById('gc').style.minWidth = (LW + TW) + 'px';
+  bindEvents();
+}
+
+function bindEvents() {
+  document.querySelectorAll('.gcell').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.closest('.rbts') || e.target.dataset.sw) return;
+      selId = el.dataset.id;
+      document.querySelectorAll('.gcell').forEach(c => c.classList.remove('sel'));
+      el.classList.add('sel');
+    });
+  });
+  document.querySelectorAll('[data-nm]').forEach(el => {
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur', () => {
+      const it = find(el.dataset.nm); if (!it) return;
+      it.name = el.innerText.trim() || it.name;
+      const bt = document.querySelector(`[data-bar="${it.id}"] .btext`);
+      if (bt) bt.textContent = it.name;
+    });
+  });
+  document.querySelectorAll('[data-sw]').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation(); openColor(el.dataset.sw); });
+  });
+  document.querySelectorAll('[data-add]').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation(); addChild(el.dataset.add); });
+  });
+  document.querySelectorAll('[data-del]').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation(); delItem(el.dataset.del); });
+  });
+  document.querySelectorAll('[data-bar]').forEach(bar => {
+    bar.addEventListener('mousedown', e => {
+      if (e.target.dataset.hl) return;
+      e.preventDefault();
+      const it = find(bar.dataset.bar); if (!it) return;
+      drag = { type: 'M', id: it.id, sx: e.clientX, os: it.start, oe: it.end, dur: it.end - it.start };
+    });
+  });
+  document.querySelectorAll('[data-hl]').forEach(h => {
+    h.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation();
+      const it = find(h.dataset.hl); if (!it) return;
+      drag = { type: h.dataset.side, id: it.id, sx: e.clientX, os: it.start, oe: it.end };
+    });
+  });
+}
+
+document.addEventListener('mousemove', e => {
+  if (!drag) return; e.preventDefault();
+  const dw = Math.round((e.clientX - drag.sx) / S.weekWidth);
+  const it = find(drag.id); if (!it) return;
+  if (drag.type === 'M') {
+    let ns = Math.max(0, drag.os + dw), ne = ns + drag.dur;
+    if (ne > S.totalWeeks) { ne = S.totalWeeks; ns = ne - drag.dur; }
+    if (ns < 0) { ns = 0; ne = drag.dur; }
+    it.start = ns; it.end = ne;
+  } else if (drag.type === 'L') {
+    it.start = Math.max(0, Math.min(drag.os + dw, it.end - 1));
+  } else {
+    it.end = Math.max(it.start + 1, Math.min(S.totalWeeks, drag.oe + dw));
+  }
+  const bar = document.querySelector(`[data-bar="${drag.id}"]`);
+  if (bar) { bar.style.left = it.start * S.weekWidth + 'px'; bar.style.width = (it.end - it.start) * S.weekWidth + 'px'; }
+});
+document.addEventListener('mouseup', () => { drag = null; });
+
+function openColor(id) {
+  cpTarget = id;
+  const it = find(id), cp = document.getElementById('cp');
+  if (it) cp.value = it.color;
+  cp.click();
+}
+document.getElementById('cp').addEventListener('input', e => {
+  if (!cpTarget) return;
+  const it = find(cpTarget); if (!it) return;
+  it.color = e.target.value;
+  const sw = document.querySelector(`[data-sw="${cpTarget}"]`);
+  const bar = document.querySelector(`[data-bar="${cpTarget}"]`);
+  if (sw) sw.style.background = e.target.value;
+  if (bar) bar.style.background = e.target.value;
+});
+
+function addRoot() {
+  S.items.push({ id: uid(), type: 'phase', name: nextPhaseName(), color: nextPhaseColor(), start: 0, end: 4, children: [] });
+  render();
+}
+function addUnder(type) {
+  if (!selId) { alert(type === 'group' ? '請先點選一個大項列' : '請先點選一個中項列'); return; }
+  if (type === 'group') {
+    let phase = null;
+    for (const p of S.items) {
+      if (p.id === selId) { phase = p; break; }
+      if (p.children) for (const g of p.children) {
+        if (g.id === selId || (g.children && g.children.find(t => t.id === selId))) { phase = p; break; }
+      }
+      if (phase) break;
+    }
+    if (!phase) { alert('請先點選一個大項列'); return; }
+    phase.children = phase.children || [];
+    phase.children.push({ id: uid(), type: 'group', name: nextGroupName(phase), color: nextGroupColor(phase), start: phase.start, end: phase.end, children: [] });
+    if (S.visibleLayers < 2) S.visibleLayers = 2;
+  } else {
+    let group = null;
+    outer: for (const p of S.items) {
+      if (!p.children) continue;
+      for (const g of p.children) {
+        if (g.id === selId || (g.children && g.children.find(t => t.id === selId))) { group = g; break outer; }
+      }
+    }
+    if (!group) { alert('請先點選一個中項列'); return; }
+    group.children = group.children || [];
+    group.children.push({ id: uid(), type: 'task', name: nextTaskName(group), color: nextTaskColor(group), start: group.start, end: group.end });
+    if (S.visibleLayers < 3) S.visibleLayers = 3;
+  }
+  render();
+}
+function addChild(id) {
+  const it = find(id); if (!it || it.type === 'task') return;
+  if (it.type === 'phase') {
+    it.children = it.children || [];
+    it.children.push({ id: uid(), type: 'group', name: nextGroupName(it), color: nextGroupColor(it), start: it.start, end: it.end, children: [] });
+    if (S.visibleLayers < 2) S.visibleLayers = 2;
+  } else {
+    it.children = it.children || [];
+    it.children.push({ id: uid(), type: 'task', name: nextTaskName(it), color: nextTaskColor(it), start: it.start, end: it.end });
+    if (S.visibleLayers < 3) S.visibleLayers = 3;
+  }
+  render();
+}
+function delItem(id) {
+  function del(arr) {
+    const i = arr.findIndex(x => x.id === id);
+    if (i >= 0) { arr.splice(i, 1); return true; }
+    for (const it of arr) if (it.children && del(it.children)) return true;
+    return false;
+  }
+  del(S.items); if (selId === id) selId = null; render();
+}
+function setLyr(n) { S.visibleLayers = n; render(); }
+
+function doExportPNG() {
+  const el = document.getElementById('gc');
+  if (typeof html2canvas === 'undefined') { alert('匯出函式庫尚未載入，請確認網路連線後重試'); return; }
+  const actualW = LW + S.totalWeeks * S.weekWidth;
+  html2canvas(el, {
+    scale: 2, useCORS: true, backgroundColor: '#ffffff',
+    width: actualW, height: el.scrollHeight,
+    windowWidth: actualW + 40, scrollX: 0, scrollY: -document.getElementById('preview').scrollTop
+  }).then(canvas => {
+    const a = document.createElement('a'); a.download = 'gantt-chart.png';
+    a.href = canvas.toDataURL('image/png'); a.click();
+  });
+}
+function doSaveJSON() {
+  const data = { ...S, colHeaderText,
+    title: document.getElementById('gtitle').innerText,
+    subtitle: document.getElementById('gsub').innerText,
+    notes: document.getElementById('gnotes').innerText,
+    footer: document.getElementById('gfooter').innerText
+  };
+  const b = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.download = 'gantt.json';
+  a.href = URL.createObjectURL(b); a.click();
+}
+function doLoadJSON(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      Object.assign(S, d);
+      if (d.colHeaderText) colHeaderText = d.colHeaderText;
+      document.getElementById('gtitle').innerText = d.title || '';
+      document.getElementById('gsub').innerText = d.subtitle || '';
+      if (d.notes) document.getElementById('gnotes').innerText = d.notes;
+      if (d.footer) document.getElementById('gfooter').innerText = d.footer;
+      document.getElementById('sd').value = S.startDate;
+      document.getElementById('tw').value = S.totalWeeks;
+      document.getElementById('nfr').value = S.nameFs || 13; document.getElementById('nfv').textContent = (S.nameFs||13) + 'px';
+      document.getElementById('bfr').value = S.barFs || 11; document.getElementById('bfv').textContent = (S.barFs||11) + 'px';
+      document.getElementById('mfr').value = S.monthFs || 11; document.getElementById('mfv').textContent = (S.monthFs||11) + 'px';
+      document.getElementById('rfr').value = S.noteFs || 12; document.getElementById('rfv').textContent = (S.noteFs||12) + 'px';
+      document.getElementById('wwr').value = S.weekWidth; document.getElementById('wwv').textContent = S.weekWidth + 'px';
+      render();
+    } catch { alert('JSON 格式錯誤，請確認檔案是否正確'); }
+  };
+  r.readAsText(f); input.value = '';
+}
+
+render();
+</script>
+</body>
+</html>
