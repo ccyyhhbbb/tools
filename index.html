@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/User/Downloads/%E4%B8%BB%E9%A0%81.html -->
-<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>臺灣聲響實驗室・工具集</title>
-<link href="./主頁面_files/css2" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -193,8 +193,8 @@ body {
   <div class="brand" onclick="goHome()">
     <div class="brand-dot"></div>
     <div class="brand-text">
-      <div class="brand-name">SIUSIUPMLAB</div>
-      <div class="brand-sub">TOOLS</div>
+      <div class="brand-name">臺灣聲響實驗室</div>
+      <div class="brand-sub">TAIWAN SOUND LAB · TOOLS</div>
     </div>
   </div>
   <div id="topbar-right">
@@ -206,13 +206,13 @@ body {
 <div id="main">
 
   <div id="home">
-    <div class="home-eyebrow">SIUSIU</div>
+    <div class="home-eyebrow">C-LAB 臺灣當代文化實驗場</div>
     <div class="home-title">內部工具集</div>
     <div class="home-subtitle">點選工具開始使用</div>
 
     <div class="tool-grid">
 
-      <div class="tool-card" onclick="openTool(&#39;gantt.html&#39;, &#39;甘特圖產生器&#39;)">
+      <div class="tool-card" onclick="openTool('gantt.html', '甘特圖產生器')">
         <div class="tool-card-top">
           <div class="tool-icon icon-blue">📊</div>
           <div class="arrow-icon">↗</div>
@@ -226,7 +226,7 @@ body {
         </div>
       </div>
 
-      <div class="tool-card" onclick="openTool(&#39;accupass.html&#39;, &#39;ACCUPASS 橫幅產生器&#39;)">
+      <div class="tool-card" onclick="openTool('accupass.html', 'ACCUPASS 橫幅產生器')">
         <div class="tool-card-top">
           <div class="tool-icon icon-dark">🎨</div>
           <div class="arrow-icon">↗</div>
@@ -244,7 +244,7 @@ body {
   </div>
 
   <div id="frame-wrap">
-    <iframe id="tool-frame" src="./主頁面_files/saved_resource.html" title="工具"></iframe>
+    <iframe id="tool-frame" src="" title="工具"></iframe>
   </div>
 
 </div>
@@ -253,7 +253,7 @@ body {
   function openTool(file, name) {
     document.getElementById('home').style.display = 'none';
     document.getElementById('frame-wrap').style.display = 'flex';
-    document.getElementById('tool-frame').src = file;
+    document.getElementById('tool-frame').src = file + '?v=2';
     document.getElementById('tool-label').textContent = name;
     document.getElementById('tool-label').style.display = 'block';
     document.getElementById('back-btn').style.display = 'flex';
@@ -268,6 +268,5 @@ body {
   }
 </script>
 
-
-
-</body></html>
+</body>
+</html>
