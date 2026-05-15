@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rundown 生成器</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1526;--navy2:#1a2d4a;
+  --accent:#f0c93a;--adim:rgba(240,201,58,.1);
+  --bdk:rgba(255,255,255,.1);
+  --pbg:#dedad4;
+  --border:#ccc8c0;
+  --tp:#1c1b18;--ts:#5a5854;--tm:#a09d98;
+  --danger:#c53030;
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --sw:272px;
+  /* row height CSS vars — updated by JS */
+  --rh-title:36px;--rh-stage:36px;--rh-break:36px;
+}
+body{font-family:var(--font);background:var(--pbg);color:var(--tp);min-height:100vh;font-size:13px;line-height:1.45}
+
+/* ══ SIDEBAR ══ */
+.sb{width:var(--sw);background:var(--navy);color:#fff;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;z-index:100;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+.sb-logo{padding:16px 18px 12px;border-bottom:1px solid var(--bdk)}
+.sb-logo h1{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.sb-logo p{font-size:13px;color:rgba(255,255,255,.55);margin-top:1px}
+.sb-s{padding:13px 18px;border-bottom:1px solid var(--bdk)}
+.sb-s h2{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:10px}
+.sf{margin-bottom:8px}
+.sf label{display:block;font-size:13px;color:rgba(255,255,255,.65);margin-bottom:3px}
+.sf input{width:100%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:6px 9px;color:#fff;font-family:var(--font);font-size:12.5px;outline:none;transition:border-color .14s}
+.sf input:focus{border-color:var(--accent);background:rgba(255,255,255,.12)}
+.sf input.tin{font-family:var(--mono);font-size:13px;letter-spacing:.04em}
+.sf input.tin.terr-in{border-color:#f87171!important;background:rgba(248,113,113,.12)!important}
+.sf input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.65;cursor:pointer}
+.tpair{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.tplbl{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:3px}
+.tplbl span{font-size:11px;color:rgba(255,255,255,.36)}
+.terrmsg{font-size:10.5px;color:#f87171;margin-top:4px;display:none}
+.terrmsg.on{display:block}
+.fsr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.fsr:last-child{margin-bottom:0}
+.fsr>span{font-size:13px;color:rgba(255,255,255,.65)}
+.fsc{display:flex;align-items:center;gap:5px}
+.fsc button{width:22px;height:22px;border:1px solid rgba(255,255,255,.18);border-radius:4px;background:rgba(255,255,255,.08);cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1;font-family:var(--font)}
+.fsc button:hover{background:rgba(255,255,255,.16)}
+.fsc span{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.65);min-width:26px;text-align:center}
+.tog-list{display:flex;flex-direction:column;gap:7px}
+.tog-row{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;user-select:none}
+.tog-row input[type="checkbox"]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.ctc-list{display:flex;flex-direction:column;gap:5px}
+.ctc-row{display:flex;gap:3px;align-items:center}
+.ctc-row input{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:4px 6px;color:#fff;font-family:var(--font);font-size:12px;outline:none;min-width:0}
+.ctc-row input:focus{border-color:var(--accent)}
+.ctc-row .cr{width:52px;flex-shrink:0}.ctc-row .cn{width:46px;flex-shrink:0}.ctc-row .cc{flex:1}
+.ctc-del{width:18px;height:18px;background:rgba(210,60,60,.2);border:none;border-radius:3px;cursor:pointer;color:#f87171;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1}
+.ctc-hdr{display:grid;grid-template-columns:52px 46px 1fr 18px;gap:3px;margin-bottom:3px}
+.ctc-hdr span{font-size:13px;color:rgba(255,255,255,.55);text-align:center}
+.add-sec{padding:12px 18px;border-bottom:1px solid var(--bdk)}
+.btn-ar{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border-radius:5px;border:1px dashed rgba(255,255,255,.2);background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;color:rgba(255,255,255,.7);transition:all .14s;margin-bottom:5px}
+.btn-ar:last-child{margin-bottom:0}
+.btn-ar:hover{border-color:rgba(255,255,255,.5);color:#fff;background:rgba(255,255,255,.07)}
+.sb-ex{padding:12px 18px;display:flex;flex-direction:column;gap:5px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;transition:all .14s;width:100%}
+.bp{background:var(--accent);color:var(--navy)}.bp:hover{filter:brightness(1.07)}
+.bg{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.11)}.bg:hover{background:rgba(255,255,255,.13)}
+.bd{background:rgba(210,60,60,.13);color:#f87171;border:1px solid rgba(210,60,60,.24)}.bd:hover{background:rgba(210,60,60,.21)}
+.btn-pair{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.stats{padding:12px 18px;margin-top:auto;border-top:1px solid var(--bdk);background:rgba(0,0,0,.1)}
+.sr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sr:last-child{margin-bottom:0}
+.sl{font-size:13px;color:rgba(255,255,255,.55)}
+.sv{font-family:var(--mono);font-size:11.5px;color:#fff;font-weight:500}
+.sv.over{color:#f87171}.sv.ok{color:#4ade80}.sv.exact{color:var(--accent)}
+
+/* ══ MAIN ══ */
+.main{margin-left:var(--sw);min-height:100vh;background:var(--pbg);padding:16px 20px;overflow-x:auto}
+.ot-ban{background:rgba(210,60,60,.08);border:1px solid rgba(210,60,60,.22);border-radius:6px;padding:8px 13px;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ot-ban p{font-size:12px;color:var(--danger);font-weight:500}
+.ot-ban.hide{display:none}
+
+/* ══ PAPER ══ */
+.paper{background:#fff;border:1px solid var(--border);box-shadow:0 1px 8px rgba(0,0,0,.1);width:max-content;min-height:60vh}
+.ev-hdr{padding:15px 22px 11px;border-bottom:2.5px solid var(--navy)}
+.ev-hdr h1{font-weight:700;color:var(--navy);line-height:1.25;margin-bottom:4px;word-break:break-word}
+.ev-meta-row{display:flex;gap:14px;flex-wrap:wrap}
+.ev-meta-item{color:var(--ts);word-break:break-word}
+
+/* ══ TABLE ══ */
+table.rdt{width:auto;border-collapse:collapse;table-layout:fixed}
+.rdt input,.rdt textarea{font-size:inherit;font-family:inherit}
+.rdt thead tr{background:var(--navy)}
+.rdt thead th{padding:6px 8px;text-align:left;font-size:inherit;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55);white-space:nowrap;border:none;position:relative;user-select:none}
+.rdt thead th:first-child,.rdt thead th:nth-child(2){padding:0}
+.rdt td{border-bottom:1px solid var(--border);vertical-align:middle;padding:0}
+/* Row heights applied via JS setRowVisualHeight() — CSS height/max-height on td are ignored by Chrome table layout */
+.stage-row:hover td:not(.c-dh):not(.c-cs),.break-row:hover td:not(.c-dh):not(.c-cs){background:#fdfcf9}
+.rdt tr.dov td{background:var(--adim)!important;outline:2px solid var(--accent);outline-offset:-1px}
+/* textarea vertical centering wrapper */
+.ta-vc{display:flex;align-items:center;overflow:hidden;width:100%}
+/* remove vertical padding/min-height inside ta-vc so textarea shrinks to text height and flex can center it */
+.ta-vc .ci-ta{padding-top:0;padding-bottom:0;min-height:0}
+.col-rh{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:5}
+.col-rh:hover{background:rgba(255,255,255,.3)}
+/* drag handle cell */
+td.c-dh{width:18px;padding:0;text-align:center;border-right:1px solid rgba(0,0,0,.06);position:relative}
+th.c-dh{width:18px;padding:0}
+.dh-icon{width:18px;height:100%;min-height:34px;display:flex;align-items:center;justify-content:center;cursor:grab;opacity:0;transition:opacity .12s;color:var(--tm);font-size:13px}
+.stage-row:hover .dh-icon,.break-row:hover .dh-icon,.title-row:hover .dh-icon{opacity:1}
+/* Individual row-height resize handle — horizontal bar at bottom of c-dh */
+.rh-grip{position:absolute;bottom:0;left:0;right:0;height:5px;cursor:row-resize;opacity:0;transition:opacity .12s;background:linear-gradient(transparent,rgba(0,0,0,.18));border-radius:0 0 2px 2px}
+.stage-row:hover .rh-grip,.title-row:hover .rh-grip,.break-row:hover .rh-grip{opacity:1}
+/* color strip */
+td.c-cs{width:5px;padding:0;border-right:none}
+th.c-cs{width:5px;padding:0}
+/* cells */
+.ci{width:100%;border:none;outline:none;background:transparent;color:var(--tp);padding:7px 8px;display:block}
+.ci:focus{background:var(--adim)}
+.ci::placeholder{color:var(--tm)}
+.ci-mono{font-family:var(--mono)!important;font-weight:600;color:var(--navy);padding:7px 8px;display:block;white-space:nowrap}
+.ci-num{text-align:center;width:100%;border:none;outline:none;background:transparent;padding:7px 4px;color:var(--tp);display:block}
+.ci-num:focus{background:var(--adim)}
+.ci-combo{width:100%;border:none;outline:none;background:transparent;color:var(--tp);padding:7px 6px;display:block}
+.ci-combo:focus{background:var(--adim)}
+.ci-combo::placeholder{color:var(--tm)}
+.type-pl{display:none;color:var(--ts);padding:7px 8px}
+/* textarea — min-height ensures placeholder is fully visible */
+.ci-ta{width:100%;border:none;outline:none;background:transparent;color:var(--tp);padding:7px 8px;resize:none;overflow:hidden;min-height:34px;display:block;line-height:1.45}
+.ci-ta:focus{background:var(--adim)}
+.ci-ta::placeholder{color:var(--tm)}
+/* item cell */
+.item-wrap{padding:6px 8px}
+.item-title-row{display:flex;align-items:center;gap:5px}
+.item-title{flex:1;border:none;outline:none;background:transparent;font-weight:600;color:var(--tp);min-width:0;width:100%;padding:1px 0}
+.item-title::placeholder{color:var(--tm);font-weight:400}
+.btn-si{flex-shrink:0;padding:1px 6px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--tm);border-radius:3px;font-size:11px;font-family:var(--font);white-space:nowrap;line-height:1.5}
+.btn-si:hover{border-color:var(--navy);color:var(--navy);background:var(--pbg)}
+.si-list{display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.si-row{display:flex;align-items:center;gap:4px}
+.si-dot{width:4px;height:4px;border-radius:50%;background:var(--tm);flex-shrink:0}
+.si-row input{flex:1;border:none;outline:none;background:transparent;color:var(--ts)}
+.si-row input::placeholder{color:var(--tm)}
+.si-x{width:14px;height:14px;border:none;background:transparent;cursor:pointer;color:var(--tm);font-size:13px;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;line-height:1}
+.si-x:hover{background:rgba(210,60,60,.1);color:var(--danger)}
+.cp-dot{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);cursor:pointer;flex-shrink:0}
+/* actions — horizontal */
+th.c-act{width:44px;padding:0}
+td.c-act{width:44px;padding:0;vertical-align:middle}
+.act-inner{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;padding:2px;opacity:0;transition:opacity .12s}
+.stage-row:hover .act-inner,.break-row:hover .act-inner,.title-row:hover .act-inner{opacity:1}
+.ib{width:20px;height:20px;border:none;background:transparent;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tm);padding:0}
+.ib:hover{background:var(--pbg);color:var(--tp)}
+.ib.del:hover{background:rgba(210,60,60,.1);color:var(--danger)}
+
+/* ══ COLUMN VISIBILITY ══ */
+.rdt.htyp col.c-typ,.rdt.htyp td.c-typ,.rdt.htyp th.c-typ{display:none}
+.rdt.hp  col.c-per,.rdt.hp  td.c-per,.rdt.hp  th.c-per{display:none}
+.rdt.hl  col.c-loc,.rdt.hl  td.c-loc,.rdt.hl  th.c-loc{display:none}
+.rdt.hn  col.c-not,.rdt.hn  td.c-not,.rdt.hn  th.c-not{display:none}
+
+/* ══ TITLE ROW ══ */
+.title-row td{background:#ebe7e0;border-bottom:1px solid #c8c4bc;vertical-align:middle}
+.title-cell{display:flex;align-items:center;padding-right:4px}
+.title-in{flex:1;border:none;outline:none;background:transparent;font-weight:700;color:var(--navy);padding:7px 10px}
+.title-in::placeholder{color:rgba(20,36,80,.28);font-weight:400}
+.sect-dur{font-family:var(--mono);font-size:.82em;color:rgba(13,21,38,.38);white-space:nowrap;padding-right:8px;flex-shrink:0}
+.sect-dur.hide{display:none}
+
+/* ══ BREAK ROW ══ */
+.break-row td{background:#f5f4f0;vertical-align:middle}
+.break-label{display:flex;align-items:center;gap:7px;padding:7px 8px}
+.break-label input{border:none;outline:none;background:transparent;color:var(--ts);font-style:italic;flex:1}
+.break-label input::placeholder{color:var(--tm)}
+
+/* ══ BOTTOM SECTIONS ══ */
+.btm-sec{padding:12px 22px;border-top:1px solid var(--border)}
+.btm-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.btm-hdr h3{font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ts)}
+.sec-add{border:1px dashed var(--border);background:transparent;border-radius:5px;padding:3px 9px;font-size:11px;color:var(--ts);cursor:pointer;font-family:var(--font);transition:all .13s}
+.sec-add:hover{border-color:var(--navy);color:var(--navy)}
+.ctc-pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:2px 14px}
+.ctc-pg span{color:var(--tp)}
+.note-block{border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:9px}
+.note-block:last-child{margin-bottom:0}
+.nb-hdr{display:flex;align-items:center;background:#f5f4f0;border-bottom:1px solid var(--border);padding-right:6px}
+.nb-title{flex:1;border:none;outline:none;background:transparent;font-weight:600;color:var(--tp);padding:7px 10px;font-size:inherit;font-family:inherit}
+.nb-title::placeholder{color:var(--tm);font-weight:400}
+.nb-body{width:100%;border:none;outline:none;background:transparent;color:var(--tp);padding:8px 10px 10px;resize:none;overflow:hidden;min-height:56px;font-size:inherit;font-family:inherit;line-height:1.6;display:block}
+.nb-del{width:20px;height:20px;border:none;background:transparent;cursor:pointer;color:var(--tm);font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0}
+.nb-del:hover{background:rgba(210,60,60,.1);color:var(--danger)}
+
+/* Hide UI-only elements during image export */
+body.exporting .np,
+body.exporting .c-dh,
+body.exporting .c-act,
+body.exporting .rh-grip,
+body.exporting .cpop{display:none!important}
+body.exporting #col-dh,
+body.exporting #col-act{display:none!important}
+.cpop{position:fixed;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px;display:none;grid-template-columns:repeat(6,24px);gap:5px;box-shadow:0 6px 22px rgba(0,0,0,.16);z-index:9999}
+.cpop.open{display:grid}
+.cpsw{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s}
+.cpsw:hover{transform:scale(1.2)}
+.cpsw.sel{border-color:var(--navy)}
+
+/* ══ PRINT ══ */
+@page{size:A4 portrait;margin:12mm 14mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .sb,.c-dh,.c-act,.ot-ban,.btn-si,.si-x,.cpop,.np,.sec-add,.nb-del,.rh-grip{display:none!important}
+  #col-dh,#col-act{display:none!important}
+  .main{margin-left:0!important;padding:0!important;background:#fff!important}
+  /* Paper must not overflow the page */
+  .paper{border:none!important;box-shadow:none!important;min-height:0!important;width:100%!important;overflow:hidden!important;max-width:100%!important}
+  .ev-hdr{padding:0 0 8px}
+  /* JS scaling ensures cols sum to exactly 182mm; keep fixed layout to use those widths */
+  .rdt{width:100%!important;table-layout:fixed!important;max-width:100%!important}
+  /* Prevent cell content from overflowing */
+  .rdt td,.rdt th{overflow:hidden!important;word-break:break-word!important;max-width:0!important}
+  .rdt thead th{padding:5px 6px}
+  .ci,.ci-ta,.item-title,.break-label input,.title-in,.ci-mono{padding:4px 6px}
+  .ci-num{padding:4px 3px}
+  .item-wrap{padding:3px 6px}
+  .ci-combo{display:none!important}
+  .type-pl{display:block!important;padding:4px 6px}
+  .btm-sec{padding:8px 0 0}
+  .nb-hdr{padding-right:0}
+  .nb-title{padding:5px 8px}
+  .nb-body{padding:6px 8px;min-height:0}
+  tbody tr{page-break-inside:avoid}
+  .rdt.htyp col.c-typ,.rdt.htyp td.c-typ,.rdt.htyp th.c-typ{display:none!important}
+  .rdt.hp  col.c-per,.rdt.hp  td.c-per,.rdt.hp  th.c-per{display:none!important}
+  .rdt.hl  col.c-loc,.rdt.hl  td.c-loc,.rdt.hl  th.c-loc{display:none!important}
+  .rdt.hn  col.c-not,.rdt.hn  td.c-not,.rdt.hn  th.c-not{display:none!important}
+  /* Row heights via JS, not CSS (td height/max-height ignored by Chrome) */
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+<aside class="sb">
+  <div class="sb-logo"><h1>Rundown</h1><p>活動流程生成器</p></div>
+
+  <div class="sb-s">
+    <h2>活動資訊</h2>
+    <div class="sf"><label>活動名稱</label><input id="evName" type="text" placeholder="輸入活動名稱"></div>
+    <div class="sf"><label>活動日期</label><input id="evDate" type="date"></div>
+    <div class="sf"><label>場地</label><input id="evVenue" type="text" placeholder="場地名稱"></div>
+    <div class="sf"><label>主辦單位</label><input id="evOrg" type="text" placeholder="主辦單位"></div>
+    <div class="sf">
+      <label>開始 ／ 結束時間</label>
+      <div class="tplbl"><span>開始</span><span>結束</span></div>
+      <div class="tpair">
+        <input id="tStart" class="tin" type="text" placeholder="09:00" maxlength="5" value="09:00" oninput="onTI(this)" onblur="onTB(this)">
+        <input id="tEnd" class="tin" type="text" placeholder="18:00" maxlength="5" value="18:00" oninput="onTI(this)" onblur="onTB(this)">
+      </div>
+      <div class="terrmsg" id="terr">⚠ 結束不得早於開始</div>
+    </div>
+  </div>
+
+  <div class="sb-s">
+    <h2>聯絡人</h2>
+    <div class="ctc-hdr"><span>職稱</span><span>姓名</span><span>聯繫方式</span><span></span></div>
+    <div class="ctc-list" id="ctcList"></div>
+    <button class="btn bg" style="margin-top:8px;font-size:11px;padding:5px 0" onclick="addContact()">＋ 新增聯絡人</button>
+  </div>
+
+  <div class="add-sec">
+    <h2 style="font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.24);margin-bottom:10px">插入列</h2>
+    <button class="btn-ar" onclick="addRow('title')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="17" x2="18" y2="17"/></svg>插入標題
+    </button>
+    <button class="btn-ar" onclick="addRow('stage')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增項目
+    </button>
+    <button class="btn-ar" onclick="addRow('break')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>插入休息
+    </button>
+  </div>
+
+  <div class="sb-s">
+    <h2>字體大小</h2>
+    <div class="fsr"><span>活動標題</span><div class="fsc"><button onclick="cf('hdr',-1)">−</button><span id="fs-hdr">18</span><button onclick="cf('hdr',1)">+</button></div></div>
+    <div class="fsr"><span>活動資訊</span><div class="fsc"><button onclick="cf('meta',-1)">−</button><span id="fs-meta">12</span><button onclick="cf('meta',1)">+</button></div></div>
+    <div class="fsr"><span>表格標頭</span><div class="fsc"><button onclick="cf('thead',-1)">−</button><span id="fs-thead">13</span><button onclick="cf('thead',1)">+</button></div></div>
+    <div class="fsr"><span>流程內容</span><div class="fsc"><button onclick="cf('tbody',-1)">−</button><span id="fs-tbody">13</span><button onclick="cf('tbody',1)">+</button></div></div>
+    <div class="fsr"><span>聯絡人</span><div class="fsc"><button onclick="cf('ctc',-1)">−</button><span id="fs-ctc">12</span><button onclick="cf('ctc',1)">+</button></div></div>
+    <div class="fsr"><span>備註</span><div class="fsc"><button onclick="cf('notes',-1)">−</button><span id="fs-notes">13</span><button onclick="cf('notes',1)">+</button></div></div>
+    <div class="fsr"><span>小節標題</span><div class="fsc"><button onclick="cf('sechead',-1)">−</button><span id="fs-sechead">11</span><button onclick="cf('sechead',1)">+</button></div></div>
+  </div>
+
+  <div class="sb-s">
+    <h2>行高設定</h2>
+    <div style="font-size:11px;color:rgba(255,255,255,.32);margin-bottom:8px">統一調整 ／ 個別可拖曳各列下緣</div>
+    <div class="fsr"><span>標題列</span><div class="fsc"><button onclick="chRH('title',-4)">−</button><span id="rh-title">36</span><button onclick="chRH('title',4)">+</button><button onclick="resetRH('title')" title="回到預設高度" style="font-size:13px;opacity:.6">↺</button></div></div>
+    <div class="fsr"><span>項目列</span><div class="fsc"><button onclick="chRH('stage',-4)">−</button><span id="rh-stage">36</span><button onclick="chRH('stage',4)">+</button><button onclick="resetRH('stage')" title="回到預設高度" style="font-size:13px;opacity:.6">↺</button></div></div>
+    <div class="fsr"><span>休息列</span><div class="fsc"><button onclick="chRH('break',-4)">−</button><span id="rh-break">36</span><button onclick="chRH('break',4)">+</button><button onclick="resetRH('break')" title="回到預設高度" style="font-size:13px;opacity:.6">↺</button></div></div>
+  </div>
+
+  <div class="sb-s">
+    <h2>顯示設定</h2>
+    <div class="tog-list">
+      <label class="tog-row"><input type="checkbox" id="togTyp" checked onchange="togCol('typ',this.checked)">類型欄</label>
+      <label class="tog-row"><input type="checkbox" id="togPer" checked onchange="togCol('per',this.checked)">負責人欄</label>
+      <label class="tog-row"><input type="checkbox" id="togLoc" checked onchange="togCol('loc',this.checked)">地點欄</label>
+      <label class="tog-row"><input type="checkbox" id="togNot" checked onchange="togCol('not',this.checked)">備註欄</label>
+      <label class="tog-row"><input type="checkbox" id="togSD" checked onchange="togSD(this.checked)">顯示段落時長</label>
+    </div>
+  </div>
+
+  <div class="sb-ex">
+    <button class="btn bp" onclick="doPrint()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印 / 匯出 PDF
+    </button>
+    <button class="btn bg" onclick="doSaveImage()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>儲存成圖片
+    </button>
+    <button class="btn bg" onclick="doCopy()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製純文字
+    </button>
+    <div class="btn-pair">
+      <button class="btn bg" onclick="saveJSON()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>儲存 JSON
+      </button>
+      <button class="btn bg" onclick="loadJSON()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>載入 JSON
+      </button>
+    </div>
+    <button class="btn bd" onclick="doClear()">清除全部</button>
+  </div>
+
+  <div class="stats">
+    <div class="sr"><span class="sl">項目數量</span><span class="sv" id="sCnt">0</span></div>
+    <div class="sr"><span class="sl">總時長</span><span class="sv" id="sDur">0 分鐘</span></div>
+    <div class="sr"><span class="sl">預計結束</span><span class="sv" id="sEnd">—</span></div>
+    <div class="sr"><span class="sl">緩衝時間</span><span class="sv" id="sBuf">—</span></div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="ot-ban hide" id="otBan">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <p id="otTxt"></p>
+  </div>
+  <div class="paper" id="paper">
+    <div class="ev-hdr">
+      <h1 id="evHdrName" style="font-size:18px">未命名活動</h1>
+      <div class="ev-meta-row" id="evHdrMeta" style="font-size:12px"></div>
+    </div>
+    <table class="rdt" id="rdtTable">
+      <colgroup>
+        <col id="col-dh" style="width:18px">
+        <col id="col-cs" style="width:5px">
+        <col id="col-tm" style="width:56px">
+        <col id="col-dur" style="width:46px">
+        <col id="col-typ" class="c-typ" style="width:74px">
+        <col id="col-itm" style="width:200px">
+        <col id="col-per" class="c-per" style="width:78px">
+        <col id="col-loc" class="c-loc" style="width:76px">
+        <col id="col-not" class="c-not" style="width:86px">
+        <col id="col-act" style="width:44px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="c-dh"></th><th class="c-cs"></th>
+          <th data-col="col-tm">時間</th>
+          <th data-col="col-dur">時長</th>
+          <th data-col="col-typ" class="c-typ">類型</th>
+          <th data-col="col-itm">項目</th>
+          <th data-col="col-per" class="c-per">負責人</th>
+          <th data-col="col-loc" class="c-loc">地點</th>
+          <th data-col="col-not" class="c-not">備註</th>
+          <th class="c-act np"></th>
+        </tr>
+      </thead>
+      <tbody id="stageList">
+        <tr id="emptyRow"><td colspan="10" style="padding:44px 22px;text-align:center;color:var(--tm);font-size:13px;border:none">使用左側「插入列」開始建立流程</td></tr>
+      </tbody>
+    </table>
+    <div class="btm-sec" id="ctcSec" style="display:none">
+      <div class="btm-hdr"><h3>聯絡人</h3></div>
+      <div class="ctc-pg" id="ctcPG"></div>
+    </div>
+    <div class="btm-sec" id="notesSec">
+      <div class="btm-hdr"><h3>備註</h3><button class="sec-add np" onclick="addNote()">＋ 新增備註</button></div>
+      <div id="notesList"></div>
+    </div>
+  </div>
+</main>
+
+<datalist id="type-opts">
+  <option value="演講"></option><option value="座談"></option>
+  <option value="表演"></option><option value="休息"></option>
+  <option value="頒獎"></option><option value="Q&A"></option>
+  <option value="工作坊"></option>
+</datalist>
+<div class="cpop" id="cpop"></div>
+
+<script>
+/* ── CONFIG ── */
+const COLORS=['#e74c3c','#e8864a','#f0c93a','#2ecc71','#1abc9c','#3498db','#5b8dee','#9b59b6','#e91e8c','#607d8b','#795548','#0d1526','#27ae60','#c0392b','#7f8c8d','#c8b96e'];
+const DCOL={stage:'#3498db',break:'#7f8c8d',title:'#1a2d4a'};
+const OLD_TYPES={talk:'演講',panel:'座談',performance:'表演',break:'休息',ceremony:'頒獎',qa:'Q&A',workshop:'工作坊',other:'其他'};
+const COL_CSS={typ:'htyp',per:'hp',loc:'hl',not:'hn'};
+
+/* ── STATE ── */
+let rows=[];
+let showSD=true;
+let activeCP=null;
+let dragId=null,dragOvId=null;
+const FS={hdr:18,meta:12,thead:13,tbody:13,ctc:12,notes:13,sechead:11};
+const RH={title:36,stage:36,break:36}; // unified row heights (px)
+
+/* ── UTILS ── */
+const uid=()=>Math.random().toString(36).slice(2,8);
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const escT=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function getMin(id){
+  const v=(document.getElementById(id).value||'').trim();
+  const m=v.match(/^(\d{1,2}):(\d{2})$/);
+  if(m)return parseInt(m[1])*60+parseInt(m[2]);
+  const n=v.replace(/\D/g,'');
+  if(n.length>=3)return Math.min(23,parseInt(n.slice(0,2)))*60+Math.min(59,parseInt(n.slice(2,4)));
+  return id==='tStart'?9*60:18*60;
+}
+const fmtT=t=>{const h=Math.floor(t/60)%24,m=t%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;};
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+/* ── FONT SIZE ── */
+function cf(k,d){FS[k]=Math.max(7,Math.min(36,FS[k]+d));document.getElementById('fs-'+k).textContent=FS[k];applyFS();save();}
+function applyFS(){
+  document.getElementById('evHdrName').style.fontSize=FS.hdr+'px';
+  document.getElementById('evHdrMeta').style.fontSize=FS.meta+'px';
+  const thead=document.querySelector('#rdtTable thead');
+  const tbody=document.querySelector('#rdtTable tbody');
+  if(thead)thead.style.fontSize=FS.thead+'px';
+  if(tbody)tbody.style.fontSize=FS.tbody+'px';
+  const ctcSec=document.getElementById('ctcSec');
+  if(ctcSec)ctcSec.style.fontSize=FS.ctc+'px';
+  const ns=document.getElementById('notesSec');
+  if(ns)ns.style.fontSize=FS.notes+'px';
+  document.querySelectorAll('.btm-hdr h3').forEach(el=>el.style.fontSize=FS.sechead+'px');
+  document.querySelectorAll('.ci-ta,.nb-body').forEach(el=>autoResize(el));
+}
+
+/* ── ROW HEIGHT (unified) ── */
+function chRH(k,d){
+  RH[k]=Math.max(0,RH[k]+d);
+  applyRH();save();
+}
+function resetRH(k){
+  RH[k]=36;
+  rows.filter(r=>r.rt===k).forEach(r=>{
+    if(k==='stage'&&r.si&&r.si.length>0){
+      r.rh=getNaturalRowH(r.id);
+    } else {
+      r.rh=null;
+    }
+  });
+  applyRH();save();
+}
+
+/* Apply height to a single tr by directly overriding inner elements.
+   Chrome ignores height/max-height on <td>, so we target the content elements
+   that actually inflate the row (min-height on .dh-icon and .ci-ta). */
+function setRowVisualHeight(tr,h){
+  // dh-icon: the row height controller
+  tr.querySelectorAll('.dh-icon').forEach(el=>{
+    el.style.minHeight='0';el.style.height=h+'px';el.style.overflow='hidden';
+  });
+  // ta-vc: explicit height so flex align-items:center works, clips overflow
+  tr.querySelectorAll('.ta-vc').forEach(el=>{
+    el.style.height=h+'px';el.style.overflow='hidden';
+  });
+  // item-wrap: flex-column centering
+  tr.querySelectorAll('.item-wrap').forEach(el=>{
+    el.style.height=h+'px';el.style.overflow='hidden';
+    el.style.display='flex';el.style.flexDirection='column';el.style.justifyContent='center';
+  });
+  // other inline content wrappers
+  tr.querySelectorAll('.break-label,.title-cell,.ci-mono,.ci-num,.ci-combo').forEach(el=>{
+    el.style.overflow='hidden';el.style.maxHeight=h+'px';
+  });
+}
+
+function getRowH(tr){
+  const id=tr.id.replace(/^sr-/,'');
+  const r=rows.find(x=>x.id===id);
+  if(r&&r.rh!=null)return r.rh; // individual overrides unified
+  if(tr.classList.contains('title-row'))return RH.title;
+  if(tr.classList.contains('break-row'))return RH.break;
+  return RH.stage;
+}
+
+function applyRH(){
+  const root=document.documentElement;
+  root.style.setProperty('--rh-title',RH.title+'px');
+  root.style.setProperty('--rh-stage',RH.stage+'px');
+  root.style.setProperty('--rh-break',RH.break+'px');
+  ['title','stage','break'].forEach(k=>{const el=document.getElementById('rh-'+k);if(el)el.textContent=RH[k];});
+  // Apply to all existing rows
+  document.querySelectorAll('#stageList tr.title-row,#stageList tr.stage-row,#stageList tr.break-row').forEach(tr=>{
+    setRowVisualHeight(tr,getRowH(tr));
+  });
+}
+
+/* ── ROW HEIGHT (individual) — via event delegation on stageList ── */
+document.addEventListener('DOMContentLoaded',()=>{
+  let rhDragId=null,rhStartY=0,rhStartH=0;
+
+  document.getElementById('stageList').addEventListener('mousedown',e=>{
+    const grip=e.target.closest('.rh-grip');
+    if(!grip)return;
+    e.preventDefault();e.stopPropagation();
+    rhDragId=grip.dataset.id;
+    const tr=document.getElementById('sr-'+rhDragId);
+    rhStartY=e.clientY;
+    rhStartH=tr?tr.getBoundingClientRect().height:36;
+
+    const onMove=e=>{
+      const newH=Math.max(0,rhStartH+(e.clientY-rhStartY));
+      const r=rows.find(x=>x.id===rhDragId);
+      if(r)r.rh=newH;
+      const tr2=document.getElementById('sr-'+rhDragId);
+      if(tr2)setRowVisualHeight(tr2,newH);
+    };
+    const onUp=()=>{
+      document.removeEventListener('mousemove',onMove);
+      document.removeEventListener('mouseup',onUp);
+      rhDragId=null;save();
+    };
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  });
+
+  /* ── TAB NAVIGATION: item-title → next row's item-title ── */
+  document.getElementById('stageList').addEventListener('keydown',e=>{
+    if(e.key!=='Tab'||!e.target.classList.contains('item-title'))return;
+    const all=Array.from(document.querySelectorAll('#stageList .item-title'));
+    const idx=all.indexOf(e.target);
+    if(!e.shiftKey&&idx>=0&&idx<all.length-1){e.preventDefault();all[idx+1].focus();}
+    else if(e.shiftKey&&idx>0){e.preventDefault();all[idx-1].focus();}
+  });
+});
+
+/* ── TIME ── */
+function onTI(el){const n=el.value.replace(/\D/g,'');if(n.length>=3&&!el.value.includes(':'))el.value=n.slice(0,2)+':'+n.slice(2,4);}
+function onTB(el){
+  const n=el.value.replace(/\D/g,'');
+  if(n.length>=3){el.value=String(Math.min(23,parseInt(n.slice(0,2))||0)).padStart(2,'0')+':'+String(Math.min(59,parseInt(n.slice(2,4))||0)).padStart(2,'0');}
+  else if(n.length===2){el.value=String(Math.min(23,parseInt(n)||0)).padStart(2,'0')+':00';}
+  validateTime();updateEvHdr();recalc();save();
+}
+function validateTime(){
+  const s=getMin('tStart'),e=getMin('tEnd');
+  const er=document.getElementById('terr'),ei=document.getElementById('tEnd');
+  if(e<=s){er.classList.add('on');ei.classList.add('terr-in');return false;}
+  er.classList.remove('on');ei.classList.remove('terr-in');return true;
+}
+
+/* ── COLSPAN UPDATE ── */
+function updateColspans(){
+  const rdt=document.getElementById('rdtTable');
+  const h=(rdt.classList.contains('htyp')?1:0)+(rdt.classList.contains('hp')?1:0)+(rdt.classList.contains('hl')?1:0)+(rdt.classList.contains('hn')?1:0);
+  document.querySelectorAll('#stageList td[data-cs]').forEach(td=>{td.setAttribute('colspan',Math.max(1,parseInt(td.dataset.cs)-h));});
+}
+
+/* ── RECALC ── */
+function recalc(){
+  let cur=getMin('tStart');
+  rows.forEach(r=>{
+    if(r.rt==='title'){r.sm=cur;return;}
+    r.sm=cur;const el=document.getElementById('st-'+r.id);if(el)el.textContent=fmtT(cur);
+    cur+=(parseInt(r.dur)||0);
+  });
+  rows.forEach((r,i)=>{
+    if(r.rt!=='title')return;
+    let dur=0;for(let j=i+1;j<rows.length;j++){if(rows[j].rt==='title')break;dur+=(parseInt(rows[j].dur)||0);}
+    const el=document.getElementById('sdur-'+r.id);
+    if(el){el.textContent=dur>0?`${dur} 分鐘`:'';el.className='sect-dur'+((!showSD||dur===0)?' hide':'');}
+  });
+  updateStats();
+}
+function updateStats(){
+  const timed=rows.filter(r=>r.rt!=='title');
+  const total=timed.reduce((a,r)=>a+(parseInt(r.dur)||0),0);
+  const calcEnd=getMin('tStart')+total,buf=getMin('tEnd')-calcEnd;
+  document.getElementById('sCnt').textContent=timed.length;
+  document.getElementById('sDur').textContent=total+'分鐘';
+  document.getElementById('sEnd').textContent=fmtT(calcEnd);
+  const bEl=document.getElementById('sBuf');
+  if(buf<0){bEl.textContent='-'+Math.abs(buf)+'分';bEl.className='sv over';document.getElementById('otBan').classList.remove('hide');document.getElementById('otTxt').textContent=`超出 ${Math.abs(buf)} 分鐘`;}
+  else if(buf===0){bEl.textContent='剛好結束';bEl.className='sv exact';document.getElementById('otBan').classList.add('hide');}
+  else{bEl.textContent='+'+buf+'分';bEl.className='sv ok';document.getElementById('otBan').classList.add('hide');}
+  updateEvHdr();updateCtcSec();
+}
+function updateEvHdr(){
+  const name=document.getElementById('evName').value||'未命名活動';
+  document.getElementById('evHdrName').textContent=name;
+  const date=document.getElementById('evDate').value,venue=document.getElementById('evVenue').value,org=document.getElementById('evOrg').value;
+  const ts=document.getElementById('tStart').value||'—',te=document.getElementById('tEnd').value||'—';
+  const p=[];
+  if(date)p.push('📅 '+new Date(date+'T12:00').toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'short'}));
+  if(venue)p.push('📍 '+venue);if(org)p.push('🏢 '+org);
+  p.push('⏰ '+ts+' – '+te);
+  document.getElementById('evHdrMeta').innerHTML=p.map(x=>`<span class="ev-meta-item">${esc(x)}</span>`).join('');
+}
+function updateCtcSec(){
+  const items=[];
+  document.querySelectorAll('.ctc-row').forEach(r=>{const i=r.querySelectorAll('input');const a=i[0]?.value||'',b=i[1]?.value||'',c=i[2]?.value||'';if(a||b||c)items.push([a,b,c].filter(Boolean).join(' · '));});
+  const pg=document.getElementById('ctcPG'),sec=document.getElementById('ctcSec');
+  if(pg)pg.innerHTML=items.map(i=>`<span>${esc(i)}</span>`).join('');
+  if(sec){sec.style.display=items.length?'block':'none';if(items.length)sec.style.fontSize=FS.ctc+'px';}
+}
+
+/* ── ROWS ── */
+function addRow(rt){
+  const r={id:uid(),rt};
+  if(rt==='stage'){
+    const last=[...rows].reverse().find(x=>x.rt!=='title');
+    r.title='';r.dur=last?(parseInt(last.dur)||30):30;r.typeLabel='';r.color=DCOL.stage;r.person='';r.loc='';r.notes='';r.si=[];
+  }else if(rt==='break'){
+    const last=[...rows].reverse().find(x=>x.rt!=='title');
+    r.title='休息';r.dur=last?(parseInt(last.dur)||15):15;r.color=DCOL.break;
+  }else{r.title='';r.color=DCOL.title;}
+  rows.push(r);hideEmpty();
+  const tr=buildTR(r);document.getElementById('stageList').appendChild(tr);
+  afterRender(tr);recalc();save();
+}
+function delRow(id){rows=rows.filter(r=>r.id!==id);document.getElementById('sr-'+id)?.remove();if(!rows.length)showEmpty();recalc();save();}
+function dupRow(id){
+  const idx=rows.findIndex(r=>r.id===id);if(idx<0)return;
+  const orig=rows[idx];const clone={...orig,id:uid(),si:orig.si?[...orig.si]:undefined};
+  rows.splice(idx+1,0,clone);
+  document.getElementById('sr-'+id).after(buildTR(clone));
+  afterRender(document.getElementById('sr-'+clone.id));
+  recalc();save();
+}
+function reRenderAll(){
+  document.querySelectorAll('#stageList tr:not(#emptyRow)').forEach(tr=>tr.remove());
+  rows.forEach(r=>{const tr=buildTR(r);document.getElementById('stageList').appendChild(tr);afterRender(tr);});
+  updateColspans();
+}
+function afterRender(tr){
+  tr.querySelectorAll('.ci-ta').forEach(ta=>{
+    if(ta.closest('.ta-vc')){
+      // Inline override wins over CSS; ensures autoResize reads content-only scrollHeight
+      ta.style.paddingTop='0';
+      ta.style.paddingBottom='0';
+      ta.style.minHeight='0';
+    }
+    autoResize(ta);
+  });
+  setRowVisualHeight(tr,getRowH(tr));
+}
+
+/* ── BUILD TR ── */
+const SVGDUP=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const SVGDEL=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+function buildTR(r){if(r.rt==='title')return buildTitle(r);if(r.rt==='break')return buildBreak(r);return buildStage(r);}
+
+function rhStyle(r){return r.rh?`td.style.minHeight will be set after`:'';}
+function applyIndividualRH(tr,r){
+  // Called at render time; height applied after autoResize in afterRender
+  // (nothing needed here since afterRender calls setRowVisualHeight)
+}
+
+function buildStage(s){
+  const tr=document.createElement('tr');tr.className='stage-row';tr.id='sr-'+s.id;
+  const tl=esc(s.typeLabel||'');
+  tr.innerHTML=`
+<td class="c-dh">
+  <div class="dh-icon" title="拖曳排序">⠿</div>
+  <div class="rh-grip" data-id="${s.id}" title="拖曳調整行高"></div>
+</td>
+<td class="c-cs" style="background:${s.color};padding:0;border-right:none"></td>
+<td><span class="ci-mono" id="st-${s.id}">--:--</span></td>
+<td><input class="ci-num" type="number" value="${s.dur}" min="1" max="999" onchange="updDur('${s.id}',this.value)"></td>
+<td class="c-typ"><input class="ci-combo" list="type-opts" value="${tl}" placeholder="類型" oninput="updTL('${s.id}',this.value)"><span class="type-pl">${tl||'—'}</span></td>
+<td class="item-cell">
+  <div class="item-wrap">
+    <div class="item-title-row">
+      <div class="cp-dot np" id="cpd-${s.id}" style="background:${s.color}" onclick="toggleCP('${s.id}',event)"></div>
+      <input class="item-title" value="${esc(s.title)}" placeholder="項目名稱" oninput="updF('${s.id}','title',this.value)">
+      <button class="btn-si np" onclick="addSI('${s.id}')" title="新增細項">＋</button>
+    </div>
+    <div class="si-list" id="si-${s.id}">${(s.si||[]).map((t,i)=>siH(s.id,i,t)).join('')}</div>
+  </div>
+</td>
+<td class="c-per"><div class="ta-vc"><textarea class="ci-ta" rows="1" placeholder="負責人" oninput="updF('${s.id}','person',this.value);autoResize(this)">${escT(s.person)}</textarea></div></td>
+<td class="c-loc"><div class="ta-vc"><textarea class="ci-ta" rows="1" placeholder="地點" oninput="updF('${s.id}','loc',this.value);autoResize(this)">${escT(s.loc)}</textarea></div></td>
+<td class="c-not"><div class="ta-vc"><textarea class="ci-ta" rows="1" placeholder="備註" oninput="updF('${s.id}','notes',this.value);autoResize(this)">${escT(s.notes)}</textarea></div></td>
+<td class="c-act np"><div class="act-inner">
+  <button class="ib" onclick="dupRow('${s.id}')" title="複製">${SVGDUP}</button>
+  <button class="ib del" onclick="delRow('${s.id}')" title="刪除">${SVGDEL}</button>
+</div></td>`;
+  applyIndividualRH(tr,s);setupDrag(tr,s.id);return tr;
+}
+function buildBreak(b){
+  const tr=document.createElement('tr');tr.className='break-row';tr.id='sr-'+b.id;
+  tr.innerHTML=`
+<td class="c-dh">
+  <div class="dh-icon" title="拖曳排序">⠿</div>
+  <div class="rh-grip" data-id="${b.id}" title="拖曳調整行高"></div>
+</td>
+<td class="c-cs" style="background:${b.color};padding:0;border-right:none"></td>
+<td><span class="ci-mono" id="st-${b.id}">--:--</span></td>
+<td><input class="ci-num" type="number" value="${b.dur}" min="1" max="999" onchange="updDur('${b.id}',this.value)"></td>
+<td colspan="5" data-cs="5"><div class="break-label">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;opacity:.4"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+  <input value="${esc(b.title)}" placeholder="休息" oninput="updF('${b.id}','title',this.value)">
+</div></td>
+<td class="c-act np"><div class="act-inner"><button class="ib del" onclick="delRow('${b.id}')" title="刪除">${SVGDEL}</button></div></td>`;
+  applyIndividualRH(tr,b);setupDrag(tr,b.id);return tr;
+}
+function buildTitle(t){
+  const tr=document.createElement('tr');tr.className='title-row';tr.id='sr-'+t.id;
+  tr.innerHTML=`
+<td class="c-dh">
+  <div class="dh-icon" title="拖曳排序">⠿</div>
+  <div class="rh-grip" data-id="${t.id}" title="拖曳調整行高"></div>
+</td>
+<td class="c-cs" style="background:${t.color};padding:0;border-right:none"></td>
+<td colspan="7" data-cs="7" style="padding:0"><div class="title-cell">
+  <input class="title-in" value="${esc(t.title)}" placeholder="段落標題（不佔時間）" oninput="updF('${t.id}','title',this.value)">
+  <span class="sect-dur hide" id="sdur-${t.id}"></span>
+</div></td>
+<td class="c-act np"><div class="act-inner"><button class="ib del" onclick="delRow('${t.id}')" title="刪除">${SVGDEL}</button></div></td>`;
+  applyIndividualRH(tr,t);setupDrag(tr,t.id);return tr;
+}
+
+/* ── SUBITEMS ── */
+function siH(sid,i,t){return`<div class="si-row"><div class="si-dot"></div><input type="text" value="${esc(t)}" placeholder="細項" oninput="updSI('${sid}',${i},this.value)"><button class="si-x np" onclick="delSI('${sid}',${i})">×</button></div>`;}
+/* Measure the natural content height of a stage row's item-wrap */
+function getNaturalRowH(sid){
+  const tr=document.getElementById('sr-'+sid);if(!tr)return RH.stage;
+  const wrap=tr.querySelector('.item-wrap');if(!wrap)return RH.stage;
+  // Temporarily release height constraint to measure true content height
+  const prevH=wrap.style.height,prevOv=wrap.style.overflow,prevDisp=wrap.style.display;
+  wrap.style.height='auto';wrap.style.overflow='visible';wrap.style.display='block';
+  const h=Math.max(wrap.scrollHeight,RH.stage);
+  wrap.style.height=prevH;wrap.style.overflow=prevOv;wrap.style.display=prevDisp;
+  return h;
+}
+function syncRowHToContent(sid){
+  const r=rows.find(x=>x.id===sid);if(!r)return;
+  r.rh=getNaturalRowH(sid);
+  const tr=document.getElementById('sr-'+sid);
+  if(tr)setRowVisualHeight(tr,r.rh);
+  save();
+}
+
+function addSI(sid){
+  const r=rows.find(x=>x.id===sid);if(!r)return;
+  r.si.push('');
+  const list=document.getElementById('si-'+sid);
+  list.insertAdjacentHTML('beforeend',siH(sid,r.si.length-1,''));
+  list.lastElementChild.querySelector('input').focus();
+  syncRowHToContent(sid);
+}
+function updSI(sid,i,v){const r=rows.find(x=>x.id===sid);if(r){r.si[i]=v;save();}}
+function delSI(sid,i){
+  const r=rows.find(x=>x.id===sid);if(!r)return;
+  r.si.splice(i,1);
+  document.getElementById('si-'+sid).innerHTML=r.si.map((t,j)=>siH(sid,j,t)).join('');
+  if(r.si.length===0){
+    r.rh=null;
+    const tr=document.getElementById('sr-'+sid);
+    if(tr)setRowVisualHeight(tr,RH.stage);
+    save();
+  } else {
+    syncRowHToContent(sid);
+  }
+}
+
+/* ── FIELD UPDATES ── */
+function updDur(id,v){const r=rows.find(x=>x.id===id);if(r){r.dur=parseInt(v)||0;recalc();save();}}
+function updF(id,f,v){const r=rows.find(x=>x.id===id);if(r){r[f]=v;save();}}
+function updTL(id,v){const r=rows.find(x=>x.id===id);if(!r)return;r.typeLabel=v;const pl=document.querySelector(`#sr-${id} .type-pl`);if(pl)pl.textContent=v||'—';save();}
+
+/* ── COLOR PICKER ── */
+function toggleCP(id,e){
+  e.stopPropagation();
+  const pop=document.getElementById('cpop');
+  if(activeCP===id&&pop.classList.contains('open')){pop.classList.remove('open');activeCP=null;return;}
+  activeCP=id;
+  const r=rows.find(x=>x.id===id);
+  pop.innerHTML=COLORS.map(c=>`<div class="cpsw${r&&r.color===c?' sel':''}" style="background:${c}" onclick="setColor('${id}','${c}')"></div>`).join('');
+  const btn=document.getElementById('cpd-'+id);if(!btn)return;
+  const rect=btn.getBoundingClientRect();
+  pop.style.top=(rect.bottom+6)+'px';pop.style.left=Math.max(4,rect.left-70)+'px';
+  pop.classList.add('open');
+}
+function setColor(id,color){
+  const r=rows.find(x=>x.id===id);
+  if(r){r.color=color;const cs=document.querySelector(`#sr-${id} .c-cs`);if(cs)cs.style.background=color;const dot=document.getElementById('cpd-'+id);if(dot)dot.style.background=color;}
+  document.getElementById('cpop').classList.remove('open');activeCP=null;save();
+}
+document.addEventListener('click',()=>{document.getElementById('cpop').classList.remove('open');activeCP=null;});
+
+/* ── DRAG ── */
+function setupDrag(tr,id){
+  const h=tr.querySelector('.dh-icon');
+  if(h)h.addEventListener('mousedown',()=>{tr.draggable=true;});
+  tr.addEventListener('dragstart',e=>{if(!tr.draggable){e.preventDefault();return;}dragId=id;tr.style.opacity='.4';e.dataTransfer.effectAllowed='move';});
+  tr.addEventListener('dragend',()=>{tr.draggable=false;tr.style.opacity='1';document.querySelectorAll('.dov').forEach(el=>el.classList.remove('dov'));dragId=null;});
+  tr.addEventListener('dragover',e=>{e.preventDefault();if(dragId&&dragId!==id){document.querySelectorAll('.dov').forEach(el=>el.classList.remove('dov'));tr.classList.add('dov');dragOvId=id;}});
+  tr.addEventListener('drop',e=>{
+    e.preventDefault();
+    if(dragId&&dragOvId&&dragId!==dragOvId){
+      const fi=rows.findIndex(r=>r.id===dragId),ti=rows.findIndex(r=>r.id===dragOvId);
+      const[mv]=rows.splice(fi,1);rows.splice(ti,0,mv);
+      reRenderAll();recalc();save();
+    }
+    tr.classList.remove('dov');
+  });
+}
+
+/* ── COLUMN RESIZE: update both col and th for reliable header sync ── */
+function initResize(){
+  document.querySelectorAll('.rdt thead th[data-col]').forEach(th=>{
+    const rh=document.createElement('div');rh.className='col-rh';th.appendChild(rh);
+    let sx,sw,colEl;
+    rh.addEventListener('mousedown',e=>{
+      e.stopPropagation();e.preventDefault();
+      sx=e.clientX;colEl=document.getElementById(th.dataset.col);
+      sw=th.getBoundingClientRect().width; // actual rendered width
+      const onMove=e=>{
+        const w=Math.max(30,sw+(e.clientX-sx));
+        if(colEl)colEl.style.width=w+'px';
+        th.style.width=w+'px'; // sync header explicitly
+      };
+      const onUp=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);save();};
+      document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+    });
+  });
+}
+
+/* ── PRINT SCALING ──
+   Scale visible columns proportionally to PRINT_W_PX (182mm).
+   The last column absorbs rounding errors so the total is exact.
+   No Math.max floor (except 1px minimum) to avoid inflation. ── */
+const PRINT_W_PX=Math.round(182*(96/25.4)); // 688px
+
+function prepForPrint(){
+  const rdt=document.getElementById('rdtTable');
+  const htyp=rdt.classList.contains('htyp'),hp=rdt.classList.contains('hp'),hl=rdt.classList.contains('hl'),hn=rdt.classList.contains('hn');
+  const visIds=['col-cs','col-tm','col-dur'];
+  if(!htyp)visIds.push('col-typ');
+  visIds.push('col-itm');
+  if(!hp)visIds.push('col-per');if(!hl)visIds.push('col-loc');if(!hn)visIds.push('col-not');
+
+  let totalW=0;const cols=[];
+  visIds.forEach(id=>{const el=document.getElementById(id);if(!el)return;const w=parseInt(el.style.width)||0;if(w>0){cols.push({el,w});totalW+=w;}});
+  if(!totalW||cols.length===0)return;
+
+  const scale=PRINT_W_PX/totalW;
+  let used=0;
+  cols.forEach(({el,w},i)=>{
+    el.setAttribute('data-po',el.style.width);
+    let sw;
+    if(i===cols.length-1){
+      // Last column: absorb rounding so total = exactly PRINT_W_PX
+      sw=Math.max(1,PRINT_W_PX-used);
+    }else{
+      sw=Math.max(1,Math.round(w*scale));
+      used+=sw;
+    }
+    el.style.width=sw+'px';
+  });
+}
+
+function restoreAfterPrint(){
+  document.querySelectorAll('#rdtTable col[data-po]').forEach(col=>{col.style.width=col.getAttribute('data-po');col.removeAttribute('data-po');});
+}
+window.addEventListener('beforeprint',prepForPrint);
+window.addEventListener('afterprint',restoreAfterPrint);
+
+/* ── TOGGLES ── */
+function togCol(col,show){const cls=COL_CSS[col]||('h'+col[0]);document.getElementById('rdtTable').classList.toggle(cls,!show);updateColspans();save();}
+function togSD(show){showSD=show;recalc();save();}
+function hideEmpty(){const e=document.getElementById('emptyRow');if(e)e.style.display='none';}
+function showEmpty(){const e=document.getElementById('emptyRow');if(e)e.style.display='';}
+
+/* ── CONTACTS ── */
+function addContact(){
+  const list=document.getElementById('ctcList');
+  const row=document.createElement('div');row.className='ctc-row';
+  row.innerHTML=`<input type="text" class="cr" placeholder="職稱" oninput="updateCtcSec();save()"><input type="text" class="cn" placeholder="姓名" oninput="updateCtcSec();save()"><input type="text" class="cc" placeholder="聯繫方式" oninput="updateCtcSec();save()"><button class="ctc-del" onclick="this.parentElement.remove();updateCtcSec();save()">×</button>`;
+  list.appendChild(row);
+}
+
+/* ── NOTES ── */
+function addNote(title='',body=''){
+  const list=document.getElementById('notesList');
+  const block=document.createElement('div');block.className='note-block';
+  block.innerHTML=`<div class="nb-hdr"><input class="nb-title" type="text" placeholder="備註標題" value="${esc(title)}" oninput="save()"><button class="nb-del np" onclick="this.closest('.note-block').remove();save()">×</button></div><textarea class="nb-body" placeholder="輸入備註內容…" oninput="autoResize(this);save()">${escT(body)}</textarea>`;
+  list.appendChild(block);
+  setTimeout(()=>autoResize(block.querySelector('.nb-body')),0);
+}
+
+/* ── EXPORT ── */
+function doCopy(){
+  const rdt=document.getElementById('rdtTable');
+  const showTyp=!rdt.classList.contains('htyp');
+  const showPer=!rdt.classList.contains('hp');
+  const showLoc=!rdt.classList.contains('hl');
+  const showNot=!rdt.classList.contains('hn');
+  const name=document.getElementById('evName').value||'未命名活動';
+  const ts=document.getElementById('tStart').value,te=document.getElementById('tEnd').value;
+  const lines=['═'.repeat(52),'  '+name,'  '+ts+' – '+te,'═'.repeat(52),''];
+  rows.forEach(r=>{
+    if(r.rt==='title'){lines.push('▌ '+(r.title||'—'),'');return;}
+    if(r.rt==='break'){lines.push(`[${fmtT(r.sm||0)}] ${'─'.repeat(8)} ${r.title||'休息'} (${r.dur}分)`,'');return;}
+    const parts=[`[${fmtT(r.sm||0)}]  ${r.title||'（未命名）'}  （${r.dur}分）`];
+    if(showTyp&&r.typeLabel)parts.push('         類型：'+r.typeLabel);
+    if(showPer&&r.person)parts.push('         負責人：'+r.person);
+    if(showLoc&&r.loc)parts.push('         地點：'+r.loc);
+    (r.si||[]).forEach(s=>{if(s)parts.push('         • '+s);});
+    if(showNot&&r.notes)parts.push('         備註：'+r.notes);
+    lines.push(...parts,'');
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('已複製 ✓')).catch(()=>toast('複製失敗'));
+}
+function doClear(){if(!confirm('確定清除全部？'))return;rows=[];reRenderAll();showEmpty();updateStats();save();}
+
+/* ── JSON SAVE / LOAD ── */
+function collectState(){
+  const ctcs=[];
+  document.querySelectorAll('.ctc-row').forEach(r=>{const i=r.querySelectorAll('input');ctcs.push([i[0]?.value||'',i[1]?.value||'',i[2]?.value||'']);});
+  const notes=[];
+  document.querySelectorAll('#notesList .note-block').forEach(b=>{notes.push([b.querySelector('.nb-title')?.value||'',b.querySelector('.nb-body')?.value||'']);});
+  const rdt=document.getElementById('rdtTable');
+  const togs={typ:!rdt.classList.contains('htyp'),per:!rdt.classList.contains('hp'),loc:!rdt.classList.contains('hl'),not:!rdt.classList.contains('hn'),sd:showSD};
+  return{version:4,rows,fs:{...FS},rh:{...RH},evName:document.getElementById('evName').value,evDate:document.getElementById('evDate').value,evVenue:document.getElementById('evVenue').value,evOrg:document.getElementById('evOrg').value,tStart:document.getElementById('tStart').value,tEnd:document.getElementById('tEnd').value,ctcs,notes,colW:getColW(),togs};
+}
+function saveJSON(){
+  const st=collectState();
+  const name=(st.evName||'rundown').replace(/[/\\?%*:|"<>]/g,'-');
+  const date=st.evDate||new Date().toISOString().slice(0,10);
+  const blob=new Blob([JSON.stringify(st,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`${name}-${date}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('已儲存 JSON ✓');
+}
+function loadJSON(){
+  const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!data||typeof data!=='object')throw new Error('invalid');
+        if(rows.length&&!confirm('載入後將覆蓋目前內容，確定繼續？'))return;
+        applyState(data);save();toast('載入成功 ✓');
+      }catch(err){toast('載入失敗：JSON 格式錯誤');}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+/* ── APPLY STATE ── */
+function applyState(st){
+  rows=[];
+  document.querySelectorAll('#stageList tr:not(#emptyRow)').forEach(tr=>tr.remove());
+  document.getElementById('ctcList').innerHTML='';
+  document.getElementById('notesList').innerHTML='';
+
+  ['evName','evDate','evVenue','evOrg','tStart','tEnd'].forEach(id=>{if(st[id]!==undefined)document.getElementById(id).value=st[id];});
+
+  if(st.fs){
+    if(st.fs.tbl&&!st.fs.tbody)st.fs.tbody=st.fs.tbl;
+    Object.assign(FS,st.fs);
+    Object.keys(FS).forEach(k=>{const el=document.getElementById('fs-'+k);if(el)el.textContent=FS[k];});
+  }
+  if(st.rh){
+    Object.assign(RH,st.rh);
+    applyRH();
+  }
+
+  applyColW(st.colW);
+
+  const rdt=document.getElementById('rdtTable');
+  rdt.classList.remove('htyp','hp','hl','hn');
+  if(st.togs){
+    const t=st.togs,g=id=>document.getElementById(id);
+    if(g('togTyp')){g('togTyp').checked=t.typ??true;if(!t.typ)rdt.classList.add('htyp');}
+    if(g('togPer')){g('togPer').checked=t.per??true;if(!t.per)rdt.classList.add('hp');}
+    if(g('togLoc')){g('togLoc').checked=t.loc??true;if(!t.loc)rdt.classList.add('hl');}
+    if(g('togNot')){g('togNot').checked=t.not??true;if(!t.not)rdt.classList.add('hn');}
+    if(g('togSD')){showSD=t.sd??true;g('togSD').checked=showSD;}
+  }
+
+  if(st.ctcs&&st.ctcs.length){
+    st.ctcs.forEach(([r,n,c])=>{
+      const list=document.getElementById('ctcList');const row=document.createElement('div');row.className='ctc-row';
+      row.innerHTML=`<input type="text" class="cr" placeholder="職稱" value="${esc(r||'')}" oninput="updateCtcSec();save()"><input type="text" class="cn" placeholder="姓名" value="${esc(n||'')}" oninput="updateCtcSec();save()"><input type="text" class="cc" placeholder="聯繫方式" value="${esc(c||'')}" oninput="updateCtcSec();save()"><button class="ctc-del" onclick="this.parentElement.remove();updateCtcSec();save()">×</button>`;
+      list.appendChild(row);
+    });
+  }
+
+  if(st.notes&&st.notes.length)st.notes.forEach(([l,b])=>addNote(l,b));
+
+  if(st.rows&&st.rows.length){
+    st.rows.forEach(r=>{if(r.type&&!r.typeLabel)r.typeLabel=r.type==='other'?(r.customType||'其他'):(OLD_TYPES[r.type]||'');});
+    rows=st.rows;hideEmpty();
+    rows.forEach(r=>{const tr=buildTR(r);document.getElementById('stageList').appendChild(tr);afterRender(tr);});
+    recalc();
+  }else{showEmpty();}
+
+  updateColspans();applyFS();updateEvHdr();updateCtcSec();
+}
+
+/* ── PERSIST ── */
+function getColW(){
+  const w={};
+  ['col-tm','col-dur','col-typ','col-itm','col-per','col-loc','col-not'].forEach(id=>{const el=document.getElementById(id);if(el&&el.style.width)w[id]=el.style.width;});
+  return w;
+}
+function applyColW(w){
+  if(!w)return;
+  Object.entries(w).forEach(([id,v])=>{
+    const col=document.getElementById(id);if(col)col.style.width=v;
+    const th=document.querySelector(`#rdtTable thead th[data-col="${id}"]`);if(th)th.style.width=v;
+  });
+}
+function save(){try{localStorage.setItem('rd13',JSON.stringify(collectState()));}catch(e){}}
+function load(){try{const raw=localStorage.getItem('rd13');if(!raw)return;applyState(JSON.parse(raw));}catch(e){}}
+
+function doPrint(){
+  const name=document.getElementById('evName').value||'未命名活動';
+  const orig=document.title;
+  document.title=name;
+  window.print();
+  setTimeout(()=>document.title=orig,500);
+}
+async function doSaveImage(){
+  const name=document.getElementById('evName').value||'未命名活動';
+  toast('匯出圖片中…');
+  document.body.classList.add('exporting');
+  try{
+    const paper=document.getElementById('paper');
+    const canvas=await html2canvas(paper,{
+      scale:2,
+      useCORS:true,
+      backgroundColor:'#ffffff',
+      scrollX:0,scrollY:0,
+      width:paper.scrollWidth,
+      height:paper.scrollHeight,
+    });
+    document.body.classList.remove('exporting');
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=url;a.download=name+'.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('圖片已儲存 ✓');
+  }catch(err){
+    document.body.classList.remove('exporting');
+    toast('匯出失敗，請稍後再試');
+    console.error(err);
+  }
+}
+function toast(msg){
+  let t=document.getElementById('_t');
+  if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a2d4a;color:#fff;padding:9px 18px;border-radius:6px;font-size:12px;z-index:9999;pointer-events:none;transition:opacity .3s';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';clearTimeout(t._x);t._x=setTimeout(()=>t.style.opacity='0',2400);
+}
+
+/* ── LISTENERS ── */
+['evName','evDate','evVenue','evOrg'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{updateEvHdr();save();}));
+document.getElementById('tStart').addEventListener('input',()=>onTI(document.getElementById('tStart')));
+document.getElementById('tEnd').addEventListener('input',()=>onTI(document.getElementById('tEnd')));
+
+/* ── INIT ── */
+load();if(rows.length===0)addRow('stage');updateStats();applyFS();applyRH();initResize();
+</script>
+</body>
+</html>
