@@ -618,8 +618,33 @@ function updateCtcSec(){
   if(sec){sec.style.display=items.length?'block':'none';if(items.length)sec.style.fontSize=FS.ctc+'px';}
 }
 
+/* ── UNDO ── */
+const undoStack=[];
+const MAX_UNDO=50;
+function pushHistory(){
+  try{
+    const s=JSON.stringify(collectState());
+    if(undoStack.length&&undoStack[undoStack.length-1]===s)return;
+    undoStack.push(s);
+    if(undoStack.length>MAX_UNDO)undoStack.shift();
+  }catch(e){}
+}
+function undo(){
+  if(!undoStack.length){toast('沒有可復原的操作');return;}
+  try{applyState(JSON.parse(undoStack.pop()));save();toast('已復原 ✓');}
+  catch(e){toast('復原失敗');}
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){
+    const tag=document.activeElement?.tagName?.toLowerCase();
+    if(tag==='input'||tag==='textarea')return; // native undo in text fields
+    e.preventDefault();undo();
+  }
+});
+
 /* ── ROWS ── */
 function addRow(rt){
+  pushHistory();
   const r={id:uid(),rt};
   if(rt==='stage'){
     const last=[...rows].reverse().find(x=>x.rt!=='title');
@@ -632,8 +657,9 @@ function addRow(rt){
   const tr=buildTR(r);document.getElementById('stageList').appendChild(tr);
   afterRender(tr);recalc();save();
 }
-function delRow(id){rows=rows.filter(r=>r.id!==id);document.getElementById('sr-'+id)?.remove();if(!rows.length)showEmpty();recalc();save();}
+function delRow(id){pushHistory();rows=rows.filter(r=>r.id!==id);document.getElementById('sr-'+id)?.remove();if(!rows.length)showEmpty();recalc();save();}
 function dupRow(id){
+  pushHistory();
   const idx=rows.findIndex(r=>r.id===id);if(idx<0)return;
   const orig=rows[idx];const clone={...orig,id:uid(),si:orig.si?[...orig.si]:undefined};
   rows.splice(idx+1,0,clone);
@@ -757,6 +783,7 @@ function syncRowHToContent(sid){
 
 function addSI(sid){
   const r=rows.find(x=>x.id===sid);if(!r)return;
+  pushHistory();
   r.si.push('');
   const list=document.getElementById('si-'+sid);
   list.insertAdjacentHTML('beforeend',siH(sid,r.si.length-1,''));
@@ -766,6 +793,7 @@ function addSI(sid){
 function updSI(sid,i,v){const r=rows.find(x=>x.id===sid);if(r){r.si[i]=v;save();}}
 function delSI(sid,i){
   const r=rows.find(x=>x.id===sid);if(!r)return;
+  pushHistory();
   r.si.splice(i,1);
   document.getElementById('si-'+sid).innerHTML=r.si.map((t,j)=>siH(sid,j,t)).join('');
   if(r.si.length===0){
@@ -797,6 +825,7 @@ function toggleCP(id,e){
   pop.classList.add('open');
 }
 function setColor(id,color){
+  pushHistory();
   const r=rows.find(x=>x.id===id);
   if(r){r.color=color;const cs=document.querySelector(`#sr-${id} .c-cs`);if(cs)cs.style.background=color;const dot=document.getElementById('cpd-'+id);if(dot)dot.style.background=color;}
   document.getElementById('cpop').classList.remove('open');activeCP=null;save();
@@ -813,9 +842,13 @@ function setupDrag(tr,id){
   tr.addEventListener('drop',e=>{
     e.preventDefault();
     if(dragId&&dragOvId&&dragId!==dragOvId){
+      pushHistory();
       const fi=rows.findIndex(r=>r.id===dragId),ti=rows.findIndex(r=>r.id===dragOvId);
       const[mv]=rows.splice(fi,1);rows.splice(ti,0,mv);
-      reRenderAll();recalc();save();
+      // Move the DOM element directly — avoids full rebuild and page scroll reset
+      const fromTR=document.getElementById('sr-'+dragId);
+      if(fi<ti){tr.after(fromTR);}else{tr.before(fromTR);}
+      updateColspans();recalc();save();
     }
     tr.classList.remove('dov');
   });
