@@ -60,7 +60,6 @@ input[type=number]{font-size:12px;padding:3px 5px;border:1px solid #c8c7c1;borde
 .handle:hover{background:rgba(255,255,255,.25)}
 .hleft{left:0;border-radius:4px 0 0 4px}
 .hright{right:0;border-radius:0 4px 4px 0}
-.tody{position:absolute;top:0;bottom:0;width:2px;background:rgba(220,60,55,.75);z-index:2;pointer-events:none}
 .gnotes{display:block;padding:9px 20px;border:none;background:transparent;width:100%;font-family:inherit;color:#555;border-top:.5px solid #e0ded9;cursor:text;min-height:34px}
 .gfooter{display:block;padding:6px 20px 11px;border:none;background:transparent;width:100%;font-family:inherit;border-top:.5px solid #e0ded9;cursor:text;color:#aaa}
 input[type=color]{position:absolute;opacity:0;width:0;height:0;pointer-events:none;top:0;left:0}
@@ -273,8 +272,7 @@ function render() {
     colhdr.addEventListener('blur', () => { colHeaderText = colhdr.innerText.trim() || colHeaderText; });
   }
 
-  const tw = todayWk();
-  const tdm = (tw >= 0 && tw <= S.totalWeeks) ? `<div class="tody" style="left:${tw * ww}px"></div>` : '';
+ 
   let html = '';
   rows.forEach(({ it, d }, idx) => {
     const h = d === 1 ? 38 : d === 2 ? 32 : 27;
@@ -291,7 +289,6 @@ function render() {
   <div class="rbts">${addB}<button class="rbtn" title="刪除" data-del="${it.id}">×</button></div>
 </div>
 <div class="barea" style="width:${TW}px;height:${h}px">
-  ${tdm}
   <div class="bar" data-bar="${it.id}" style="left:${bL}px;width:${bW}px;height:${h-8}px;top:4px;background:${it.color}">
     <div class="handle hleft" data-hl="${it.id}" data-side="L"></div>
     <div class="btext" style="font-size:${S.barFs}px">${esc(it.name)}</div>
