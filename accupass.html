@@ -272,12 +272,14 @@ select:hover{border-color:var(--line2);}
           <option value="1">IG／FB 方形　1080×1080</option>
           <option value="2">FB 直式　1080×1350</option>
           <option value="3">FB 橫式（2026推薦）　1200×900</option>
-          <option value="4">官網列表1　1744×1090（≤200kb）</option>
-          <option value="5">官網列表2　1800×690（≤200kb）</option>
-          <option value="6">官網摘要縮圖　640×400（≤200kb）</option>
+          <option value="4">新官網縮圖　1280×800（≤2MB）</option>
+          <option value="5">新官網封面圖片　1280×800（≤2MB）</option>
+          <option value="6">舊官網列表1　1744×1090（≤200kb）</option>
+          <option value="7">舊官網列表2　1800×690（≤200kb）</option>
+          <option value="8">舊官網摘要縮圖　640×400（≤200kb）</option>
         </select>
       </div>
-      <p style="font-size:10.5px;color:#555;line-height:1.6;margin-bottom:4px;">此處會「就地」改變目前分頁的尺寸。若想保留目前尺寸、另建一個新尺寸，請用預覽區上方的「＋ 新畫布」分頁（可選擇是否導入當前設置）。標示「≤200kb」的尺寸下載時自動改存 JPEG 並壓到 200kb 內。</p>
+      <p style="font-size:10.5px;color:#555;line-height:1.6;margin-bottom:4px;">此處會「就地」改變目前分頁的尺寸。若想保留目前尺寸、另建一個新尺寸，請用預覽區上方的「＋ 新畫布」分頁（可選擇是否導入當前設置）。「新官網」系列優先存 PNG，超過 2MB 才自動改存 JPEG；「舊官網」系列自動存 JPEG 並壓到 200kb 內。</p>
       <div class="sec">分割線</div>
       <div class="ctrl"><label>上端位置<span id="lv-dt">580px</span></label><input type="range" id="sl-dt" min="0" max="1080" value="580" oninput="setDiag('t',this.value)"></div>
       <div class="ctrl"><label>下端位置<span id="lv-db">440px</span></label><input type="range" id="sl-db" min="0" max="1080" value="440" oninput="setDiag('b',this.value)"></div>
@@ -981,9 +983,11 @@ const CANVAS_PRESETS=[
   {name:'IG／FB 方形',w:1080,h:1080},
   {name:'FB 直式',w:1080,h:1350},
   {name:'FB 橫式',w:1200,h:900},
-  {name:'官網列表1',w:1744,h:1090,maxKB:200},
-  {name:'官網列表2',w:1800,h:690,maxKB:200},
-  {name:'官網摘要縮圖',w:640,h:400,maxKB:200}
+  {name:'新官網縮圖',w:1280,h:800,maxKB:2048,pngPref:true},
+  {name:'新官網封面圖片',w:1280,h:800,maxKB:2048,pngPref:true},
+  {name:'舊官網列表1',w:1744,h:1090,maxKB:200},
+  {name:'舊官網列表2',w:1800,h:690,maxKB:200},
+  {name:'舊官網摘要縮圖',w:640,h:400,maxKB:200}
 ];
 let curPreset=CANVAS_PRESETS[0];
 function setCanvasPreset(idx){curPreset=CANVAS_PRESETS[+idx]||CANVAS_PRESETS[0];setCanvasSize(curPreset.w,curPreset.h);}
@@ -1003,7 +1007,7 @@ function setCanvasSize(w,h){
   // keep logo row pinned near the bottom unless the user moved it
   const g=document.getElementById('g-logos');
   if(g.dataset.moved!=='1')g.style.top=Math.max(0,H-46)+'px';
-  document.querySelectorAll('.dl-size').forEach(el=>el.textContent=`${W}×${H} · ${curPreset.maxKB?'JPEG ≤200kb':'PNG'}`);
+  document.querySelectorAll('.dl-size').forEach(el=>el.textContent=`${W}×${H} · ${curPreset.maxKB?((curPreset.pngPref?'PNG ':'JPEG ')+(curPreset.maxKB>=1024?'≤'+(curPreset.maxKB/1024)+'MB':'≤'+curPreset.maxKB+'kb')):'PNG'}`);
   render();renderBanner();zoomReset();
 }
 
@@ -1097,7 +1101,7 @@ function openAddMenu(e){
   e.stopPropagation();
   if(document.getElementById('add-menu')){closeAddMenu();return;}
   const m=document.createElement('div');m.id='add-menu';
-  m.innerHTML=CANVAS_PRESETS.map((p,i)=>`<div class="add-item" onclick="chooseAdd(${i})">${esc(p.name)}<span>${p.w}×${p.h}${p.maxKB?' · ≤200kb':''}</span></div>`).join('');
+  m.innerHTML=CANVAS_PRESETS.map((p,i)=>`<div class="add-item" onclick="chooseAdd(${i})">${esc(p.name)}<span>${p.w}×${p.h}${p.maxKB?(' · '+(p.maxKB>=1024?'≤'+(p.maxKB/1024)+'MB':'≤'+p.maxKB+'kb')):''}</span></div>`).join('');
   const bar=document.getElementById('canvas-tabs');bar.appendChild(m);
   const btn=bar.querySelector('.ctab-add');
   m.style.left=Math.max(6,Math.min(btn.offsetLeft-bar.scrollLeft,bar.clientWidth-238))+'px';
@@ -1133,16 +1137,24 @@ async function download(){
       ignoreElements:el=>el.classList&&el.classList.contains('resize-handle'),
       onclone:doc=>{const safe=el=>{if(el){el.style.background='#111';el.style.backgroundColor='#111';el.style.color='#fff';}};
         safe(doc.documentElement);safe(doc.body);safe(doc.getElementById('preview-col'));safe(doc.getElementById('stage-main'));}});
+    const bytesOf=u=>Math.ceil((u.length-(u.indexOf(',')+1))*3/4);
     let href,ext;
     if(curPreset.maxKB){
-      // export JPEG, lower quality until under the size cap
-      const flat=document.createElement('canvas');flat.width=W;flat.height=H;
-      const fx=flat.getContext('2d');fx.fillStyle='#000';fx.fillRect(0,0,W,H);fx.drawImage(cvs,0,0);
-      let q=0.92,url=flat.toDataURL('image/jpeg',q);
-      const bytes=u=>Math.ceil((u.length-'data:image/jpeg;base64,'.length)*3/4);
-      while(bytes(url)>curPreset.maxKB*1024 && q>0.2){q=Math.max(0.2,q-0.07);url=flat.toDataURL('image/jpeg',q);}
-      href=url;ext='jpg';
-      toast(`✓ JPEG 品質 ${Math.round(q*100)}%，約 ${Math.round(bytes(url)/1024)}kb`);
+      const cap=curPreset.maxKB*1024;
+      const png=curPreset.pngPref?cvs.toDataURL('image/png'):null;
+      if(png && bytesOf(png)<=cap){
+        href=png;ext='png';
+        toast(`✓ PNG，約 ${Math.round(bytesOf(png)/1024)}kb`);
+      }else{
+        // JPEG on black backing, lower quality until under the cap
+        const flat=document.createElement('canvas');flat.width=W;flat.height=H;
+        const fx=flat.getContext('2d');fx.fillStyle='#000';fx.fillRect(0,0,W,H);fx.drawImage(cvs,0,0);
+        let q=0.92,url=flat.toDataURL('image/jpeg',q);
+        while(bytesOf(url)>cap && q>0.2){q=Math.max(0.2,q-0.07);url=flat.toDataURL('image/jpeg',q);}
+        href=url;ext='jpg';
+        toast(png?`✓ 超過上限，改存 JPEG 品質 ${Math.round(q*100)}%（約 ${Math.round(bytesOf(url)/1024)}kb）`
+                 :`✓ JPEG 品質 ${Math.round(q*100)}%，約 ${Math.round(bytesOf(url)/1024)}kb`);
+      }
     }else{
       href=cvs.toDataURL('image/png');ext='png';
     }
@@ -1307,11 +1319,17 @@ function applySettings(cfg){
     });
   }
 
-  // Canvas size
+  // Canvas size — trust the stored w/h; use a preset only if its dimensions still match
+  // (preset order can change between versions, so index alone is not reliable).
   if(cfg.canvas){
     const c=cfg.canvas;
-    if(c.preset!=null && CANVAS_PRESETS[c.preset]){getEl('sel-canvas').value=c.preset;setCanvasPreset(c.preset);}
-    else if(c.w&&c.h){curPreset={name:'自訂',w:c.w,h:c.h};setCanvasSize(c.w,c.h);}
+    const p=CANVAS_PRESETS[c.preset];
+    if(p && p.w===c.w && p.h===c.h){getEl('sel-canvas').value=c.preset;setCanvasPreset(c.preset);}
+    else if(c.w&&c.h){
+      const match=CANVAS_PRESETS.findIndex(q=>q.w===c.w&&q.h===c.h);
+      if(match>=0){getEl('sel-canvas').value=match;setCanvasPreset(match);}
+      else{curPreset={name:'自訂',w:c.w,h:c.h,maxKB:c.maxKB||null};setCanvasSize(c.w,c.h);}
+    }
   }
 
   // Logos (supports old single-src format + new multi-image format)
@@ -1388,12 +1406,64 @@ function exportJSON(){
   const a=document.createElement('a');a.download='banner_project.json';a.href=URL.createObjectURL(blob);a.click();
   toast('✓ 已匯出專案（含全部畫布）');
 }
+/* match a preset by dimensions (preset order can change between versions) */
+function presetIdxFor(w,h,fallback){
+  const i=CANVAS_PRESETS.findIndex(q=>q.w===w&&q.h===h);
+  return i>=0?i:(fallback!=null&&CANVAS_PRESETS[fallback]?fallback:0);
+}
+/* normalise an imported file (v3 project | v3 single | legacy settings) → one design snapshot */
+function importedToSnapshot(obj){
+  if(obj&&obj.version>=3&&Array.isArray(obj.docs)&&obj.docs.length){
+    const d=obj.docs[obj.active&&obj.docs[obj.active]?obj.active:0];
+    return {snap:d.snapshot,w:d.w,h:d.h};
+  }
+  const w=(obj.canvas&&obj.canvas.w)||1080, h=(obj.canvas&&obj.canvas.h)||540;
+  return {snap:obj,w,h};                     // legacy single settings object
+}
+/* add an imported design as a NEW tab (keeps every existing tab) */
+function importAsNewTab(obj){
+  const it=importedToSnapshot(obj);
+  if(docs[activeDoc])docs[activeDoc].snapshot=snapshotDoc();
+  const idx=presetIdxFor(it.w,it.h,0), p=CANVAS_PRESETS[idx];
+  const doc={id:++docSeq,name:p.name,w:it.w,h:it.h,maxKB:p.maxKB||null,presetIdx:idx,snapshot:it.snap};
+  docs.push(doc);activeDoc=docs.length-1;curPreset=p;
+  applyDoc(it.snap);renderTabs();
+}
+/* apply an imported design INTO the current tab, re-fitting it to the current canvas size */
+function importIntoCurrent(obj){
+  const it=importedToSnapshot(obj);
+  const resized=importSnapshotResized(it.snap,curPreset);   // reposition proportionally to current W×H
+  docs[activeDoc].snapshot=resized;
+  applyDoc(resized);renderTabs();
+}
+/* append a whole project's tabs after the current ones (keeps existing tabs) */
+function appendProject(obj){
+  if(docs[activeDoc])docs[activeDoc].snapshot=snapshotDoc();
+  obj.docs.forEach(d=>{
+    const idx=presetIdxFor(d.w,d.h,d.presetIdx);
+    docs.push({id:++docSeq,name:d.name,w:d.w,h:d.h,maxKB:d.maxKB,presetIdx:idx,snapshot:d.snapshot});
+  });
+  activeDoc=docs.length-1;const d=docs[activeDoc];
+  curPreset=CANVAS_PRESETS[d.presetIdx]||CANVAS_PRESETS[0];
+  applyDoc(d.snapshot);renderTabs();
+}
 function importJSON(input){
   const f=input.files[0];input.value='';if(!f)return;
   const r=new FileReader();
   r.onload=e=>{
-    try{loadPayload(JSON.parse(e.target.result));toast('✓ 專案已匯入');}
-    catch(err){toast('⚠ JSON 格式錯誤');}
+    let obj;
+    try{obj=JSON.parse(e.target.result);}catch(err){return toast('⚠ JSON 格式錯誤');}
+    // 完整專案（多個畫布）→ 一律以新分頁加入，不動現有分頁
+    if(obj&&obj.version>=3&&Array.isArray(obj.docs)&&obj.docs.length>1){
+      appendProject(obj);toast('✓ 已匯入專案（以新分頁顯示）');return;
+    }
+    // 單一設計：與目前畫布尺寸相符 → 載入目前畫布；不符 → 以新分頁顯示
+    const it=importedToSnapshot(obj);
+    if(it.w===W&&it.h===H){
+      importIntoCurrent(obj);toast('✓ 已匯入到目前畫布');
+    }else{
+      importAsNewTab(obj);toast('選擇之 JSON 與當前畫布不相符，將以新分頁顯示');
+    }
   };
   r.readAsText(f);
 }
