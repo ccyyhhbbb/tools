@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>影片首尾幀擷取</title>
+<meta name="description" content="選擇影片，自動擷取第一幀與最後一幀為圖檔。全部在瀏覽器本地處理，影片不會上傳。">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --text: #1d2330;
+    --muted: #6b7280;
+    --border: #d9dde4;
+    --accent: #2563eb;
+    --accent-text: #ffffff;
+    --accent-soft: #e8efff;
+    --ok: #15803d;
+    --err: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b;
+      --surface: #1b1f27;
+      --text: #e7e9ee;
+      --muted: #9aa1ad;
+      --border: #2e3440;
+      --accent: #5b8cff;
+      --accent-text: #0b1020;
+      --accent-soft: #1e2a47;
+      --ok: #4ade80;
+      --err: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    line-height: 1.5;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: .95rem; }
+
+  .drop {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 40px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop strong { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+  .drop span { color: var(--muted); font-size: .9rem; }
+
+  .options {
+    display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center;
+    margin: 16px 0 8px; padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    font-size: .92rem;
+  }
+  .options label { display: inline-flex; align-items: center; gap: 6px; }
+  select, input[type=range] { accent-color: var(--accent); }
+  select {
+    font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px;
+  }
+  .folder-name { color: var(--muted); font-size: .85rem; }
+
+  button {
+    font: inherit; font-size: .9rem; cursor: pointer;
+    border-radius: 8px; padding: 6px 12px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button:disabled { opacity: .5; cursor: default; }
+
+  .toolbar { display: flex; gap: 8px; justify-content: flex-end; margin: 16px 0 8px; flex-wrap: wrap; }
+
+  .list { display: grid; gap: 12px; }
+  .item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .item-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 10px; }
+  .item-name { font-weight: 600; overflow-wrap: anywhere; }
+  .status { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--err); white-space: normal; }
+  .frames { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .frame figure { margin: 0; }
+  .frame img {
+    width: 100%; aspect-ratio: 16 / 9; object-fit: contain;
+    background: repeating-conic-gradient(var(--border) 0 25%, transparent 0 50%) 0 0 / 16px 16px;
+    border-radius: 8px; border: 1px solid var(--border); display: block;
+  }
+  .frame figcaption { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: .85rem; color: var(--muted); gap: 8px; }
+  .placeholder {
+    width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; border: 1px dashed var(--border);
+    display: grid; place-items: center; color: var(--muted); font-size: .85rem;
+  }
+  footer { margin-top: 32px; color: var(--muted); font-size: .82rem; }
+
+  @media (max-width: 560px) {
+    .frames { grid-template-columns: 1fr; }
+    .item-head { flex-direction: column; gap: 2px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>影片首尾幀擷取</h1>
+  <p class="sub">選擇或拖入影片，自動輸出第一幀與最後一幀。全部在瀏覽器本地處理，影片不會上傳。</p>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="選擇影片">
+    <strong>拖曳影片到這裡，或點擊選擇</strong>
+    <span>可一次選多支 · MP4 / WebM / MOV 等瀏覽器可播放的格式</span>
+  </div>
+  <input type="file" id="picker" accept="video/*" multiple hidden>
+
+  <div class="options">
+    <label>格式
+      <select id="format">
+        <option value="image/png">PNG（無損）</option>
+        <option value="image/jpeg">JPG</option>
+        <option value="image/webp">WebP</option>
+      </select>
+    </label>
+    <label id="qualityWrap">品質
+      <input type="range" id="quality" min="50" max="100" value="95">
+      <span id="qualityVal">95</span>
+    </label>
+    <label>儲存方式
+      <select id="saveMode">
+        <option value="download">自動下載</option>
+        <option value="folder">存到指定資料夾</option>
+        <option value="none">只預覽，不自動儲存</option>
+      </select>
+    </label>
+    <button id="pickFolder" hidden>選擇資料夾…</button>
+    <span class="folder-name" id="folderName"></span>
+  </div>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <button id="saveAll">全部儲存</button>
+    <button id="clearAll">清除</button>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <footer>
+    輸出檔名：<code>影片名_first.副檔名</code>、<code>影片名_last.副檔名</code>。
+    「存到指定資料夾」需使用 Chrome 或 Edge；選擇影片所在的資料夾，圖檔就會存在影片旁邊。
+  </footer>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const drop = $('drop'), picker = $('picker'), list = $('list');
+  const formatSel = $('format'), quality = $('quality'), qualityVal = $('qualityVal'), qualityWrap = $('qualityWrap');
+  const saveMode = $('saveMode'), pickFolderBtn = $('pickFolder'), folderName = $('folderName');
+  const toolbar = $('toolbar');
+
+  const EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+  const canPickFolder = 'showDirectoryPicker' in window;
+  let dirHandle = null;
+  const results = []; // { base, first: Blob, last: Blob, ext }
+  let queue = Promise.resolve();
+
+  // ---------- 設定（記住上次選項） ----------
+  function loadPrefs() {
+    try {
+      const p = JSON.parse(localStorage.getItem('flframe-prefs') || '{}');
+      if (p.format) formatSel.value = p.format;
+      if (p.quality) quality.value = p.quality;
+      if (p.saveMode) saveMode.value = p.saveMode;
+    } catch {}
+    if (!canPickFolder) {
+      saveMode.querySelector('option[value=folder]').disabled = true;
+      if (saveMode.value === 'folder') saveMode.value = 'download';
+    }
+  }
+  function savePrefs() {
+    try {
+      localStorage.setItem('flframe-prefs', JSON.stringify({
+        format: formatSel.value, quality: quality.value, saveMode: saveMode.value
+      }));
+    } catch {}
+  }
+  function syncUI() {
+    qualityWrap.hidden = formatSel.value === 'image/png';
+    qualityVal.textContent = quality.value;
+    const folder = saveMode.value === 'folder';
+    pickFolderBtn.hidden = !folder;
+    folderName.textContent = folder ? (dirHandle ? '→ ' + dirHandle.name : '尚未選擇') : '';
+  }
+  [formatSel, quality, saveMode].forEach(el => el.addEventListener('input', () => { savePrefs(); syncUI(); }));
+  pickFolderBtn.addEventListener('click', chooseFolder);
+
+  async function chooseFolder() {
+    try {
+      dirHandle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'videos' });
+    } catch { /* 使用者取消 */ }
+    syncUI();
+    return dirHandle;
+  }
+
+  // ---------- 選檔 / 拖放 ----------
+  drop.addEventListener('click', () => picker.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); picker.click(); } });
+  picker.addEventListener('change', () => { handleFiles(picker.files); picker.value = ''; });
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+  // 避免拖到頁面其他地方時瀏覽器直接開啟影片
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => e.preventDefault());
+
+  async function handleFiles(fileList) {
+    const files = [...fileList].filter(f => f.type.startsWith('video/') || /\.(mp4|m4v|mov|webm|mkv|ogv|avi)$/i.test(f.name));
+    if (!files.length) return;
+    if (saveMode.value === 'folder' && !dirHandle) {
+      if (!await chooseFolder()) { saveMode.value = 'download'; savePrefs(); syncUI(); }
+    }
+    toolbar.hidden = false;
+    for (const file of files) {
+      const card = makeCard(file.name);
+      // 依序處理，避免同時解碼太多影片
+      queue = queue.then(() => processFile(file, card));
+    }
+  }
+
+  // ---------- UI 卡片 ----------
+  function makeCard(name) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div class="item-head">
+        <div class="item-name"></div>
+        <div class="status">等待中…</div>
+      </div>
+      <div class="frames">
+        <div class="frame" data-k="first"><div class="placeholder">第一幀</div></div>
+        <div class="frame" data-k="last"><div class="placeholder">最後一幀</div></div>
+      </div>`;
+    el.querySelector('.item-name').textContent = name;
+    list.prepend(el);
+    return {
+      el,
+      status(text, cls = '') { const s = el.querySelector('.status'); s.textContent = text; s.className = 'status ' + cls; },
+      show(k, blob, filename, label) {
+        const box = el.querySelector(`[data-k="${k}"]`);
+        const url = URL.createObjectURL(blob);
+        box.innerHTML = `<figure><img alt=""><figcaption><span></span><button>下載</button></figcaption></figure>`;
+        box.querySelector('img').src = url;
+        box.querySelector('img').alt = label;
+        box.querySelector('span').textContent = label;
+        box.querySelector('button').addEventListener('click', () => downloadBlob(blob, filename));
+      }
+    };
+  }
+
+  // ---------- 核心：擷取首尾幀 ----------
+  function waitEvent(target, ok, timeoutMs = 15000) {
+    return new Promise((resolve, reject) => {
+      const done = (fn, v) => { clearTimeout(timer); target.removeEventListener(ok, onOk); target.removeEventListener('error', onErr); fn(v); };
+      const onOk = () => done(resolve);
+      const onErr = () => done(reject, new Error('瀏覽器無法解碼此影片（可能是不支援的編碼格式）'));
+      const timer = setTimeout(() => done(reject, new Error('處理逾時')), timeoutMs);
+      target.addEventListener(ok, onOk);
+      target.addEventListener('error', onErr);
+    });
+  }
+
+  // 等畫面真的更新到新的幀（支援的瀏覽器用 requestVideoFrameCallback）
+  function waitFramePainted(video) {
+    if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) return Promise.resolve();
+    return Promise.race([
+      new Promise(r => video.requestVideoFrameCallback(() => r())),
+      new Promise(r => setTimeout(r, 250))
+    ]);
+  }
+
+  async function seekTo(video, t) {
+    if (Math.abs(video.currentTime - t) < 1e-6 && video.readyState >= 2) return;
+    const p = waitEvent(video, 'seeked');
+    video.currentTime = t;
+    await p;
+    await waitFramePainted(video);
+  }
+
+  function capture(video, type, q) {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('無法產生圖檔')), type, q));
+  }
+
+  async function getDuration(video) {
+    if (isFinite(video.duration) && video.duration > 0) return video.duration;
+    // 某些 WebM 沒有寫入長度：跳到極大時間點讓瀏覽器算出實際長度
+    const p = waitEvent(video, 'durationchange');
+    video.currentTime = 1e101;
+    await p.catch(() => {});
+    return video.duration;
+  }
+
+  async function extractFrames(file, type, q) {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.src = url;
+    try {
+      await waitEvent(video, 'loadeddata');
+      if (!video.videoWidth) throw new Error('找不到影像軌（可能是純音訊檔）');
+      const duration = await getDuration(video);
+
+      await seekTo(video, 0);
+      const first = await capture(video, type, q);
+
+      // 最後一幀的顯示區間是 [duration - 一幀長, duration)，往前一點點就一定落在最後一幀上
+      await seekTo(video, Math.max(0, duration - 0.001));
+      const last = await capture(video, type, q);
+
+      return { first, last, width: video.videoWidth, height: video.videoHeight, duration };
+    } finally {
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  async function processFile(file, card) {
+    const type = formatSel.value;
+    const q = Number(quality.value) / 100;
+    const ext = EXT[type];
+    const base = file.name.replace(/\.[^.]+$/, '');
+    card.status('處理中…');
+    try {
+      const r = await extractFrames(file, type, q);
+      const entry = { base, ext, first: r.first, last: r.last };
+      results.push(entry);
+      card.show('first', r.first, `${base}_first.${ext}`, `第一幀 · ${r.width}×${r.height}`);
+      card.show('last', r.last, `${base}_last.${ext}`, `最後一幀 · ${formatTime(r.duration)}`);
+      const saved = await saveEntry(entry);
+      card.status(saved ? '完成，已儲存' : '完成', 'ok');
+    } catch (err) {
+      card.status('失敗：' + err.message, 'err');
+    }
+  }
+
+  // ---------- 儲存 ----------
+  async function saveEntry(entry, mode = saveMode.value) {
+    const files = [[`${entry.base}_first.${entry.ext}`, entry.first], [`${entry.base}_last.${entry.ext}`, entry.last]];
+    if (mode === 'folder' && dirHandle) {
+      for (const [name, blob] of files) {
+        const fh = await dirHandle.getFileHandle(name, { create: true });
+        const w = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+      }
+      return true;
+    }
+    if (mode === 'download') {
+      for (const [name, blob] of files) { downloadBlob(blob, name); await sleep(150); }
+      return true;
+    }
+    return false;
+  }
+
+  function downloadBlob(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  }
+
+  $('saveAll').addEventListener('click', async () => {
+    const mode = saveMode.value === 'none' ? 'download' : saveMode.value;
+    if (mode === 'folder' && !dirHandle && !await chooseFolder()) return;
+    for (const e of results) await saveEntry(e, mode);
+  });
+  $('clearAll').addEventListener('click', () => {
+    results.length = 0;
+    list.innerHTML = '';
+    toolbar.hidden = true;
+  });
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function formatTime(s) {
+    if (!isFinite(s)) return '';
+    const m = Math.floor(s / 60), sec = (s % 60).toFixed(2).padStart(5, '0');
+    return `${m}:${sec}`;
+  }
+
+  loadPrefs();
+  syncUI();
+})();
+</script>
+</body>
+</html>
