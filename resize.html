@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>快速多尺寸排版</title>
+<meta name="description" content="匯入 SVG / AI / PDF，自動辨識物件，拖曳排版並一次輸出多種社群與廣告尺寸。全部在瀏覽器本地處理。">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --text: #1d2330;
+    --muted: #6b7280;
+    --border: #d9dde4;
+    --accent: #2563eb;
+    --accent-text: #ffffff;
+    --accent-soft: #e8efff;
+    --hover: #f1f3f7;
+    --stage: #e6e8ec;
+    --ok: #15803d;
+    --err: #b91c1c;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --sel: #2563eb;
+    --guide: #ec4899;
+    --bgline: #f59e0b;
+    --chk-a: #e5e7eb;
+    --chk-b: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b;
+      --surface: #1b1f27;
+      --text: #e7e9ee;
+      --muted: #9aa1ad;
+      --border: #2e3440;
+      --accent: #5b8cff;
+      --accent-text: #0b1020;
+      --accent-soft: #1e2a47;
+      --hover: #232834;
+      --stage: #0d1015;
+      --ok: #4ade80;
+      --err: #f87171;
+      --warn: #fbbf24;
+      --warn-soft: #3a2e12;
+      --sel: #5b8cff;
+      --chk-a: #2a2f3a;
+      --chk-b: #20242d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151b; --surface: #1b1f27; --text: #e7e9ee; --muted: #9aa1ad; --border: #2e3440;
+    --accent: #5b8cff; --accent-text: #0b1020; --accent-soft: #1e2a47; --hover: #232834; --stage: #0d1015;
+    --ok: #4ade80; --err: #f87171; --warn: #fbbf24; --warn-soft: #3a2e12; --sel: #5b8cff; --chk-a: #2a2f3a; --chk-b: #20242d;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+  input, dialog { user-select: text; }
+  .checker { background: repeating-conic-gradient(var(--chk-a) 0 25%, var(--chk-b) 0 50%) 0 0 / 14px 14px; }
+
+  header.top {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .brand { font-weight: 700; font-size: 15px; margin-right: 4px; white-space: nowrap; }
+  .pname { width: 130px; }
+  .sp { flex: 1; }
+  .sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; }
+  button {
+    font: inherit; color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px;
+    cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; line-height: 1.3;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  button.ghost { border-color: transparent; background: transparent; padding: 3px 5px; }
+  button.danger:hover:not(:disabled) { border-color: var(--err); color: var(--err); }
+  input, select {
+    font: inherit; color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; min-width: 0;
+  }
+  input[type=number] { width: 100%; }
+  input[type=range] { flex: 1; accent-color: var(--accent); }
+  input[type=checkbox] { accent-color: var(--accent); }
+  input[type=color] { padding: 1px 2px; width: 40px; height: 30px; }
+
+  .app { flex: 1; display: grid; grid-template-columns: 250px minmax(0, 1fr) 290px; min-height: 0; }
+  aside { background: var(--surface); overflow: auto; min-height: 0; }
+  aside.left { border-right: 1px solid var(--border); }
+  aside.right { border-left: 1px solid var(--border); }
+  .panel { padding: 12px; border-bottom: 1px solid var(--border); }
+  .panel h2 {
+    font-size: 12px; margin: 0 0 8px; color: var(--muted); font-weight: 600; letter-spacing: .04em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .panel h2 .cnt { font-weight: 400; }
+  .panel h2 .sp { flex: 1; }
+  .tools { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .tools button { padding: 3px 8px; font-size: 13px; }
+
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  .list li {
+    display: flex; align-items: center; gap: 6px; padding: 3px 4px;
+    border-radius: 6px; cursor: pointer; border: 1px solid transparent; user-select: none;
+  }
+  .list li:hover { background: var(--hover); }
+  .list li.sel { background: var(--accent-soft); border-color: var(--accent); }
+  .list li.off .th, .list li.off .nm { opacity: .35; }
+  .list li.none { color: var(--muted); cursor: default; padding: 8px 4px; }
+  .list li.none:hover { background: none; }
+  .th { width: 36px; height: 28px; flex: none; border-radius: 4px; border: 1px solid var(--border); display: block; }
+  .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  .badge { font-size: 11px; padding: 0 5px; border-radius: 5px; background: var(--warn-soft); color: var(--warn); flex: none; }
+  .eye svg, .lk svg { width: 16px; height: 16px; display: block; }
+  .list .lk { opacity: .3; }
+  .list li:hover .lk { opacity: .6; }
+  .list .lk.on, .panel h2 .lk.on { opacity: 1; color: var(--warn); }
+  .panel h2 .lk { padding: 2px 4px; }
+  .box.locked { border-color: var(--warn); border-style: dotted; }
+  .bgsel { position: absolute; border: 1.5px dashed var(--bgline); }
+  .marquee { position: absolute; border: 1px solid var(--sel); background: color-mix(in srgb, var(--sel) 12%, transparent); }
+  .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+  main.center { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .stagebar {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    padding: 6px 10px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .stagebar .info { font-weight: 600; }
+  .stagebar .muted { color: var(--muted); font-size: 12px; }
+  #zoomPct { min-width: 44px; text-align: center; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #wrap { flex: 1; overflow: auto; background: var(--stage); position: relative; }
+  #wrapIn { min-width: 100%; min-height: 100%; display: flex; padding: 24px; }
+  #stage { position: relative; margin: auto; flex: none; box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 10px 30px rgba(0,0,0,.1); touch-action: none; }
+  #stage.bgmode { cursor: move; }
+  #svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: hidden; }
+  #ov { position: absolute; inset: 0; pointer-events: none; }
+  .box { position: absolute; border: 1.5px solid var(--sel); }
+  .box.multi { border-style: dashed; opacity: .6; }
+  .box.group { border-style: solid; }
+  .hd {
+    position: absolute; width: 10px; height: 10px; background: #fff; border: 1.5px solid var(--sel);
+    border-radius: 2px; pointer-events: auto; transform: translate(-50%, -50%);
+  }
+  .hd[data-h=nw], .hd[data-h=se] { cursor: nwse-resize; }
+  .hd[data-h=ne], .hd[data-h=sw] { cursor: nesw-resize; }
+  .hd[data-h=n], .hd[data-h=s] { cursor: ns-resize; }
+  .hd[data-h=e], .hd[data-h=w] { cursor: ew-resize; }
+  .guide { position: absolute; background: var(--guide); }
+  .bgbox { position: absolute; border: 2px dashed var(--bgline); }
+
+  #empty {
+    position: absolute; inset: 24px; border: 2px dashed var(--border); border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    text-align: center; cursor: pointer; background: var(--surface); padding: 16px;
+  }
+  #empty:hover, body.dragover #empty { border-color: var(--accent); background: var(--accent-soft); }
+  #empty strong { font-size: 1.15rem; }
+  #empty span { color: var(--muted); font-size: 13px; max-width: 460px; }
+
+  .sizes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sz { border: 1px solid var(--border); border-radius: 8px; padding: 5px; cursor: pointer; position: relative; min-width: 0; }
+  .sz:hover { border-color: var(--accent); }
+  .sz.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .sz .tb { height: 72px; display: flex; align-items: center; justify-content: center; background: var(--stage); border-radius: 4px; overflow: hidden; }
+  .sz .tb svg { display: block; background: #fff; }
+  .sz .l1 { font-size: 12px; font-weight: 600; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sz .l2 { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .star { position: absolute; top: 3px; left: 3px; font-size: 10px; background: var(--accent); color: var(--accent-text); border-radius: 4px; padding: 0 4px; z-index: 1; }
+
+  .bglib { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .bgc { border: 1px solid var(--border); border-radius: 6px; cursor: pointer; position: relative; aspect-ratio: 4 / 3; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); }
+  .bgc:hover { border-color: var(--accent); }
+  .bgc.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .bgc svg { width: 100%; height: 100%; display: block; }
+  .bgc .x { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; padding: 0; justify-content: center; font-size: 12px; line-height: 1; border-radius: 4px; }
+
+  .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; flex: 1; justify-content: center; padding: 5px 4px; font-size: 13px; }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+  .row > .lb { min-width: 34px; color: var(--muted); font-size: 12px; }
+  .row .val { font-size: 12px; color: var(--muted); min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+  .chk { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+  .fld { display: flex; align-items: center; gap: 6px; }
+  .fld span { color: var(--muted); font-size: 12px; width: 12px; }
+  .anchor { display: grid; grid-template-columns: repeat(3, 22px); gap: 3px; }
+  .anchor button { width: 22px; height: 22px; padding: 0; justify-content: center; }
+  .anchor button::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .anchor button.on::after { background: var(--accent); }
+  .anchor button.auto::after { background: var(--accent); opacity: .45; }
+  .align { display: flex; gap: 3px; flex-wrap: wrap; }
+  .align button { padding: 3px 6px; }
+  .align svg { width: 16px; height: 16px; display: block; }
+
+  dialog {
+    border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text);
+    padding: 18px; width: min(480px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog h3 { margin: 0 0 10px; font-size: 16px; }
+  dialog .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  .pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .pg { flex-direction: column; align-items: stretch; padding: 6px; gap: 4px; }
+  .pg.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+  .pgth { height: 120px; display: flex; align-items: center; justify-content: center; background: var(--stage); border-radius: 4px; position: relative; overflow: hidden; }
+  .pgth canvas { max-width: 100%; max-height: 100%; display: block; background: #fff; }
+  .pgload { font-size: 12px; color: var(--muted); }
+  .pgl { font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
+  .opt { display: flex; gap: 8px; align-items: flex-start; padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px; margin: 6px 0; cursor: pointer; }
+  .opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .opt small { display: block; color: var(--muted); }
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; max-height: 300px; overflow: auto; padding: 2px; }
+  .presets label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+  .presets label small { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+  .custom { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 50;
+    background: var(--text); color: var(--bg); padding: 9px 14px; border-radius: 10px;
+    font-size: 13px; max-width: min(560px, calc(100vw - 32px)); box-shadow: 0 6px 24px rgba(0,0,0,.25);
+  }
+  #toast.err { background: var(--err); color: #fff; }
+  #busy { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 40; display: flex; align-items: center; justify-content: center; }
+  #busy div { background: var(--surface); padding: 14px 20px; border-radius: 10px; }
+  #mounts { position: fixed; left: -100000px; top: 0; visibility: hidden; pointer-events: none; }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; height: auto; }
+    .app { grid-template-columns: 1fr; }
+    #wrap { height: 62vh; flex: none; }
+    aside { overflow: visible; }
+    aside.left { border-right: 0; order: 2; }
+    aside.right { border-left: 0; order: 3; }
+    main.center { order: 1; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="brand">快速多尺寸排版</span>
+  <input class="pname" id="pname" value="未命名" title="專案名稱（匯出檔名會用到）" aria-label="專案名稱">
+  <button id="bImport" class="primary">匯入檔案</button>
+  <button id="bOpen">開啟專案</button>
+  <button id="bSave" title="Ctrl+S">儲存專案</button>
+  <button id="bNew">新專案</button>
+  <span class="sep"></span>
+  <button id="bUndo" title="復原 Ctrl+Z">復原</button>
+  <button id="bRedo" title="重做 Ctrl+Shift+Z">重做</button>
+  <span class="sp"></span>
+  <select id="exFmt" aria-label="匯出格式"><option value="png">PNG</option><option value="jpg">JPG</option><option value="svg">SVG</option></select>
+  <select id="exScale" aria-label="匯出倍率"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select>
+  <button id="bExport">匯出目前尺寸</button>
+  <button id="bExportAll" class="primary">全部尺寸 ZIP</button>
+</header>
+
+<div class="app">
+  <aside class="left">
+    <section class="panel">
+      <h2>物件 <span class="cnt" id="objCount"></span></h2>
+      <div class="tools">
+        <button id="tMerge" title="Ctrl+G">合併</button>
+        <button id="tSplit" title="Ctrl+Shift+G">拆開</button>
+        <button id="tAsBg" title="把選取的物件加入底圖區">加入底圖</button>
+        <button id="tLockAll" title="一鍵鎖定 / 解鎖全部物件">全部鎖定</button>
+        <button id="tUp" title="上移一層">↑</button>
+        <button id="tDown" title="下移一層">↓</button>
+        <button id="tDel" class="danger" title="Delete">刪除</button>
+      </div>
+      <ul class="list" id="objList"></ul>
+      <p class="hint">點選、拉框或 Ctrl / Shift 多選 · 拖曳移動 · 角落等比縮放（按住 Shift 自由縮放），多選時可整組縮放· 方向鍵微調 · 按住 Alt 暫時切換吸附</p>
+    </section>
+  </aside>
+
+  <main class="center">
+    <div class="stagebar">
+      <span class="info" id="curInfo">尚未建立尺寸</span>
+      <span class="muted" id="curSub"></span>
+      <span class="sp"></span>
+      <button id="bSnap" title="拖曳物件或底圖時，靠近畫布邊框、中線或其他物件會自動吸附（按住 Alt 暫時反轉）">吸附</button>
+      <button id="bBgMode" title="拖曳調整底圖位置，滾輪縮放">調整底圖</button>
+      <span class="sep"></span>
+      <button id="zOut" title="縮小">−</button>
+      <span id="zoomPct">100%</span>
+      <button id="zIn" title="放大">+</button>
+      <button id="zFit">適合</button>
+    </div>
+    <div id="wrap">
+      <div id="wrapIn">
+        <div id="stage" class="checker" hidden>
+          <svg id="svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
+          <div id="ov"></div>
+        </div>
+      </div>
+      <div id="empty">
+        <strong>拖放檔案到這裡，或點一下選擇檔案</strong>
+        <span>支援 SVG（建議，從 Illustrator「匯出為 SVG」能保留圖層與群組）、AI（需存成 PDF 相容檔）、PDF、PNG / JPG，以及專案檔 .json</span>
+      </div>
+    </div>
+  </main>
+
+  <aside class="right">
+    <section class="panel">
+      <h2>尺寸 <span class="sp"></span><button class="ghost" id="bAddSize">＋ 新增</button></h2>
+      <div class="sizes" id="sizes"></div>
+      <div class="tools" style="margin-top:8px">
+        <button id="sMaster">設為主版</button>
+        <button id="sRelayout">重新自動排位</button>
+        <button id="sCanvas">調整畫布大小</button>
+        <button id="sRename">改名</button>
+        <button id="sDel" class="danger">刪除</button>
+      </div>
+      <p class="hint">主版的排版會自動推算到其他尺寸。在其他尺寸手動調整過的物件會標示「自訂」，之後就不再跟著主版變動。</p>
+    </section>
+
+    <section class="panel">
+      <h2>底圖 <span class="cnt" id="bgCount"></span><span class="sp"></span>
+        <button class="ghost lk" id="bgLock" title="鎖定底圖（鎖定後不能調整底圖位置）"></button></h2>
+      <div class="tools">
+        <button id="bgMerge" title="把選取的底圖項目合併成一個">合併</button>
+        <button id="bgSplit" title="把合併的底圖拆回原本的項目">拆開</button>
+        <button id="bgUp" title="上移一層">↑</button>
+        <button id="bgDown" title="下移一層">↓</button>
+        <button id="bgOut" class="danger" title="物件會回到物件清單；上傳的圖片會刪除">移出</button>
+      </div>
+      <ul class="list" id="bgList"></ul>
+      <div class="row">
+        <button id="bgUpload">上傳底圖圖片</button>
+      </div>
+      <div id="bgCtl">
+        <div class="seg" id="fitSeg">
+          <button data-fit="cover">填滿裁切</button>
+          <button data-fit="contain">完整顯示</button>
+          <button data-fit="stretch">拉伸</button>
+          <button data-fit="free" title="固定位置，不隨畫布大小變動">自由</button>
+        </div>
+        <div class="row"><span class="lb">縮放</span><input type="range" id="bgZoom" min="0.3" max="3" step="0.01"><span class="val" id="bgZoomV"></span></div>
+        <div class="row">
+          <button id="bgCenter">置中</button>
+          <button id="bgApplyAll" title="把目前的填滿方式、縮放與位置套用到所有尺寸">套用到全部尺寸</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="lb">底色</span><input type="color" id="bgColor" value="#ffffff">
+        <label class="chk"><input type="checkbox" id="bgTrans"> 透明（PNG / SVG）</label>
+      </div>
+      <p class="hint">在物件清單按「加入底圖」把物件放進來；在這裡多選（Shift）後按「合併」就變成一個底圖。整個底圖區會一起套用上面的填滿方式。</p>
+    </section>
+
+    <section class="panel">
+      <h2>物件屬性</h2>
+      <p class="hint" id="propNone" style="margin:0">點選畫布上的物件來調整。</p>
+      <div id="propBody">
+        <div class="grid4" id="propXY">
+          <label class="fld"><span>X</span><input type="number" id="pX" step="1"></label>
+          <label class="fld"><span>Y</span><input type="number" id="pY" step="1"></label>
+          <label class="fld"><span>W</span><input type="number" id="pW" step="1" min="1"></label>
+          <label class="fld"><span>H</span><input type="number" id="pH" step="1" min="1"></label>
+        </div>
+        <div class="row" id="propLockRow"><label class="chk"><input type="checkbox" id="pLock" checked> 等比例</label></div>
+        <div class="row">
+          <span class="lb">錨點</span>
+          <div class="anchor" id="anchorGrid"></div>
+          <button id="pAuto">自動</button>
+        </div>
+        <p class="hint" style="margin-top:0">換尺寸時物件往哪一邊靠。「自動」會依主版上的位置判斷。</p>
+        <div class="row"><span class="lb">對齊</span>
+          <div class="align" id="alignBtns"></div>
+        </div>
+        <div class="row"><button id="pReset">重設為自動排位</button></div>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<dialog id="dlgPdf">
+  <form method="dialog">
+    <h3>匯入 AI / PDF</h3>
+    <p class="hint" id="pdfInfo" style="margin-top:0"></p>
+    <div id="pdfPageRow">
+      <div class="hint" style="margin:0 0 6px">選擇要匯入的工作區域</div>
+      <div class="pages" id="pdfPages"></div>
+      <input type="hidden" id="pdfPage" value="1">
+    </div>
+    <label class="opt"><input type="radio" name="pmode" value="split" checked><span>依圖層＋自動切分<small>每個圖層再依空白間距切成獨立物件（建議）</small></span></label>
+    <label class="opt"><input type="radio" name="pmode" value="layers"><span>一個圖層一個物件<small>適合圖層已經分好的檔案</small></span></label>
+    <label class="opt"><input type="radio" name="pmode" value="whole"><span>整頁一張圖<small>不切分</small></span></label>
+    <div class="row">
+      <span class="lb">解析度</span>
+      <div class="seg" id="pdfRes" style="flex:1">
+        <button type="button" data-res="3000">標準</button>
+        <button type="button" data-res="6000">高</button>
+        <button type="button" data-res="8000">超高</button>
+      </div>
+    </div>
+    <p class="hint" id="pdfResInfo" style="margin-top:0"></p>
+    <div class="row" id="gapRow"><span class="lb">間距</span><input type="range" id="pdfGap" min="0" max="80" step="1" value="14"><span class="val" id="pdfGapV">14</span></div>
+    <p class="hint">間距越大，距離越近的元素越容易被合成同一個物件（例如一行字）。AI 檔會轉成高解析點陣圖，需要保留向量請改匯入 SVG。</p>
+    <div class="acts"><button value="cancel">取消</button><button value="ok" class="primary">匯入</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgCanvas">
+  <form method="dialog">
+    <h3>調整畫布大小</h3>
+    <p class="hint" id="cvInfo" style="margin-top:0"></p>
+    <div class="grid4">
+      <label class="fld"><span>W</span><input type="number" id="cvW" min="1" step="1"></label>
+      <label class="fld"><span>H</span><input type="number" id="cvH" min="1" step="1"></label>
+    </div>
+    <div class="row"><label class="chk"><input type="checkbox" id="cvLock"> 等比例</label></div>
+    <div class="row">
+      <span class="lb">內容位置</span>
+      <div class="anchor" id="cvAnchor"></div>
+      <span class="hint" style="margin:0">原本的內容靠哪一邊，多出來的空間就長在另一邊</span>
+    </div>
+    <p class="hint">物件和底圖都保持原位不縮放，多出來的地方會顯示底色（預設白色）。底圖會切換成「自由」模式，之後可用「調整底圖」拖曳、滾輪縮放。</p>
+    <div class="acts"><button value="cancel">取消</button><button value="ok" class="primary">套用</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgSize">
+  <form method="dialog">
+    <h3>新增尺寸</h3>
+    <div class="presets" id="presetList"></div>
+    <div class="custom">
+      <input id="cName" placeholder="自訂名稱">
+      <input id="cW" type="number" placeholder="寬 px" min="1">
+      <input id="cH" type="number" placeholder="高 px" min="1">
+    </div>
+    <div class="acts"><button value="cancel">取消</button><button value="ok" class="primary">加入</button></div>
+  </form>
+</dialog>
+
+<input type="file" id="fImport" accept=".svg,.ai,.pdf,.png,.jpg,.jpeg,.webp,.json,image/*,application/pdf" multiple hidden>
+<input type="file" id="fBg" accept=".png,.jpg,.jpeg,.webp,.svg,image/*" hidden>
+<input type="file" id="fOpen" accept=".json,application/json" hidden>
+<div id="mounts" aria-hidden="true"></div>
+<div id="busy" hidden><div id="busyText">處理中…</div></div>
+<div id="toast" hidden></div>
+
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const uid = p => p + Math.random().toString(36).slice(2, 10);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const r2 = v => Math.round(v * 100) / 100;
+const NS = 'http://www.w3.org/2000/svg';
+const XLINK = 'http://www.w3.org/1999/xlink';
+
+const PRESETS = [
+  ['IG 貼文', 1080, 1080], ['IG 直式', 1080, 1350], ['限動 / Reels', 1080, 1920],
+  ['FB 連結 / 廣告', 1200, 628], ['FB 封面', 1640, 624], ['YouTube 縮圖', 1280, 720],
+  ['X 貼文', 1600, 900], ['LINE 圖文', 1040, 1040], ['LinkedIn 貼文', 1200, 627],
+  ['GDN 中矩形', 300, 250], ['GDN 大矩形', 336, 280], ['GDN 橫幅', 728, 90],
+  ['GDN 摩天', 160, 600], ['GDN 半頁', 300, 600], ['GDN 大橫幅', 970, 250],
+  ['行動橫幅', 320, 50], ['行動大橫幅', 320, 100], ['簡報 16:9', 1920, 1080],
+];
+const ANCH = { tl: [0, 0], tc: [.5, 0], tr: [1, 0], ml: [0, .5], mc: [.5, .5], mr: [1, .5], bl: [0, 1], bc: [.5, 1], br: [1, 1] };
+
+let P;                 // project state (serializable)
+let SRC = {};          // source svg docs: id -> {id,name,vb,defs,text,mount}
+let ASSETS = {};       // raster/svg blobs: id -> {blob,url,dataURL}
+let sel = [], bgMode = false, zoomMul = 1, viewScale = 1, drag = null, guides = [];
+const hist = { stack: [], i: -1 };
+const thumbCache = {};
+
+const svgEl = $('#svg'), stageEl = $('#stage'), ovEl = $('#ov');
+
+/* ---------- helpers ---------- */
+let toastT;
+function toast(msg, kind = '', ms = 3200) {
+  const t = $('#toast'); t.textContent = msg; t.className = kind; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms);
+}
+function busy(on, text = '處理中…') { $('#busy').hidden = !on; $('#busyText').textContent = text; }
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('無法載入 ' + src)); document.head.appendChild(s); });
+}
+function download(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const safeName = s => String(s).replace(/[\\/:*?"<>|\s]+/g, '_').replace(/^_+|_+$/g, '') || 'untitled';
+const blobToDataURL = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+const dataURLToBlob = async u => (await fetch(u)).blob();
+function union(rs) {
+  const x0 = Math.min(...rs.map(r => r.x)), y0 = Math.min(...rs.map(r => r.y));
+  const x1 = Math.max(...rs.map(r => r.x + r.w)), y1 = Math.max(...rs.map(r => r.y + r.h));
+  return { x: x0, y: y0, w: Math.max(x1 - x0, .01), h: Math.max(y1 - y0, .01) };
+}
+
+/* ---------- assets ---------- */
+function addAsset(blob, id = uid('a')) { ASSETS[id] = { blob, url: URL.createObjectURL(blob) }; return id; }
+const uiRefs = s => s.replace(/asset:(\w+)/g, (m, id) => ASSETS[id] ? ASSETS[id].url : '');
+async function exportRefs(s) {
+  for (const [, id] of s.matchAll(/asset:(\w+)/g)) {
+    const a = ASSETS[id]; if (a && !a.dataURL) a.dataURL = await blobToDataURL(a.blob);
+  }
+  return s.replace(/asset:(\w+)/g, (m, id) => ASSETS[id]?.dataURL || '');
+}
+
+/* ---------- project model ---------- */
+function newProject() {
+  P = { name: '未命名', objects: [], bg: { frame: null, items: [], locked: false }, sizes: [], masterId: null, curId: null, bgColor: '#ffffff', bgTransparent: false };
+}
+// 舊版專案（底圖素材庫 bgs / activeBgId）轉成新的底圖區結構
+function migrate() {
+  if (!P.bg) P.bg = { frame: null, items: [], locked: false };
+  if (!P.bgs) return;
+  const act = P.bgs.find(b => b.id === P.activeBgId);
+  const toItems = (b, hidden) => {
+    if (b.kind === 'comp') return b.members.map(m => ({ id: uid('i'), kind: 'obj', objId: m.objId, name: objById(m.objId)?.name || '物件', x: m.x, y: m.y, w: m.w, h: m.h, hidden }));
+    const r = P.bg.frame ? coverIn(P.bg.frame, b.w, b.h) : { x: 0, y: 0, w: b.w, h: b.h };
+    if (b.kind === 'img') return [{ id: uid('i'), kind: 'img', asset: b.asset, name: b.name, ...r, hidden }];
+    if (b.kind === 'flat') return [{ id: uid('i'), kind: 'svg', content: b.content, vw: b.w, vh: b.h, name: b.name, ...r, hidden }];
+    return [];
+  };
+  if (act) { P.bg.frame = { w: act.w, h: act.h }; P.bg.items = toItems(act, false); }
+  for (const b of P.bgs) {
+    if (b === act) continue;
+    if (b.kind === 'comp') b.members.forEach(m => { const o = objById(m.objId); if (o) o.role = 'obj'; });
+    else if (P.bg.frame) P.bg.items.unshift(...toItems(b, true));
+  }
+  delete P.bgs; delete P.activeBgId;
+}
+const coverIn = (F, w, h) => { const k = Math.max(F.w / w, F.h / h); return { x: r2((F.w - w * k) / 2), y: r2((F.h - h * k) / 2), w: r2(w * k), h: r2(h * k) }; };
+function makeSize(name, w, h) { return { id: uid('s'), name, w, h, layout: {}, hidden: {}, bg: { fit: 'cover', fx: .5, fy: .5, zoom: 1 } }; }
+const cur = () => P.sizes.find(s => s.id === P.curId);
+const master = () => P.sizes.find(s => s.id === P.masterId) || P.sizes[0];
+const objById = id => P.objects.find(o => o.id === id);
+// 整個底圖區視為一張「框」大小的圖，依各尺寸的填滿方式縮放
+const activeBg = () => P.bg.frame && P.bg.items.length ? P.bg.frame : null;
+const findBgItem = id => P.bg.items.find(i => i.id === id);
+const liveObjs = () => P.objects.filter(o => o.role !== 'bg');
+
+function anchorOf(o, R, m) {
+  if (ANCH[o.anchor]) return ANCH[o.anchor];
+  const f = v => v < 1 / 3 ? 0 : v > 2 / 3 ? 1 : .5;
+  return [f((R.x + R.w / 2) / m.w), f((R.y + R.h / 2) / m.h)];
+}
+// 物件在某尺寸的位置：有手動設定就用，否則從主版依錨點推算
+function getRect(size, o) {
+  const L = size.layout[o.id]; if (L) return L;
+  const m = master();
+  const R = (m && m.layout[o.id]) || { x: 0, y: 0, w: o.vb[2], h: o.vb[3] };
+  if (!m || size === m) return R;
+  const s = Math.min(size.w / m.w, size.h / m.h);
+  const [ax, ay] = anchorOf(o, R, m);
+  const w = R.w * s, h = R.h * s;
+  const nx = ax * size.w + (R.x + ax * R.w - ax * m.w) * s;
+  const ny = ay * size.h + (R.y + ay * R.h - ay * m.h) * s;
+  return { x: nx - ax * w, y: ny - ay * h, w, h };
+}
+function setRect(size, id, r) { size.layout[id] = { x: r2(r.x), y: r2(r.y), w: r2(Math.max(r.w, 1)), h: r2(Math.max(r.h, 1)) }; }
+function materialize(size) { for (const o of liveObjs()) if (!size.layout[o.id]) setRect(size, o.id, getRect(size, o)); }
+
+function bgBox(size, bg = activeBg()) {
+  if (!bg) return null;
+  const st = size.bg, W = size.w, H = size.h;
+  if (st.fit === 'free') {
+    // 自由：固定在畫布上的絕對位置，縮放以自身中心為準
+    const r = st.rect, w = r.w * st.zoom, h = r.h * st.zoom;
+    return { x: r.x + (r.w - w) / 2, y: r.y + (r.h - h) / 2, w, h };
+  }
+  let sx, sy;
+  if (st.fit === 'stretch') { sx = W / bg.w * st.zoom; sy = H / bg.h * st.zoom; }
+  else { sx = sy = (st.fit === 'cover' ? Math.max(W / bg.w, H / bg.h) : Math.min(W / bg.w, H / bg.h)) * st.zoom; }
+  const w = bg.w * sx, h = bg.h * sy;
+  return { x: (W - w) * st.fx, y: (H - h) * st.fy, w, h };
+}
+
+/* ---------- scene markup ---------- */
+function objMarkup(o, r, ui) {
+  const [vx, vy, vw, vh] = o.vb;
+  return `<svg ${ui ? `data-oid="${o.id}" ` : ''}x="${r2(r.x)}" y="${r2(r.y)}" width="${r2(Math.max(r.w, .01))}" height="${r2(Math.max(r.h, .01))}" viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="none" overflow="visible">${o.content}</svg>`;
+}
+function bgItemMarkup(it) {
+  if (it.hidden) return '';
+  const a = `x="${r2(it.x)}" y="${r2(it.y)}" width="${r2(Math.max(it.w, .01))}" height="${r2(Math.max(it.h, .01))}"`;
+  if (it.kind === 'obj') { const o = objById(it.objId); return o ? objMarkup(o, it) : ''; }
+  if (it.kind === 'img') return `<image xlink:href="asset:${it.asset}" ${a} preserveAspectRatio="none"/>`;
+  const inner = it.kind === 'group' ? it.children.map(bgItemMarkup).join('') : it.content;
+  return `<svg ${a} viewBox="0 0 ${it.vw} ${it.vh}" preserveAspectRatio="none" overflow="visible">${inner}</svg>`;
+}
+function bgMarkup(size, ui) {
+  const F = activeBg(), bb = bgBox(size, F);
+  if (!bb) return '';
+  return `<svg ${ui ? 'id="bgwrap" ' : ''}x="${r2(bb.x)}" y="${r2(bb.y)}" width="${r2(bb.w)}" height="${r2(bb.h)}" viewBox="0 0 ${F.w} ${F.h}" preserveAspectRatio="none" overflow="visible">${P.bg.items.map(bgItemMarkup).join('')}</svg>`;
+}
+const defsMarkup = () => '<defs>' + Object.values(SRC).map(s => s.defs).join('') + '</defs>';
+function sceneBody(size, ui) {
+  let s = P.bgTransparent ? '' : `<rect width="${size.w}" height="${size.h}" fill="${P.bgColor}"/>`;
+  s += bgMarkup(size, ui);
+  for (const o of liveObjs()) {
+    if (size.hidden[o.id]) continue;
+    const r = getRect(size, o);
+    // 鎖定的物件在畫布上點不到，只能從清單選
+    s += ui && o.locked ? objMarkup(o, r, ui).replace('<svg ', '<svg style="pointer-events:none" ') : objMarkup(o, r, ui);
+    if (ui && sel.includes(o.id) && !o.locked) s += `<rect data-oid="${o.id}" x="${r2(r.x)}" y="${r2(r.y)}" width="${r2(r.w)}" height="${r2(r.h)}" fill="transparent" pointer-events="all"/>`;
+  }
+  return s;
+}
+async function sceneSVG(size, scale = 1) {
+  const body = await exportRefs(defsMarkup() + sceneBody(size, false));
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="${NS}" xmlns:xlink="${XLINK}" width="${r2(size.w * scale)}" height="${r2(size.h * scale)}" viewBox="0 0 ${size.w} ${size.h}">${body}</svg>`;
+}
+
+/* ---------- history & autosave ---------- */
+function commit() {
+  hist.stack = hist.stack.slice(0, hist.i + 1);
+  hist.stack.push(JSON.stringify(P));
+  if (hist.stack.length > 80) hist.stack.shift();
+  hist.i = hist.stack.length - 1;
+  renderAll(); scheduleSave();
+}
+function undoRedo(d) {
+  const ni = hist.i + d; if (ni < 0 || ni >= hist.stack.length) return;
+  hist.i = ni; P = JSON.parse(hist.stack[ni]);
+  sel = sel.filter(id => objById(id)); drag = null; guides = [];
+  renderAll(); scheduleSave();
+}
+function resetHistory() { hist.stack = [JSON.stringify(P)]; hist.i = 0; }
+
+const idb = {
+  db: null,
+  async open() {
+    if (!this.db) this.db = await new Promise((res, rej) => {
+      const r = indexedDB.open('fl-resize', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+    return this.db;
+  },
+  async put(k, v) {
+    const db = await this.open();
+    return new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); });
+  },
+  async get(k) {
+    const db = await this.open();
+    return new Promise((res, rej) => { const r = db.transaction('kv').objectStore('kv').get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  },
+};
+function usedAssetIds() {
+  const all = JSON.stringify(P) + Object.values(SRC).map(s => s.text + s.defs).join('');
+  return Object.keys(ASSETS).filter(id => all.includes(id));
+}
+const srcData = () => Object.fromEntries(Object.values(SRC).map(s => [s.id, { id: s.id, name: s.name, vb: s.vb, defs: s.defs, text: s.text }]));
+let saveT;
+function scheduleSave() {
+  clearTimeout(saveT);
+  saveT = setTimeout(async () => {
+    try {
+      const assets = {}; for (const id of usedAssetIds()) assets[id] = ASSETS[id].blob;
+      await idb.put('autosave', { P, sources: srcData(), assets, t: Date.now() });
+    } catch (e) { /* autosave is best-effort */ }
+  }, 800);
+}
+async function restoreAutosave() {
+  try {
+    const d = await idb.get('autosave');
+    if (!d || !d.P) return false;
+    for (const [id, b] of Object.entries(d.assets || {})) addAsset(b, id);
+    SRC = d.sources || {}; P = d.P; migrate();
+    return true;
+  } catch (e) { return false; }
+}
+
+/* ---------- SVG import ---------- */
+const SKIP = new Set(['defs', 'style', 'title', 'desc', 'metadata', 'clipPath', 'mask', 'linearGradient', 'radialGradient', 'pattern', 'filter', 'symbol', 'marker', 'script', 'font', 'font-face']);
+const DEFS_SEL = 'style,clipPath,mask,linearGradient,radialGradient,pattern,filter,symbol,marker';
+
+function parseVB(root) {
+  const v = (root.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+  if (v.length === 4 && v.every(isFinite) && v[2] > 0 && v[3] > 0) return v;
+  const w = parseFloat(root.getAttribute('width')) || 1000, h = parseFloat(root.getAttribute('height')) || 1000;
+  return [0, 0, w, h];
+}
+async function importSVGText(text, name) {
+  const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+  const root = doc.documentElement;
+  if (root.localName !== 'svg' || doc.querySelector('parsererror')) { toast('無法解析這個 SVG 檔', 'err'); return; }
+  const sid = uid('p'), pfx = sid + '_';
+  const idMap = {};
+  root.querySelectorAll('[id]').forEach(el => { const n = pfx + el.id; idMap[el.id] = n; el.id = n; });
+  const fixUrl = v => v.replace(/url\(\s*(['"]?)#([^'")\s]+)\1\s*\)/g, (m, q, id) => idMap[id] ? `url(#${idMap[id]})` : m);
+  const fixCls = v => v.split(/\s+/).filter(Boolean).map(c => pfx + c).join(' ');
+  const clsRe = /\.(-?[_a-zA-Z -￿][\w -￿-]*)/g;
+  let linked = 0;
+  for (const el of root.querySelectorAll('*')) {
+    for (const a of [...el.attributes]) {
+      if (a.localName === 'href' && a.value.startsWith('#')) { if (idMap[a.value.slice(1)]) a.value = '#' + idMap[a.value.slice(1)]; }
+      else if (a.localName === 'class') a.value = fixCls(a.value);
+      else if (a.value.includes('url(')) a.value = fixUrl(a.value);
+    }
+    if (el.localName === 'style') {
+      el.textContent = fixUrl(el.textContent).replace(/(^|})([^{}]*)(?={)/g, (m, b, s) => b + s.replace(clsRe, (mm, c) => '.' + pfx + c));
+    }
+    if (el.localName === 'image') {
+      const href = el.getAttribute('href') || el.getAttributeNS(XLINK, 'href') || '';
+      if (href.startsWith('data:')) {
+        const id = addAsset(await dataURLToBlob(href));
+        el.removeAttribute('href'); el.setAttributeNS(XLINK, 'xlink:href', 'asset:' + id);
+      } else if (href && !href.startsWith('asset:')) linked++;
+    }
+  }
+  let n = 0; root.querySelectorAll('*').forEach(el => el.setAttribute('data-fid', n++));
+  const vb = parseVB(root);
+  const defs = [...root.querySelectorAll(DEFS_SEL)].filter(el => !el.parentElement.closest(DEFS_SEL))
+    .map(el => new XMLSerializer().serializeToString(el)).join('');
+  SRC[sid] = { id: sid, name, vb, defs, text: new XMLSerializer().serializeToString(root) };
+  const mroot = ensureMount(sid);
+  const objs = detect(mroot).map(c => objFromEl(sid, c.el, c.name)).filter(Boolean);
+  if (!objs.length) { toast('這個檔案裡找不到可見的物件', 'err'); return; }
+  placeSource(objs, vb);
+  commit();
+  toast(`已匯入「${name}」，辨識出 ${objs.length} 個物件` + (linked ? `（${linked} 張外部連結圖片無法匯出，請在 AI 裡改為嵌入）` : ''));
+}
+function ensureMount(id) {
+  const s = SRC[id];
+  if (s.mount && s.mount.isConnected) return s.mount;
+  const doc = new DOMParser().parseFromString(s.text, 'image/svg+xml');
+  // 隱藏的量測用副本不需要載入圖片（要在放進頁面之前拿掉）
+  doc.documentElement.querySelectorAll('image').forEach(im => {
+    const h = im.getAttributeNS(XLINK, 'href') || im.getAttribute('href');
+    if (h) { im.setAttribute('data-href', h); im.removeAttributeNS(XLINK, 'href'); im.removeAttribute('href'); }
+  });
+  const el = document.importNode(doc.documentElement, true);
+  el.setAttribute('width', s.vb[2]); el.setAttribute('height', s.vb[3]); el.setAttribute('viewBox', s.vb.join(' '));
+  $('#mounts').appendChild(el); s.mount = el;
+  return el;
+}
+function hasBox(el) { try { const b = el.getBBox(); return b.width > 0 || b.height > 0; } catch (e) { return false; } }
+function kidsOf(el) { return [...el.children].filter(c => c.namespaceURI === NS && !SKIP.has(c.localName) && hasBox(c)); }
+const TAGN = { path: '路徑', g: '群組', image: '圖片', rect: '矩形', circle: '圓形', ellipse: '橢圓', polygon: '多邊形', polyline: '折線', line: '線條', use: '符號', text: '文字' };
+function nameOf(el) {
+  const dn = el.getAttribute('data-name') || el.getAttribute('inkscape:label');
+  if (dn) return dn;
+  if (el.localName === 'text') { const t = el.textContent.trim().replace(/\s+/g, ' '); if (t) return '文字：' + t.slice(0, 16); }
+  const id = (el.id || '').replace(/^p[a-z0-9]{8}_/, '');
+  if (id && !/^(path|g|rect|image|circle|polygon|_x)\d*/i.test(id)) return id.replace(/_x5F_/g, '_').replace(/_/g, ' ').trim();
+  return TAGN[el.localName] || el.localName;
+}
+function descend(el) {
+  let k = kidsOf(el);
+  while (k.length === 1 && k[0].localName === 'g' && kidsOf(k[0]).length) { el = k[0]; k = kidsOf(el); }
+  return { el, k };
+}
+// 物件辨識：跳過單一包裝群組；多個頂層群組視為圖層，展開成圖層裡的物件
+function detect(root) {
+  const { el: lv, k } = descend(root);
+  if (k.length === 1) return [{ el: k[0], name: nameOf(k[0]) }];
+  const layered = lv === root && k.length >= 2 && k.length <= 20 && k.every(c => c.localName === 'g');
+  if (!layered) return k.map(c => ({ el: c, name: nameOf(c) }));
+  const out = [];
+  for (const L of k) {
+    const { k: lk } = descend(L), ln = nameOf(L);
+    if (lk.length <= 1 || lk.length > 80) out.push({ el: L, name: ln });
+    else lk.forEach(c => out.push({ el: c, name: ln + ' / ' + nameOf(c) }));
+  }
+  return out;
+}
+function objFromEl(srcId, el, name) {
+  const root = SRC[srcId].mount;
+  let b; try { b = el.getBBox(); } catch (e) { return null; }
+  if (!b || (b.width <= 0 && b.height <= 0)) return null;
+  const M = root.getScreenCTM().inverse().multiply(el.getScreenCTM());
+  const pts = [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]]
+    .map(([x, y]) => [M.a * x + M.c * y + M.e, M.b * x + M.d * y + M.f]);
+  const x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0]));
+  const y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+  // 保留祖先群組（transform、clip、樣式繼承），座標就會落在原始畫布座標系
+  // 在離線 XML 文件裡複製，還原圖片連結時瀏覽器才不會嘗試載入
+  const xd = document.implementation.createDocument(NS, 'svg', null);
+  let node = xd.importNode(el, true);
+  for (let a = el.parentElement; a && a !== root; a = a.parentElement) {
+    const sh = xd.importNode(a, false); sh.removeAttribute('id'); sh.removeAttribute('data-fid');
+    sh.appendChild(node); node = sh;
+  }
+  node.querySelectorAll('image[data-href]').forEach(im => { im.setAttributeNS(XLINK, 'xlink:href', im.getAttribute('data-href')); im.removeAttribute('data-href'); });
+  if (node.localName === 'image' && node.hasAttribute('data-href')) { node.setAttributeNS(XLINK, 'xlink:href', node.getAttribute('data-href')); node.removeAttribute('data-href'); }
+  const content = new XMLSerializer().serializeToString(node);
+  return {
+    id: uid('o'), name, srcId, fid: el.getAttribute('data-fid'),
+    vb: [r2(x0), r2(y0), r2(Math.max(x1 - x0, .5)), r2(Math.max(y1 - y0, .5))],
+    content, anchor: 'auto', role: 'obj',
+  };
+}
+function placeSource(objs, vb, autoBg = true) {
+  if (!P.sizes.length) {
+    const s = makeSize('原稿', Math.round(vb[2]), Math.round(vb[3]));
+    P.sizes.push(s); P.masterId = P.curId = s.id;
+  }
+  const m = master();
+  const k = Math.min(m.w / vb[2], m.h / vb[3]);
+  const ox = (m.w - vb[2] * k) / 2, oy = (m.h - vb[3] * k) / 2;
+  for (const o of objs) {
+    setRect(m, o.id, { x: ox + (o.vb[0] - vb[0]) * k, y: oy + (o.vb[1] - vb[1]) * k, w: o.vb[2] * k, h: o.vb[3] * k });
+    P.objects.push(o);
+  }
+  const f = objs[0];
+  if (autoBg && f && objs.length > 1 && !P.bg.items.length && f.vb[2] * f.vb[3] >= .85 * vb[2] * vb[3]) {
+    addToBg([f.id], m);
+  }
+}
+
+/* ---------- raster & PDF / AI import ---------- */
+function imgSize(url) {
+  return new Promise(res => { const i = new Image(); i.onload = () => res([i.naturalWidth || 1000, i.naturalHeight || 1000]); i.onerror = () => res([1000, 1000]); i.src = url; });
+}
+async function importImage(file, asBg) {
+  const aid = addAsset(file);
+  const [w, h] = await imgSize(ASSETS[aid].url);
+  const name = file.name.replace(/\.[^.]+$/, '');
+  if (asBg || !P.sizes.length) {
+    if (!P.sizes.length) { const s = makeSize('原稿', w, h); P.sizes.push(s); P.masterId = P.curId = s.id; }
+    const first = !activeBg();
+    if (first) { P.bg.frame = { w, h }; P.bg.items = []; P.sizes.forEach(z => z.bg = { fit: 'cover', fx: .5, fy: .5, zoom: 1 }); }
+    const r = first ? { x: 0, y: 0, w, h } : coverIn(P.bg.frame, w, h);
+    const it = { id: uid('i'), kind: 'img', asset: aid, name, ...r };
+    P.bg.items.unshift(it); bgSel = [it.id]; commit();
+    toast('已加入底圖（放在最下層）'); return;
+  }
+  const o = { id: uid('o'), name, srcId: null, vb: [0, 0, w, h], content: `<image xlink:href="asset:${aid}" width="${w}" height="${h}" preserveAspectRatio="none"/>`, anchor: 'auto', role: 'obj' };
+  const m = master(), k = Math.min(1, m.w * .6 / w, m.h * .6 / h);
+  setRect(m, o.id, { x: (m.w - w * k) / 2, y: (m.h - h * k) / 2, w: w * k, h: h * k });
+  P.objects.push(o); sel = [o.id]; commit();
+}
+
+async function ensurePdf() {
+  if (window.pdfjsLib) return;
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+const PDF_MAX_PX = 48e6; // 單張畫布像素上限，避免瀏覽器記憶體不足
+function pdfScale(w, h, res) {
+  let s = clamp(res / Math.max(w, h), 1, 16);
+  if (w * h * s * s > PDF_MAX_PX) s = Math.sqrt(PDF_MAX_PX / (w * h));
+  return s;
+}
+let pdfRes = 3000;
+try { pdfRes = +localStorage.getItem('fl-resize-pdfRes') || 3000; } catch (e) { /* storage unavailable */ }
+// 對話框開啟後才逐頁畫縮圖，不會卡住對話框
+async function renderPdfThumbs(pdf, sizes) {
+  for (let i = 0; i < sizes.length; i++) {
+    const card = $(`#pdfPages [data-p="${i + 1}"]`); if (!card || !$('#dlgPdf').open) return;
+    try {
+      const page = await pdf.getPage(i + 1), [w, h] = sizes[i];
+      const vp = page.getViewport({ scale: Math.min(2, 240 / Math.max(w, h)) });
+      const c = $('canvas', card); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      c.hidden = false; $('.pgload', card).remove();
+    } catch (e) { const l = $('.pgload', card); if (l) l.textContent = '無法預覽'; }
+  }
+}
+async function askPdfOptions(pdf, layerCount) {
+  const numPages = pdf.numPages;
+  const d = $('#dlgPdf');
+  const sizes = [];
+  for (let i = 1; i <= numPages; i++) { const v = (await pdf.getPage(i)).getViewport({ scale: 1 }); sizes.push([v.width, v.height]); }
+  const info = () => {
+    const [w, h] = sizes[(+$('#pdfPage').value || 1) - 1], k = pdfScale(w, h, pdfRes);
+    $$('#pdfRes button').forEach(b => b.classList.toggle('on', +b.dataset.res === pdfRes));
+    $('#pdfResInfo').textContent = `工作區域 ${Math.round(w)} × ${Math.round(h)}，匯入後約 ${Math.round(w * k)} × ${Math.round(h * k)} px，放大到原尺寸約 ${k.toFixed(1)} 倍內仍清晰。` + (pdfRes > 3000 ? '解析度越高，匯入越慢。' : '');
+  };
+  $('#pdfRes').onclick = e => { const b = e.target.closest('[data-res]'); if (!b) return; pdfRes = +b.dataset.res; try { localStorage.setItem('fl-resize-pdfRes', pdfRes); } catch (er) { /* ignore */ } info(); };
+  $('#pdfInfo').textContent = (layerCount ? `偵測到 ${layerCount} 個圖層。` : '檔案裡沒有圖層資訊，會整頁自動切分。') + (numPages > 1 ? `共 ${numPages} 頁（工作區域）。` : '');
+  $('#pdfPage').value = 1;
+  $('#pdfPages').innerHTML = sizes.map(([w, h], i) => `<button type="button" class="pg ${i ? '' : 'on'}" data-p="${i + 1}">
+      <span class="pgth"><canvas hidden></canvas><span class="pgload">載入預覽…</span></span>
+      <span class="pgl">第 ${i + 1} 頁 · ${Math.round(w)}×${Math.round(h)}</span></button>`).join('');
+  $('#pdfPages').onclick = e => {
+    const b = e.target.closest('[data-p]'); if (!b) return;
+    $('#pdfPage').value = b.dataset.p;
+    $$('#pdfPages .pg').forEach(x => x.classList.toggle('on', x === b));
+    info();
+  };
+  info();
+  d.returnValue = '';
+  d.showModal();
+  renderPdfThumbs(pdf, sizes);
+  return new Promise(res => d.addEventListener('close', () => {
+    if (d.returnValue !== 'ok') return res(null);
+    res({ page: +$('#pdfPage').value, mode: $('input[name=pmode]:checked', d).value, gap: +$('#pdfGap').value, res: pdfRes });
+  }, { once: true }));
+}
+async function importPDF(file) {
+  const buf = await file.arrayBuffer();
+  const head = new TextDecoder('latin1').decode(new Uint8Array(buf, 0, Math.min(2048, buf.byteLength)));
+  if (!head.includes('%PDF')) {
+    toast('這個 .ai 檔沒有 PDF 相容內容。請在 Illustrator 另存新檔時勾選「建立 PDF 相容檔案」，或改用「匯出為 SVG」。', 'err', 9000);
+    return;
+  }
+  busy(true, '載入 PDF 引擎…');
+  let pdf, cfg, groups;
+  try {
+    await ensurePdf();
+    pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    cfg = await pdf.getOptionalContentConfig();
+    groups = cfg && cfg.getGroups ? cfg.getGroups() : null;
+  } catch (e) { busy(false); toast('讀取失敗：' + e.message, 'err', 6000); return; }
+  busy(false);
+  const opts = await askPdfOptions(pdf, groups ? Object.keys(groups).length : 0);
+  if (!opts) return;
+  busy(true, '辨識物件中…'); await nextFrame();
+  try {
+    const text = await pdfPageToSVG(pdf, cfg, groups, opts);
+    await importSVGText(text, file.name.replace(/\.[^.]+$/, ''));
+  } catch (e) { console.error(e); toast('匯入失敗：' + e.message, 'err', 6000); }
+  busy(false);
+}
+async function pdfPageToSVG(pdf, cfg, groups, { page: pn, mode, gap, res }) {
+  const page = await pdf.getPage(pn);
+  const vp1 = page.getViewport({ scale: 1 });
+  const scale = pdfScale(vp1.width, vp1.height, res || 3000);
+  const vp = page.getViewport({ scale });
+  const W = Math.ceil(vp.width), H = Math.ceil(vp.height);
+  const all = groups ? Object.keys(groups) : [];
+  const init = Object.fromEntries(all.map(id => [id, groups[id].visible !== false]));
+  let ids = all.filter(id => init[id]);
+  try {
+    const flat = [];
+    const walk = a => { for (const x of a || []) { if (typeof x === 'string') flat.push(x); else if (Array.isArray(x)) walk(x); else if (x && x.order) walk(x.order); } };
+    walk(cfg.getOrder());
+    if (flat.length) ids.sort((a, b) => flat.indexOf(a) - flat.indexOf(b));
+  } catch (e) { /* no order info */ }
+  ids.reverse(); // Illustrator 的圖層順序是上層在前，反轉成由下往上疊
+  const passes = (mode === 'whole' || !ids.length) ? [{ name: null, only: null }]
+    : [{ name: '未分圖層', only: '' }, ...ids.map(id => ({ name: groups[id].name || '圖層', only: id }))];
+  let body = '', warned = false;
+  for (const [pi, ps] of passes.entries()) {
+    busy(true, `辨識物件中… ${passes.length > 1 ? `圖層 ${pi + 1} / ${passes.length}` : ''}（${W} × ${H}px）`); await nextFrame();
+    if (all.length) for (const id of all) cfg.setVisibility(id, ps.only === null ? init[id] : id === ps.only);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    await page.render({ canvasContext: ctx, viewport: vp, background: 'rgba(0,0,0,0)', optionalContentConfigPromise: Promise.resolve(cfg) }).promise;
+    const img = ctx.getImageData(0, 0, W, H);
+    c.width = c.height = 0; // 盡早釋放畫布記憶體
+    let comps, seg = null;
+    if (mode === 'whole') comps = [{ x0: 0, y0: 0, x1: W, y1: H }];
+    else {
+      const r = segment(img, mode === 'split' ? gap * scale : 1e7);
+      comps = r.comps; seg = r.seg;
+      if (comps.length > 300) {
+        const t = segment(img, 1e7); comps = t.comps; seg = t.seg;
+        if (!warned) { toast('切出的物件太多，已改為一個圖層一個物件', '', 5000); warned = true; }
+      }
+    }
+    let g = '';
+    for (const [i, cp] of comps.entries()) {
+      const blob = await cropComp(img, cp, seg);
+      const aid = addAsset(blob);
+      g += `<image data-name="${comps.length > 1 ? '物件 ' + (i + 1) : esc(ps.name || '整頁')}" xlink:href="asset:${aid}" x="${r2(cp.x0 / scale)}" y="${r2(cp.y0 / scale)}" width="${r2((cp.x1 - cp.x0) / scale)}" height="${r2((cp.y1 - cp.y0) / scale)}" preserveAspectRatio="none"/>`;
+    }
+    if (g) body += ps.name ? `<g data-name="${esc(ps.name)}">${g}</g>` : g;
+  }
+  if (all.length) for (const id of all) cfg.setVisibility(id, init[id]);
+  return `<svg xmlns="${NS}" xmlns:xlink="${XLINK}" viewBox="0 0 ${r2(vp1.width)} ${r2(vp1.height)}">${body}</svg>`;
+}
+function dilate(a, w, h, r) {
+  if (r <= 0) return a;
+  const t = new Uint8Array(w * h), o = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    let last = -1e9; const row = y * w;
+    for (let x = 0; x < w; x++) { if (a[row + x]) last = x; if (x - last <= r) t[row + x] = 1; }
+    last = 1e9;
+    for (let x = w - 1; x >= 0; x--) { if (a[row + x]) last = x; if (last - x <= r) t[row + x] = 1; }
+  }
+  for (let x = 0; x < w; x++) {
+    let last = -1e9;
+    for (let y = 0; y < h; y++) { if (t[y * w + x]) last = y; if (y - last <= r) o[y * w + x] = 1; }
+    last = 1e9;
+    for (let y = h - 1; y >= 0; y--) { if (t[y * w + x]) last = y; if (last - y <= r) o[y * w + x] = 1; }
+  }
+  return o;
+}
+// 依透明度切出連通區塊；間距內的元素會被併成同一塊
+function segment(img, gapPx) {
+  const { width: W, height: H, data: d } = img, c = 4;
+  const gw = Math.ceil(W / c), gh = Math.ceil(H / c), N = gw * gh;
+  const occ = new Uint8Array(N);
+  for (let y = 0; y < H; y++) {
+    const row = ((y / c) | 0) * gw, base = y * W * 4;
+    for (let x = 0; x < W; x++) if (d[base + x * 4 + 3] > 12) occ[row + ((x / c) | 0)] = 1;
+  }
+  const dil = dilate(occ, gw, gh, Math.min(Math.max(gw, gh), Math.round(gapPx / 2 / c)));
+  const labels = new Int32Array(N).fill(-1), q = new Int32Array(N), comps = [];
+  for (let i = 0; i < N; i++) {
+    if (!dil[i] || labels[i] >= 0) continue;
+    const L = comps.length; let qh = 0, qt = 0, x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, n = 0;
+    q[qt++] = i; labels[i] = L;
+    while (qh < qt) {
+      const j = q[qh++], x = j % gw, y = (j / gw) | 0;
+      if (occ[j]) { n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) continue;
+        const k = ny * gw + nx;
+        if (dil[k] && labels[k] < 0) { labels[k] = L; q[qt++] = k; }
+      }
+    }
+    comps.push(n ? { label: L, x0: x0 * c, y0: y0 * c, x1: Math.min(W, (x1 + 1) * c), y1: Math.min(H, (y1 + 1) * c) } : null);
+  }
+  return { comps: comps.filter(Boolean), seg: { labels, c, gw } };
+}
+function cropComp(img, cp, seg) {
+  const w = cp.x1 - cp.x0, h = cp.y1 - cp.y0, W = img.width, src = img.data;
+  const out = new ImageData(w, h), dst = out.data;
+  for (let y = 0; y < h; y++) {
+    const sy = y + cp.y0, lrow = ((sy / (seg ? seg.c : 1)) | 0) * (seg ? seg.gw : 0);
+    for (let x = 0; x < w; x++) {
+      const sx = x + cp.x0;
+      if (seg && seg.labels[lrow + ((sx / seg.c) | 0)] !== cp.label) continue;
+      const si = (sy * W + sx) * 4, di = (y * w + x) * 4;
+      dst[di] = src[si]; dst[di + 1] = src[si + 1]; dst[di + 2] = src[si + 2]; dst[di + 3] = src[si + 3];
+    }
+  }
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  cv.getContext('2d').putImageData(out, 0, 0);
+  return new Promise(r => cv.toBlob(r, 'image/png'));
+}
+
+async function importFiles(files, asBg = false) {
+  for (const f of files) {
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    try {
+      if (ext === 'json') await openProjectFile(f);
+      else if (asBg && (f.type.startsWith('image/') || ext === 'svg')) await importImage(f, true);
+      else if (ext === 'svg' || f.type === 'image/svg+xml') await importSVGText(await f.text(), f.name.replace(/\.svg$/i, ''));
+      else if (ext === 'ai' || ext === 'pdf' || f.type === 'application/pdf') await importPDF(f);
+      else if (f.type.startsWith('image/')) await importImage(f, false);
+      else toast('不支援的檔案：' + f.name, 'err');
+    } catch (e) { console.error(e); busy(false); toast('匯入失敗：' + e.message, 'err', 6000); }
+  }
+}
+
+/* ---------- object operations ---------- */
+let bgSel = [];   // 底圖區選取的項目
+// 把物件加入底圖區：換算成底圖框座標，畫面上位置不變
+function addToBg(ids, size) {
+  const os = liveObjs().filter(o => ids.includes(o.id));
+  if (!os.length || !size) return;
+  if (!activeBg()) {
+    P.bg.frame = { w: size.w, h: size.h }; P.bg.items = [];
+    P.sizes.forEach(z => z.bg = { fit: 'cover', fx: .5, fy: .5, zoom: 1 });
+  }
+  const F = P.bg.frame, bb = bgBox(size, F), kx = F.w / bb.w, ky = F.h / bb.h;
+  const added = os.map(o => {
+    const r = getRect(size, o);
+    o.role = 'bg';
+    return { id: uid('i'), kind: 'obj', objId: o.id, name: o.name, x: r2((r.x - bb.x) * kx), y: r2((r.y - bb.y) * ky), w: r2(r.w * kx), h: r2(r.h * ky) };
+  });
+  P.bg.items.push(...added);
+  sel = sel.filter(id => !ids.includes(id));
+  bgSel = added.map(i => i.id);
+}
+function selToBg() {
+  const s = cur(); if (!s || !sel.length) return;
+  const n = sel.length;
+  addToBg(sel.slice(), s); commit();
+  toast(`已加入底圖區（${n} 項）`);
+}
+function bgItemsSelected() { return P.bg.items.filter(i => bgSel.includes(i.id)); }
+function mergeBg() {
+  const its = bgItemsSelected(); if (its.length < 2) return;
+  const U = union(its);
+  const g = {
+    id: uid('i'), kind: 'group', name: `合併底圖（${its.length}）`, x: r2(U.x), y: r2(U.y), w: r2(U.w), h: r2(U.h), vw: r2(U.w), vh: r2(U.h),
+    children: its.map(i => ({ ...i, x: r2(i.x - U.x), y: r2(i.y - U.y) })),
+  };
+  const idx = Math.max(...its.map(i => P.bg.items.indexOf(i)));
+  P.bg.items.splice(idx + 1, 0, g);
+  P.bg.items = P.bg.items.filter(i => !its.includes(i));
+  bgSel = [g.id]; commit();
+  toast('已合併成一個底圖');
+}
+function splitBg() {
+  const g = bgItemsSelected()[0]; if (!g || g.kind !== 'group') return;
+  const kx = g.w / g.vw, ky = g.h / g.vh;
+  const kids = g.children.map(c => ({ ...c, x: r2(g.x + c.x * kx), y: r2(g.y + c.y * ky), w: r2(c.w * kx), h: r2(c.h * ky) }));
+  P.bg.items.splice(P.bg.items.indexOf(g), 1, ...kids);
+  bgSel = kids.map(k => k.id); commit();
+}
+// 移出底圖：物件回到物件清單（回到原本的位置），圖片直接刪除
+function removeBgItems() {
+  const its = bgItemsSelected(); if (!its.length) return;
+  let back = [];
+  const release = it => {
+    if (it.kind === 'obj') { const o = objById(it.objId); if (o) { o.role = 'obj'; back.push(o.id); } }
+    if (it.kind === 'group') it.children.forEach(release);
+  };
+  its.forEach(release);
+  P.bg.items = P.bg.items.filter(i => !its.includes(i));
+  if (!P.bg.items.length) P.bg.frame = null;
+  bgSel = []; sel = back; commit();
+  if (back.length) toast(`${back.length} 個物件已回到物件清單`);
+}
+function zmoveBg(dir) {
+  const S = new Set(bgSel), a = P.bg.items; if (!S.size) return;
+  if (dir === 'up') { for (let i = a.length - 2; i >= 0; i--) if (S.has(a[i].id) && !S.has(a[i + 1].id)) [a[i], a[i + 1]] = [a[i + 1], a[i]]; }
+  else { for (let i = 1; i < a.length; i++) if (S.has(a[i].id) && !S.has(a[i - 1].id)) [a[i], a[i - 1]] = [a[i - 1], a[i]]; }
+  commit();
+}
+function toggleLockAll() {
+  const live = liveObjs(); if (!live.length) return;
+  const lock = live.some(o => !o.locked);
+  live.forEach(o => o.locked = lock);
+  if (lock) { sel = []; }
+  commit(); toast(lock ? '已鎖定全部物件' : '已解鎖全部物件');
+}
+function mergeSel() {
+  const size = cur(); const os = liveObjs().filter(o => sel.includes(o.id));
+  if (!size || os.length < 2) return;
+  const m = master();
+  const rs = os.map(o => getRect(size, o)), U = union(rs);
+  const mr = union(os.map(o => getRect(m, o)));
+  const children = os.map((o, i) => ({ obj: o, fx: (rs[i].x - U.x) / U.w, fy: (rs[i].y - U.y) / U.h, fw: rs[i].w / U.w, fh: rs[i].h / U.h }));
+  const content = os.map((o, i) => objMarkup(o, { x: rs[i].x - U.x, y: rs[i].y - U.y, w: rs[i].w, h: rs[i].h })).join('');
+  const n = { id: uid('o'), name: `群組（${os.length}）`, srcId: null, vb: [0, 0, r2(U.w), r2(U.h)], content, anchor: 'auto', role: 'obj', children };
+  const k = Math.min(mr.w / U.w, mr.h / U.h);
+  const mRect = size === m ? U : { x: mr.x + (mr.w - U.w * k) / 2, y: mr.y + (mr.h - U.h * k) / 2, w: U.w * k, h: U.h * k };
+  for (const s of P.sizes) {
+    const hid = os.every(o => s.hidden[o.id]);
+    os.forEach(o => { delete s.layout[o.id]; delete s.hidden[o.id]; });
+    if (hid) s.hidden[n.id] = true;
+  }
+  setRect(m, n.id, mRect);
+  if (size !== m) setRect(size, n.id, U);
+  const idx = Math.max(...os.map(o => P.objects.indexOf(o)));
+  P.objects.splice(idx + 1, 0, n);
+  P.objects = P.objects.filter(o => !os.includes(o));
+  sel = [n.id]; commit();
+}
+function splitSel() {
+  const o = objById(sel[0]); if (!o || sel.length !== 1) return;
+  let kids;
+  if (o.children) kids = o.children.map(c => ({ obj: c.obj, f: c }));
+  else if (o.srcId && SRC[o.srcId] && o.fid != null) {
+    const root = ensureMount(o.srcId);
+    const el = root.querySelector(`[data-fid="${o.fid}"]`);
+    const ks = el ? descend(el).k : [];
+    if (ks.length < 2) { toast('這個物件已經是最小單位，無法再拆開'); return; }
+    kids = ks.map(c => objFromEl(o.srcId, c, nameOf(c))).filter(Boolean).map(co => ({
+      obj: co, f: { fx: (co.vb[0] - o.vb[0]) / o.vb[2], fy: (co.vb[1] - o.vb[1]) / o.vb[3], fw: co.vb[2] / o.vb[2], fh: co.vb[3] / o.vb[3] },
+    }));
+  } else { toast('這個物件已經是最小單位，無法再拆開'); return; }
+  const mapR = (R, f) => ({ x: R.x + f.fx * R.w, y: R.y + f.fy * R.h, w: f.fw * R.w, h: f.fh * R.h });
+  const m = master(), mR = getRect(m, o);
+  for (const s of P.sizes) {
+    const R = s === m ? mR : s.layout[o.id];
+    for (const k of kids) {
+      if (R) setRect(s, k.obj.id, mapR(R, k.f));
+      if (s.hidden[o.id]) s.hidden[k.obj.id] = true;
+    }
+    delete s.layout[o.id]; delete s.hidden[o.id];
+  }
+  kids.forEach(k => k.obj.role = 'obj');
+  P.objects.splice(P.objects.indexOf(o), 1, ...kids.map(k => k.obj));
+  sel = kids.map(k => k.obj.id); commit();
+  toast(`拆成 ${kids.length} 個物件`);
+}
+function deleteSel() {
+  if (!sel.length) return;
+  const ids = new Set(sel);
+  P.objects = P.objects.filter(o => !ids.has(o.id));
+  P.sizes.forEach(s => ids.forEach(id => { delete s.layout[id]; delete s.hidden[id]; }));
+  sel = []; commit();
+}
+function zmove(dir) {
+  if (!sel.length) return;
+  const S = new Set(sel), live = liveObjs(), rest = P.objects.filter(o => o.role === 'bg');
+  let a = live.slice();
+  if (dir === 'top') a = [...a.filter(o => !S.has(o.id)), ...a.filter(o => S.has(o.id))];
+  else if (dir === 'bottom') a = [...a.filter(o => S.has(o.id)), ...a.filter(o => !S.has(o.id))];
+  else if (dir === 'up') { for (let i = a.length - 2; i >= 0; i--) if (S.has(a[i].id) && !S.has(a[i + 1].id)) [a[i], a[i + 1]] = [a[i + 1], a[i]]; }
+  else { for (let i = 1; i < a.length; i++) if (S.has(a[i].id) && !S.has(a[i - 1].id)) [a[i], a[i - 1]] = [a[i - 1], a[i]]; }
+  P.objects = [...rest, ...a]; commit();
+}
+function alignSel(kind) {
+  const size = cur(); if (!size || !sel.length) return;
+  const os = sel.map(objById).filter(Boolean), rs = os.map(o => ({ ...getRect(size, o) }));
+  const T = os.length === 1 ? { x: 0, y: 0, w: size.w, h: size.h } : union(rs);
+  os.forEach((o, i) => {
+    if (o.locked) return;
+    const r = rs[i];
+    if (kind === 'l') r.x = T.x; if (kind === 'hc') r.x = T.x + (T.w - r.w) / 2; if (kind === 'r') r.x = T.x + T.w - r.w;
+    if (kind === 't') r.y = T.y; if (kind === 'vc') r.y = T.y + (T.h - r.h) / 2; if (kind === 'b') r.y = T.y + T.h - r.h;
+    setRect(size, o.id, r);
+  });
+  commit();
+}
+
+/* ---------- sizes ---------- */
+function switchSize(id) { if (P.curId === id) return; P.curId = id; sel = []; bgMode = false; zoomMul = 1; renderAll(); scheduleSave(); }
+function deleteSize() {
+  const s = cur(); if (!s) return;
+  if (P.sizes.length === 1) { toast('至少要保留一個尺寸'); return; }
+  if (!confirm(`刪除尺寸「${s.name}」？`)) return;
+  if (s.id === P.masterId) {
+    P.sizes.forEach(z => { if (z !== s) materialize(z); });
+    P.sizes = P.sizes.filter(z => z !== s); P.masterId = P.sizes[0].id;
+    toast(`主版改為「${P.sizes[0].name}」`);
+  } else P.sizes = P.sizes.filter(z => z !== s);
+  P.curId = P.masterId; sel = []; commit();
+}
+function setMaster() {
+  const s = cur(); if (!s || s.id === P.masterId) return;
+  if (!confirm(`把「${s.name}」設為主版？\n其他沒有手動調整過的尺寸會改成依這個尺寸重新推算位置。`)) return;
+  materialize(s); P.masterId = s.id; commit();
+}
+function relayout() {
+  const s = cur(); if (!s || s.id === P.masterId) return;
+  s.layout = {}; commit(); toast('此尺寸已全部改回依主版自動排位');
+}
+function freeRectOf(size) {
+  const bb = bgBox(size) || { x: 0, y: 0, w: size.w, h: size.h };
+  return { x: r2(bb.x), y: r2(bb.y), w: r2(bb.w), h: r2(bb.h) };
+}
+// 改畫布尺寸：物件與底圖不縮放，依錨點平移，多出的區域露出底色
+function resizeCanvas(size, W, H, [ax, ay]) {
+  const dx = (W - size.w) * ax, dy = (H - size.h) * ay;
+  const isM = size.id === P.masterId;
+  // 主版尺寸一變，其他尺寸的推算就會跟著變，先把它們固定住
+  if (isM) P.sizes.forEach(z => { if (z !== size) materialize(z); });
+  for (const o of liveObjs()) {
+    const r = getRect(size, o);
+    setRect(size, o.id, { ...r, x: r.x + dx, y: r.y + dy });
+  }
+  if (activeBg()) {
+    const fr = freeRectOf(size);
+    size.bg = { ...size.bg, fit: 'free', zoom: 1, rect: { ...fr, x: r2(fr.x + dx), y: r2(fr.y + dy) } };
+  }
+  size.w = W; size.h = H;
+  zoomMul = 1; commit();
+  toast(`畫布已改為 ${W} × ${H}`);
+}
+function openCanvasDialog() {
+  const s = cur(); if (!s) return;
+  const d = $('#dlgCanvas');
+  $('#cvInfo').textContent = `目前「${s.name}」是 ${s.w} × ${s.h}`;
+  $('#cvW').value = s.w; $('#cvH').value = s.h; $('#cvLock').checked = false;
+  let anchor = 'mc';
+  const paint = () => $$('#cvAnchor button').forEach(b => b.classList.toggle('on', b.dataset.a === anchor));
+  $('#cvAnchor').innerHTML = Object.keys(ANCH).map(a => `<button type="button" data-a="${a}"></button>`).join('');
+  $('#cvAnchor').onclick = e => { const b = e.target.closest('[data-a]'); if (b) { anchor = b.dataset.a; paint(); } };
+  paint();
+  $('#cvW').oninput = () => { if ($('#cvLock').checked && +$('#cvW').value > 0) $('#cvH').value = Math.round(+$('#cvW').value * s.h / s.w); };
+  $('#cvH').oninput = () => { if ($('#cvLock').checked && +$('#cvH').value > 0) $('#cvW').value = Math.round(+$('#cvH').value * s.w / s.h); };
+  d.returnValue = ''; d.showModal();
+  d.addEventListener('close', () => {
+    if (d.returnValue !== 'ok') return;
+    const W = Math.round(+$('#cvW').value), H = Math.round(+$('#cvH').value);
+    if (!(W > 0 && H > 0)) { toast('請輸入正確的寬高', 'err'); return; }
+    if (W === s.w && H === s.h) return;
+    resizeCanvas(s, W, H, ANCH[anchor]);
+  }, { once: true });
+}
+function openSizeDialog() {
+  const have = new Set(P.sizes.map(s => s.w + 'x' + s.h));
+  $('#presetList').innerHTML = PRESETS.map(([n, w, h], i) =>
+    `<label><input type="checkbox" value="${i}" ${have.has(w + 'x' + h) ? 'disabled' : ''}> ${n}<small>${w}×${h}</small></label>`).join('');
+  $('#cName').value = ''; $('#cW').value = ''; $('#cH').value = '';
+  const d = $('#dlgSize'); d.returnValue = ''; d.showModal();
+  d.addEventListener('close', () => {
+    if (d.returnValue !== 'ok') return;
+    const add = $$('#presetList input:checked').map(i => PRESETS[+i.value]);
+    const cw = parseInt($('#cW').value), ch = parseInt($('#cH').value);
+    if (cw > 0 && ch > 0) add.push([$('#cName').value.trim() || `自訂 ${cw}×${ch}`, cw, ch]);
+    if (!add.length) return;
+    let last;
+    for (const [n, w, h] of add) { last = makeSize(n, w, h); P.sizes.push(last); }
+    if (!P.masterId) P.masterId = P.sizes[0].id;
+    P.curId = last.id; sel = []; commit();
+  }, { once: true });
+}
+
+/* ---------- export & project files ---------- */
+async function renderBlob(size, fmt, scale) {
+  const svg = await sceneSVG(size, fmt === 'svg' ? 1 : scale);
+  if (fmt === 'svg') return new Blob([svg], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  try {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('無法繪製 SVG')); img.src = url; });
+    const c = document.createElement('canvas');
+    c.width = Math.round(size.w * scale); c.height = Math.round(size.h * scale);
+    const x = c.getContext('2d');
+    if (fmt === 'jpg') { x.fillStyle = P.bgTransparent ? '#ffffff' : P.bgColor; x.fillRect(0, 0, c.width, c.height); }
+    x.drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise(r => c.toBlob(r, fmt === 'jpg' ? 'image/jpeg' : 'image/png', .92));
+  } finally { URL.revokeObjectURL(url); }
+}
+const fileName = (s, fmt) => `${safeName(P.name)}_${safeName(s.name)}_${s.w}x${s.h}.${fmt}`;
+async function exportCurrent() {
+  const s = cur(); if (!s) return;
+  const fmt = $('#exFmt').value, sc = +$('#exScale').value;
+  busy(true, '匯出中…');
+  try { download(await renderBlob(s, fmt, sc), fileName(s, fmt)); } catch (e) { toast('匯出失敗：' + e.message, 'err'); }
+  busy(false);
+}
+async function exportAll() {
+  if (!P.sizes.length) return;
+  const fmt = $('#exFmt').value, sc = +$('#exScale').value;
+  busy(true, '載入壓縮工具…');
+  try {
+    if (!window.JSZip) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    const zip = new JSZip();
+    for (const [i, s] of P.sizes.entries()) {
+      busy(true, `匯出中… ${i + 1} / ${P.sizes.length}`);
+      zip.file(fileName(s, fmt), await renderBlob(s, fmt, sc));
+    }
+    download(await zip.generateAsync({ type: 'blob' }), `${safeName(P.name)}_全部尺寸.zip`);
+  } catch (e) { toast('匯出失敗：' + e.message, 'err'); }
+  busy(false);
+}
+async function saveProject() {
+  busy(true, '儲存中…');
+  try {
+    const assets = {};
+    for (const id of usedAssetIds()) { const a = ASSETS[id]; if (!a.dataURL) a.dataURL = await blobToDataURL(a.blob); assets[id] = a.dataURL; }
+    const json = JSON.stringify({ app: 'fl-resize', v: 1, P, sources: srcData(), assets });
+    download(new Blob([json], { type: 'application/json' }), safeName(P.name) + '.resize.json');
+  } catch (e) { toast('儲存失敗：' + e.message, 'err'); }
+  busy(false);
+}
+function clearAll() {
+  Object.values(ASSETS).forEach(a => URL.revokeObjectURL(a.url));
+  ASSETS = {}; SRC = {}; $('#mounts').innerHTML = '';
+  for (const k in thumbCache) delete thumbCache[k];
+  sel = []; bgSel = []; bgMode = false; zoomMul = 1;
+}
+async function openProjectFile(f) {
+  let d; try { d = JSON.parse(await f.text()); } catch (e) { toast('專案檔格式錯誤', 'err'); return; }
+  if (d.app !== 'fl-resize' || !d.P) { toast('這不是本工具的專案檔', 'err'); return; }
+  busy(true, '開啟中…');
+  clearAll();
+  for (const [id, u] of Object.entries(d.assets || {})) { addAsset(await dataURLToBlob(u), id); ASSETS[id].dataURL = u; }
+  SRC = d.sources || {}; P = d.P; migrate();
+  $('#pname').value = P.name || '未命名';
+  resetHistory(); renderAll(); scheduleSave();
+  busy(false); toast('已開啟專案');
+}
+
+/* ---------- rendering ---------- */
+function fitView() {
+  const s = cur(); if (!s) return;
+  const wrap = $('#wrap');
+  const fit = Math.max(.02, Math.min((wrap.clientWidth - 48) / s.w, (wrap.clientHeight - 48) / s.h));
+  viewScale = fit * zoomMul;
+  stageEl.style.width = s.w * viewScale + 'px';
+  stageEl.style.height = s.h * viewScale + 'px';
+  $('#zoomPct').textContent = Math.round(viewScale * 100) + '%';
+}
+function renderStage() {
+  const s = cur();
+  $('#empty').hidden = !!s; stageEl.hidden = !s;
+  if (!s) return;
+  fitView();
+  svgEl.setAttribute('viewBox', `0 0 ${s.w} ${s.h}`);
+  svgEl.innerHTML = defsMarkup() + uiRefs(sceneBody(s, true));
+  stageEl.classList.toggle('bgmode', bgMode);
+  drawOverlay();
+}
+function updateObjDom(id, r) {
+  svgEl.querySelectorAll(`[data-oid="${id}"]`).forEach(el => {
+    el.setAttribute('x', r2(r.x)); el.setAttribute('y', r2(r.y));
+    el.setAttribute('width', r2(Math.max(r.w, .01))); el.setAttribute('height', r2(Math.max(r.h, .01)));
+  });
+}
+function updateBgDom() {
+  const s = cur(), bb = s && bgBox(s), el = $('#bgwrap', svgEl);
+  if (!bb || !el) return;
+  el.setAttribute('x', r2(bb.x)); el.setAttribute('y', r2(bb.y)); el.setAttribute('width', r2(bb.w)); el.setAttribute('height', r2(bb.h));
+}
+function drawOverlay() {
+  const s = cur(); if (!s) { ovEl.innerHTML = ''; return; }
+  const k = viewScale; let h = '';
+  const st = r => `left:${r.x * k}px;top:${r.y * k}px;width:${r.w * k}px;height:${r.h * k}px`;
+  const bb = bgBox(s);
+  if (bb) {
+    // 底圖區選取的項目用虛線框標示
+    const F = P.bg.frame, kx = bb.w / F.w, ky = bb.h / F.h;
+    bgItemsSelected().forEach(i => h += `<div class="bgsel" style="${st({ x: bb.x + i.x * kx, y: bb.y + i.y * ky, w: i.w * kx, h: i.h * ky })}"></div>`);
+  }
+  if (bgMode) {
+    if (bb) h += `<div class="bgbox" style="${st(bb)}"></div>`;
+  } else {
+    const os = sel.map(objById).filter(o => o && o.role !== 'bg' && !s.hidden[o.id]);
+    const rs = os.map(o => getRect(s, o));
+    rs.forEach((r, i) => h += `<div class="box ${rs.length > 1 ? 'multi' : ''} ${os[i].locked ? 'locked' : ''}" style="${st(r)}"></div>`);
+    const ed = rs.filter((r, i) => !os[i].locked);
+    if (ed.length) {
+      // 多選時畫出整組外框，把手在外框上，可一起縮放
+      const r = union(ed);
+      if (ed.length > 1) h += `<div class="box group" style="${st(r)}"></div>`;
+      const pts = { nw: [0, 0], n: [.5, 0], ne: [1, 0], e: [1, .5], se: [1, 1], s: [.5, 1], sw: [0, 1], w: [0, .5] };
+      for (const [hd, [fx, fy]] of Object.entries(pts)) h += `<div class="hd" data-h="${hd}" style="left:${(r.x + r.w * fx) * k}px;top:${(r.y + r.h * fy) * k}px"></div>`;
+    }
+  }
+  if (drag?.type === 'marquee' && drag.box) h += `<div class="marquee" style="${st(drag.box)}"></div>`;
+  guides.forEach(g => h += g.v ? `<div class="guide" style="left:${g.p * k}px;top:0;width:1px;height:100%"></div>`
+    : `<div class="guide" style="top:${g.p * k}px;left:0;height:1px;width:100%"></div>`);
+  ovEl.innerHTML = h;
+}
+const EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/></svg>';
+const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const UNLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>';
+function renderObjList() {
+  const s = cur(), list = liveObjs().slice().reverse();
+  $('#objCount').textContent = list.length ? `· ${list.length}` : '';
+  $('#objList').innerHTML = list.map(o => {
+    const off = s && s.hidden[o.id];
+    const custom = s && s.id !== P.masterId && s.layout[o.id];
+    return `<li data-id="${o.id}" class="${sel.includes(o.id) ? 'sel' : ''} ${off ? 'off' : ''}">
+      <button class="ghost eye" data-act="eye" title="在目前尺寸顯示 / 隱藏">${off ? EYE_OFF : EYE}</button>
+      <button class="ghost lk ${o.locked ? 'on' : ''}" data-act="lock" title="${o.locked ? '已鎖定，點一下解鎖' : '鎖定（畫布上點不到、拖不動）'}">${o.locked ? LOCK : UNLOCK}</button>
+      <svg class="th checker" viewBox="${o.vb.join(' ')}" preserveAspectRatio="xMidYMid meet">${uiRefs(o.content)}</svg>
+      <span class="nm" title="${esc(o.name)}（雙擊改名）">${esc(o.name)}</span>
+      ${custom ? '<span class="badge" title="此尺寸已手動調整，不再跟隨主版">自訂</span>' : ''}</li>`;
+  }).join('') || '<li class="none">尚未匯入物件</li>';
+  const n = sel.length, one = n === 1 ? objById(sel[0]) : null;
+  $('#tMerge').disabled = n < 2;
+  $('#tSplit').disabled = !(one && (one.children || one.srcId));
+  $('#tAsBg').disabled = !n || !cur(); $('#tUp').disabled = !n; $('#tDown').disabled = !n; $('#tDel').disabled = !n;
+  const allLocked = list.length && list.every(o => o.locked);
+  $('#tLockAll').disabled = !list.length;
+  $('#tLockAll').textContent = allLocked ? '全部解鎖' : '全部鎖定';
+}
+function thumbSize(w, h, bw = 116, bh = 70) { const k = Math.min(bw / w, bh / h); return [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))]; }
+function renderSizes() {
+  $('#sizes').innerHTML = P.sizes.map(s => {
+    const [tw, th] = thumbSize(s.w, s.h);
+    return `<div class="sz ${s.id === P.curId ? 'cur' : ''}" data-id="${s.id}" title="${esc(s.name)}（雙擊改名）">
+      ${s.id === P.masterId ? '<span class="star">主版</span>' : ''}
+      <div class="tb"><svg class="checker" width="${tw}" height="${th}" viewBox="0 0 ${s.w} ${s.h}">${thumbCache[s.id] || ''}</svg></div>
+      <div class="l1">${esc(s.name)}</div><div class="l2">${s.w} × ${s.h}</div></div>`;
+  }).join('') || '<p class="hint" style="grid-column:1/-1;margin:0">匯入檔案後會自動建立「原稿」尺寸。</p>';
+  const s = cur(), isM = s && s.id === P.masterId;
+  $('#sMaster').disabled = !s || isM; $('#sRelayout').disabled = !s || isM;
+  $('#sRename').disabled = !s; $('#sDel').disabled = !s; $('#sCanvas').disabled = !s;
+  $('#bAddSize').disabled = false;
+}
+let thumbT;
+function scheduleThumbs() {
+  clearTimeout(thumbT);
+  thumbT = setTimeout(() => {
+    for (const s of P.sizes) {
+      thumbCache[s.id] = uiRefs(sceneBody(s, false));
+      const el = $(`.sz[data-id="${s.id}"] svg`); if (el) el.innerHTML = thumbCache[s.id];
+    }
+  }, 250);
+}
+function renderBgPanel() {
+  const s = cur(), bg = activeBg();
+  bgSel = bgSel.filter(findBgItem);
+  const items = P.bg.items.slice().reverse();
+  $('#bgCount').textContent = items.length ? `· ${items.length}` : '';
+  $('#bgList').innerHTML = items.map(i => `<li data-id="${i.id}" class="${bgSel.includes(i.id) ? 'sel' : ''} ${i.hidden ? 'off' : ''}">
+      <button class="ghost eye" data-act="eye" title="顯示 / 隱藏">${i.hidden ? EYE_OFF : EYE}</button>
+      <svg class="th checker" viewBox="${r2(i.x)} ${r2(i.y)} ${r2(Math.max(i.w, 1))} ${r2(Math.max(i.h, 1))}" preserveAspectRatio="xMidYMid meet">${uiRefs(bgItemMarkup({ ...i, hidden: false }))}</svg>
+      <span class="nm" title="${esc(i.name)}（雙擊改名）">${esc(i.name)}</span>
+      ${i.kind === 'group' ? `<span class="badge" title="合併的底圖，可按「拆開」還原">${i.children.length} 項</span>` : ''}</li>`).join('')
+    || '<li class="none">尚無底圖。可從物件「加入底圖」或上傳圖片。</li>';
+  const bs = bgItemsSelected();
+  $('#bgMerge').disabled = bs.length < 2;
+  $('#bgSplit').disabled = !(bs.length === 1 && bs[0].kind === 'group');
+  $('#bgUp').disabled = $('#bgDown').disabled = $('#bgOut').disabled = !bs.length;
+  $('#bgLock').innerHTML = P.bg.locked ? LOCK : UNLOCK;
+  $('#bgLock').classList.toggle('on', !!P.bg.locked);
+  $('#bgLock').title = P.bg.locked ? '底圖已鎖定，點一下解鎖' : '鎖定底圖（鎖定後不能調整底圖位置、縮放）';
+  $('#bgCtl').hidden = !(bg && s);
+  $$('#bgCtl button, #bgCtl input').forEach(el => el.disabled = !!P.bg.locked);
+  if (s) {
+    $$('#fitSeg button').forEach(b => b.classList.toggle('on', b.dataset.fit === s.bg.fit));
+    $('#bgZoom').value = s.bg.zoom; $('#bgZoomV').textContent = Math.round(s.bg.zoom * 100) + '%';
+  }
+  $('#bgColor').value = P.bgColor; $('#bgTrans').checked = P.bgTransparent;
+  $('#bgColor').disabled = P.bgTransparent;
+}
+function renderProps() {
+  const s = cur(), os = sel.map(objById).filter(Boolean);
+  $('#propNone').hidden = !!os.length; $('#propBody').hidden = !os.length;
+  if (!os.length || !s) return;
+  const one = os.length === 1;
+  $('#propXY').hidden = !one; $('#propLockRow').hidden = !one;
+  $$('#propXY input').forEach(i => i.disabled = os.some(o => o.locked));
+  if (one) {
+    const r = getRect(s, os[0]);
+    for (const [k, v] of [['pX', r.x], ['pY', r.y], ['pW', r.w], ['pH', r.h]]) if (document.activeElement !== $('#' + k)) $('#' + k).value = Math.round(v);
+  }
+  const m = master(), a0 = os[0];
+  const autoA = anchorOf({ anchor: 'auto' }, getRect(m, a0), m);
+  $$('#anchorGrid button').forEach(b => {
+    const code = b.dataset.a, same = os.every(o => o.anchor === code);
+    b.classList.toggle('on', same);
+    b.classList.toggle('auto', os.every(o => !ANCH[o.anchor]) && one && ANCH[code][0] === autoA[0] && ANCH[code][1] === autoA[1]);
+  });
+  $('#pAuto').classList.toggle('on', os.every(o => !ANCH[o.anchor]));
+  $('#pReset').disabled = s.id === P.masterId || !os.some(o => s.layout[o.id]);
+}
+function renderBar() {
+  const s = cur();
+  $('#bUndo').disabled = hist.i <= 0; $('#bRedo').disabled = hist.i >= hist.stack.length - 1;
+  $('#curInfo').textContent = s ? s.name : '尚未建立尺寸';
+  $('#curSub').textContent = s ? `${s.w} × ${s.h}${s.id === P.masterId ? ' · 主版' : ''}` : '';
+  const bg = activeBg();
+  $('#bBgMode').disabled = !bg || !s || !!P.bg.locked;
+  if (!bg || P.bg.locked) bgMode = false;
+  $('#bBgMode').classList.toggle('on', bgMode);
+  $('#bSnap').classList.toggle('on', snapOn);
+  $('#bSnap').textContent = snapOn ? '吸附：開' : '吸附：關';
+  $('#bBgMode').textContent = bgMode ? '完成底圖調整' : '調整底圖';
+  for (const id of ['bExport', 'bExportAll', 'zIn', 'zOut', 'zFit']) $('#' + id).disabled = !s;
+}
+function renderSel() { renderStage(); renderObjList(); renderProps(); }
+function renderAll() { renderStage(); renderObjList(); renderSizes(); renderBgPanel(); renderProps(); renderBar(); scheduleThumbs(); }
+
+/* ---------- stage interaction ---------- */
+function toCanvas(e) { const r = svgEl.getBoundingClientRect(); return { x: (e.clientX - r.left) / viewScale, y: (e.clientY - r.top) / viewScale }; }
+let snapOn = true;
+try { snapOn = localStorage.getItem('fl-resize-snap') !== '0'; } catch (e) { /* storage unavailable */ }
+const snapActive = e => snapOn !== !!e.altKey; // Alt 暫時反轉吸附開關
+// 吸附參考線：畫布邊緣與中線，可選擇加上其他（未選取、可見的）物件
+function snapLines(size, withObjs) {
+  const xs = [0, size.w / 2, size.w], ys = [0, size.h / 2, size.h];
+  if (withObjs) for (const o of liveObjs()) {
+    if (sel.includes(o.id) || size.hidden[o.id]) continue;
+    const r = getRect(size, o); xs.push(r.x, r.x + r.w / 2, r.x + r.w); ys.push(r.y, r.y + r.h / 2, r.y + r.h);
+  }
+  return { xs, ys };
+}
+function snapBest(vals, pts) {
+  const th = 6 / viewScale; let b = null;
+  for (const p of pts) for (const v of vals) { const d = v - p; if (Math.abs(d) <= th && (!b || Math.abs(d) < Math.abs(b.d))) b = { d, v }; }
+  return b;
+}
+// 移動一個框：左/中/右、上/中/下 對齊最近的參考線
+function snapBox(U, dx, dy, lines) {
+  const nx = U.x + dx, ny = U.y + dy;
+  const bx = snapBest(lines.xs, [nx, nx + U.w / 2, nx + U.w]), by = snapBest(lines.ys, [ny, ny + U.h / 2, ny + U.h]);
+  guides = [];
+  if (bx) { dx += bx.d; guides.push({ v: 1, p: bx.v }); }
+  if (by) { dy += by.d; guides.push({ v: 0, p: by.v }); }
+  return [dx, dy];
+}
+stageEl.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const s = cur(); if (!s) return;
+  const hd = e.target.closest('.hd');
+  if (hd && sel.length) {
+    const origs = sel.map(objById).filter(o => o && !o.locked && o.role !== 'bg' && !s.hidden[o.id]).map(o => ({ id: o.id, r: { ...getRect(s, o) } }));
+    if (!origs.length) return;
+    drag = { type: 'resize', h: hd.dataset.h, origs, orig: union(origs.map(o => o.r)), start: toCanvas(e), moved: false };
+  } else if (bgMode) {
+    const bb = bgBox(s); if (!bb) return;
+    drag = { type: 'bg', start: toCanvas(e), fx: s.bg.fx, fy: s.bg.fy, rect: s.bg.rect && { ...s.bg.rect }, bb, moved: false };
+  } else {
+    const t = e.target.closest('[data-oid]');
+    if (!t) { startMarquee(e); return; }
+    const id = t.dataset.oid;
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      sel = sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id];
+      renderSel(); if (!sel.includes(id)) return;
+    } else if (!sel.includes(id)) { sel = [id]; renderSel(); }
+    drag = { type: 'move', start: toCanvas(e), origs: sel.filter(i => !objById(i).locked).map(i => ({ id: i, r: { ...getRect(s, objById(i)) } })), moved: false };
+    if (!drag.origs.length) { drag = null; return; }
+  }
+  stageEl.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+stageEl.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const s = cur(), p = toCanvas(e);
+  let dx = p.x - drag.start.x, dy = p.y - drag.start.y;
+  if (!drag.moved && Math.hypot(dx, dy) * viewScale < 3) return;
+  drag.moved = true;
+  if (drag.type === 'marquee') {
+    const a = drag.start;
+    drag.box = { x: Math.min(a.x, p.x), y: Math.min(a.y, p.y), w: Math.abs(p.x - a.x), h: Math.abs(p.y - a.y) };
+    const B = drag.box;
+    const hits = liveObjs().filter(o => !o.locked && !s.hidden[o.id]).filter(o => {
+      const r = getRect(s, o);
+      return r.x <= B.x + B.w && r.x + r.w >= B.x && r.y <= B.y + B.h && r.y + r.h >= B.y; // 碰到就選
+    }).map(o => o.id);
+    sel = drag.add ? [...new Set([...drag.base, ...hits])] : hits;
+    renderObjList(); renderProps(); drawOverlay();
+    return;
+  }
+  if (drag.type === 'move') {
+    const U = union(drag.origs.map(o => o.r));
+    if (snapActive(e)) [dx, dy] = snapBox(U, dx, dy, snapLines(s, true)); else guides = [];
+    for (const { id, r } of drag.origs) { const nr = { ...r, x: r.x + dx, y: r.y + dy }; setRect(s, id, nr); updateObjDom(id, nr); }
+    drawOverlay();
+  } else if (drag.type === 'resize') {
+    const o = drag.orig, hd = drag.h;
+    let { x, y, w, h } = o;
+    if (hd.includes('e')) w = o.w + dx;
+    if (hd.includes('w')) { w = o.w - dx; x = o.x + dx; }
+    if (hd.includes('s')) h = o.h + dy;
+    if (hd.includes('n')) { h = o.h - dy; y = o.y + dy; }
+    const lock = $('#pLock').checked;
+    if (hd.length === 2 && lock !== e.shiftKey) {
+      const k = Math.max(w / o.w, h / o.h, 2 / Math.min(o.w, o.h));
+      w = o.w * k; h = o.h * k;
+      x = hd.includes('w') ? o.x + o.w - w : o.x;
+      y = hd.includes('n') ? o.y + o.h - h : o.y;
+    }
+    guides = [];
+    if (snapActive(e)) [x, y, w, h] = snapResize(o, hd, x, y, w, h, hd.length === 2 && lock !== e.shiftKey, snapLines(s, true));
+    w = Math.max(w, 2); h = Math.max(h, 2);
+    // 每個物件依外框的縮放比例，一起調整位置與大小
+    const kx = w / o.w, ky = h / o.h;
+    for (const { id, r } of drag.origs) {
+      const nr = { x: x + (r.x - o.x) * kx, y: y + (r.y - o.y) * ky, w: r.w * kx, h: r.h * ky };
+      setRect(s, id, nr); updateObjDom(id, nr);
+    }
+    drawOverlay();
+  } else if (drag.type === 'bg') {
+    const bb = drag.bb;
+    if (snapActive(e)) [dx, dy] = snapBox(bb, dx, dy, snapLines(s, false)); else guides = [];
+    if (s.bg.fit === 'free') { s.bg.rect = { ...drag.rect, x: r2(drag.rect.x + dx), y: r2(drag.rect.y + dy) }; updateBgDom(); drawOverlay(); return; }
+    if (Math.abs(s.w - bb.w) > .5) s.bg.fx = clamp((bb.x + dx) / (s.w - bb.w), 0, 1);
+    if (Math.abs(s.h - bb.h) > .5) s.bg.fy = clamp((bb.y + dy) / (s.h - bb.h), 0, 1);
+    updateBgDom(); drawOverlay();
+  }
+});
+// 縮放時讓被拉動的邊吸附；等比例時以吸附較近的那一邊為準重算比例
+function snapResize(o, hd, x, y, w, h, keep, lines) {
+  const ex = hd.includes('e') ? x + w : hd.includes('w') ? x : null;
+  const ey = hd.includes('s') ? y + h : hd.includes('n') ? y : null;
+  const bx = ex == null ? null : snapBest(lines.xs, [ex]);
+  const by = ey == null ? null : snapBest(lines.ys, [ey]);
+  if (keep) {
+    const useX = bx && (!by || Math.abs(bx.d) <= Math.abs(by.d)), b = useX ? bx : by;
+    if (!b) return [x, y, w, h];
+    const k = useX ? (w + (hd.includes('w') ? -b.d : b.d)) / o.w : (h + (hd.includes('n') ? -b.d : b.d)) / o.h;
+    w = o.w * k; h = o.h * k;
+    x = hd.includes('w') ? o.x + o.w - w : o.x;
+    y = hd.includes('n') ? o.y + o.h - h : o.y;
+    guides.push({ v: useX ? 1 : 0, p: b.v });
+    return [x, y, w, h];
+  }
+  if (bx) { if (hd.includes('e')) w += bx.d; else { x += bx.d; w -= bx.d; } guides.push({ v: 1, p: bx.v }); }
+  if (by) { if (hd.includes('s')) h += by.d; else { y += by.d; h -= by.d; } guides.push({ v: 0, p: by.v }); }
+  return [x, y, w, h];
+}
+// 在畫布空白處或畫布外拖曳 → 拉框選取；按住 Shift / Ctrl 會加選
+// 列表選取：Ctrl 單項加選 / 取消，Shift 從上次點的項目選到這一項
+let objAnchor = null, bgAnchor = null;
+function listSelect(e, id, order, cur, anchor) {
+  const mod = e.ctrlKey || e.metaKey;
+  if (e.shiftKey && anchor && order.includes(anchor)) {
+    const a = order.indexOf(anchor), b = order.indexOf(id);
+    const range = order.slice(Math.min(a, b), Math.max(a, b) + 1);
+    return [mod ? [...new Set([...cur, ...range])] : range, anchor];
+  }
+  if (mod) return [cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id], id];
+  return [[id], id];
+}
+function startMarquee(e) {
+  if (!cur() || bgMode) return;
+  const add = e.shiftKey || e.ctrlKey || e.metaKey;
+  drag = { type: 'marquee', start: toCanvas(e), add, base: add ? sel.slice() : [], moved: false };
+  stageEl.setPointerCapture(e.pointerId);
+  e.preventDefault();
+}
+function endDrag() {
+  if (!drag) return;
+  if (drag.type === 'marquee') {
+    const d = drag; drag = null;
+    if (!d.moved && !d.add) sel = [];
+    renderSel(); renderBar(); return;
+  }
+  const moved = drag.moved; drag = null; guides = [];
+  if (moved) commit(); else drawOverlay();
+}
+stageEl.addEventListener('pointerup', endDrag);
+stageEl.addEventListener('pointercancel', endDrag);
+stageEl.addEventListener('dblclick', e => {
+  const t = e.target.closest('[data-oid]');
+  if (t && objById(t.dataset.oid)?.srcId) { sel = [t.dataset.oid]; splitSel(); }
+});
+$('#wrap').addEventListener('pointerdown', e => {
+  if (e.button === 0 && (e.target.id === 'wrap' || e.target.id === 'wrapIn')) startMarquee(e);
+});
+$('#wrap').addEventListener('wheel', e => {
+  const s = cur(); if (!s) return;
+  if (bgMode && !e.ctrlKey) {
+    e.preventDefault();
+    wheelRaw = clamp((wheelRaw ?? s.bg.zoom) * Math.exp(-e.deltaY * .0015), .3, 3);
+    s.bg.zoom = snapActive(e) ? snapZoom(s, wheelRaw) : (guides = [], wheelRaw);
+    updateBgDom(); drawOverlay(); renderBgPanel();
+    scheduleWheelCommit();
+  } else if (e.ctrlKey) {
+    e.preventDefault();
+    zoomMul = clamp(zoomMul * Math.exp(-e.deltaY * .0015), .1, 8); fitView(); drawOverlay();
+  }
+}, { passive: false });
+let wheelT, wheelRaw = null; // 滾輪縮放時記住未吸附的原始比例，才不會卡在吸附點
+function scheduleWheelCommit() { clearTimeout(wheelT); wheelT = setTimeout(() => { wheelRaw = null; guides = []; commit(); }, 400); }
+// 底圖各邊的位置對縮放比例 z 是線性的：edge(z) = a + b·z，可直接解出剛好對齊參考線的 z
+function bgZoomEdges(size) {
+  const F = activeBg(), st = size.bg, W = size.w, H = size.h;
+  if (st.fit === 'free') {
+    const r = st.rect, cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+    return { x: [[cx, -r.w / 2], [cx, r.w / 2]], y: [[cy, -r.h / 2], [cy, r.h / 2]] };
+  }
+  let bw, bh;
+  if (st.fit === 'stretch') { bw = W; bh = H; }
+  else { const k0 = st.fit === 'cover' ? Math.max(W / F.w, H / F.h) : Math.min(W / F.w, H / F.h); bw = F.w * k0; bh = F.h * k0; }
+  const ax = (L, fx) => [[L * fx, -bw * fx], [L * fx, bw * (1 - fx)], [L * fx, bw * (.5 - fx)]];
+  const ay = (L, fy) => [[L * fy, -bh * fy], [L * fy, bh * (1 - fy)], [L * fy, bh * (.5 - fy)]];
+  return { x: ax(W, st.fx), y: ay(H, st.fy) };
+}
+function snapZoom(size, z) {
+  guides = [];
+  const E = bgZoomEdges(size), th = 6 / viewScale;
+  let best = null;
+  for (const [axis, lines] of [['x', [0, size.w / 2, size.w]], ['y', [0, size.h / 2, size.h]]]) {
+    for (const [a, b] of E[axis]) {
+      if (Math.abs(b) < 1e-9) continue;
+      const pos = a + b * z;
+      for (const L of lines) {
+        const dist = Math.abs(pos - L), zz = (L - a) / b;
+        if (dist <= th && zz >= .3 && zz <= 3 && (!best || dist < best.dist)) best = { zz, dist, g: { v: axis === 'x' ? 1 : 0, p: L } };
+      }
+    }
+  }
+  if (!best) return z;
+  guides = [best.g];
+  return best.zz;
+}
+new ResizeObserver(() => { if (cur()) { fitView(); drawOverlay(); } }).observe($('#wrap'));
+
+/* ---------- UI events ---------- */
+$('#bImport').onclick = () => $('#fImport').click();
+$('#empty').onclick = () => $('#fImport').click();
+$('#fImport').onchange = async e => { const f = [...e.target.files]; e.target.value = ''; await importFiles(f); };
+$('#bOpen').onclick = () => $('#fOpen').click();
+$('#fOpen').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await openProjectFile(f); };
+$('#bSave').onclick = saveProject;
+$('#bNew').onclick = () => {
+  if (P.objects.length && !confirm('開新專案？目前的內容會清除（建議先「儲存專案」）。')) return;
+  clearAll(); newProject(); $('#pname').value = P.name; resetHistory(); renderAll(); scheduleSave();
+};
+$('#bUndo').onclick = () => undoRedo(-1);
+$('#bRedo').onclick = () => undoRedo(1);
+$('#bExport').onclick = exportCurrent;
+$('#bExportAll').onclick = exportAll;
+$('#pname').onchange = e => { P.name = e.target.value.trim() || '未命名'; commit(); };
+$('#zIn').onclick = () => { zoomMul = clamp(zoomMul * 1.25, .1, 8); fitView(); drawOverlay(); };
+$('#zOut').onclick = () => { zoomMul = clamp(zoomMul / 1.25, .1, 8); fitView(); drawOverlay(); };
+$('#zFit').onclick = () => { zoomMul = 1; fitView(); drawOverlay(); };
+$('#bSnap').onclick = () => {
+  snapOn = !snapOn;
+  try { localStorage.setItem('fl-resize-snap', snapOn ? '1' : '0'); } catch (e) { /* ignore */ }
+  renderBar(); toast(snapOn ? '吸附已開啟' : '吸附已關閉');
+};
+$('#bBgMode').onclick = () => { bgMode = !bgMode; if (bgMode) sel = []; renderAll(); if (bgMode) toast('拖曳畫布移動底圖，滾輪縮放'); };
+
+$('#tMerge').onclick = mergeSel;
+$('#tSplit').onclick = splitSel;
+$('#tAsBg').onclick = selToBg;
+$('#tLockAll').onclick = toggleLockAll;
+$('#tUp').onclick = () => zmove('up');
+$('#tDown').onclick = () => zmove('down');
+$('#tDel').onclick = deleteSel;
+$('#objList').addEventListener('click', e => {
+  const li = e.target.closest('li[data-id]'); if (!li) return;
+  const id = li.dataset.id, s = cur();
+  if (e.target.closest('[data-act=lock]')) {
+    const o = objById(id); o.locked = !o.locked;
+    if (o.locked) sel = sel.filter(x => x !== id);
+    commit(); return;
+  }
+  if (e.target.closest('[data-act=eye]')) {
+    if (!s) return;
+    if (s.hidden[id]) delete s.hidden[id]; else s.hidden[id] = true;
+    commit(); return;
+  }
+  const order = liveObjs().slice().reverse().map(o => o.id);
+  [sel, objAnchor] = listSelect(e, id, order, sel, objAnchor);
+  bgMode = false; renderSel(); renderBar();
+});
+$('#objList').addEventListener('dblclick', e => {
+  const li = e.target.closest('li[data-id]'); if (!li || e.target.closest('[data-act]')) return;
+  const o = objById(li.dataset.id); const n = prompt('物件名稱', o.name);
+  if (n && n.trim()) { o.name = n.trim(); commit(); }
+});
+
+$('#bAddSize').onclick = openSizeDialog;
+$('#sizes').addEventListener('click', e => { const c = e.target.closest('.sz'); if (c) switchSize(c.dataset.id); });
+$('#sizes').addEventListener('dblclick', e => { if (e.target.closest('.sz')) $('#sRename').click(); });
+$('#sMaster').onclick = setMaster;
+$('#sRelayout').onclick = relayout;
+$('#sDel').onclick = deleteSize;
+$('#sRename').onclick = () => { const s = cur(); if (!s) return; const n = prompt('尺寸名稱', s.name); if (n && n.trim()) { s.name = n.trim(); commit(); } };
+
+$('#bgList').addEventListener('click', e => {
+  const li = e.target.closest('li[data-id]'); if (!li) return;
+  const it = findBgItem(li.dataset.id);
+  if (e.target.closest('[data-act=eye]')) { it.hidden = !it.hidden; commit(); return; }
+  const id = it.id;
+  const order = P.bg.items.slice().reverse().map(i => i.id);
+  [bgSel, bgAnchor] = listSelect(e, id, order, bgSel, bgAnchor);
+  renderBgPanel(); drawOverlay();
+});
+$('#bgList').addEventListener('dblclick', e => {
+  const li = e.target.closest('li[data-id]'); if (!li || e.target.closest('[data-act]')) return;
+  const it = findBgItem(li.dataset.id), n = prompt('底圖名稱', it.name);
+  if (n && n.trim()) { it.name = n.trim(); commit(); }
+});
+$('#bgMerge').onclick = mergeBg;
+$('#bgSplit').onclick = splitBg;
+$('#bgUp').onclick = () => zmoveBg('up');
+$('#bgDown').onclick = () => zmoveBg('down');
+$('#bgOut').onclick = removeBgItems;
+$('#bgLock').onclick = () => { P.bg.locked = !P.bg.locked; if (P.bg.locked) bgMode = false; commit(); };
+$('#bgUpload').onclick = () => $('#fBg').click();
+$('#fBg').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await importImage(f, true); };
+$('#fitSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-fit]'), s = cur(); if (!b || !s) return;
+  if (b.dataset.fit === 'free') { if (s.bg.fit === 'free') return; s.bg.rect = freeRectOf(s); }
+  s.bg.fit = b.dataset.fit; s.bg.zoom = 1; commit();
+});
+$('#bgZoom').oninput = e => { const s = cur(); if (!s) return; s.bg.zoom = snapOn ? snapZoom(s, +e.target.value) : +e.target.value; $('#bgZoomV').textContent = Math.round(s.bg.zoom * 100) + '%'; updateBgDom(); drawOverlay(); };
+$('#bgZoom').onchange = () => { guides = []; commit(); };
+$('#bgCenter').onclick = () => {
+  const s = cur(); if (!s) return;
+  s.bg.fx = s.bg.fy = .5;
+  if (s.bg.fit === 'free') s.bg.rect = { ...s.bg.rect, x: r2((s.w - s.bg.rect.w) / 2), y: r2((s.h - s.bg.rect.h) / 2) };
+  commit();
+};
+$('#bgApplyAll').onclick = () => { const s = cur(); if (!s) return; P.sizes.forEach(z => z.bg = structuredClone(s.bg)); commit(); toast('已套用到全部尺寸'); };
+$('#sCanvas').onclick = openCanvasDialog;
+$('#bgColor').oninput = e => { P.bgColor = e.target.value; renderStage(); };
+$('#bgColor').onchange = commit;
+$('#bgTrans').onchange = e => { P.bgTransparent = e.target.checked; commit(); };
+
+$('#anchorGrid').innerHTML = Object.keys(ANCH).map(a => `<button data-a="${a}" title="${a}"></button>`).join('');
+$('#anchorGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const s = cur();
+  sel.map(objById).forEach(o => {
+    // 保持目前尺寸的外觀不變，只改之後推算的依據
+    if (s && s.id !== P.masterId && !s.layout[o.id]) setRect(s, o.id, getRect(s, o));
+    o.anchor = b.dataset.a;
+  });
+  commit();
+});
+$('#pAuto').onclick = () => { sel.map(objById).forEach(o => o.anchor = 'auto'); commit(); };
+const ALIGN = {
+  l: '<path d="M4 3v18M8 7h10v4H8zM8 13h6v4H8z"/>', hc: '<path d="M12 3v18M6 7h12v4H6zM8 13h8v4H8z"/>', r: '<path d="M20 3v18M6 7h10v4H6zM10 13h6v4h-6z"/>',
+  t: '<path d="M3 4h18M7 8h4v10H7zM13 8h4v6h-4z"/>', vc: '<path d="M3 12h18M7 6h4v12H7zM13 8h4v8h-4z"/>', b: '<path d="M3 20h18M7 6h4v10H7zM13 10h4v6h-4z"/>',
+};
+const ALIGN_T = { l: '靠左', hc: '水平置中', r: '靠右', t: '靠上', vc: '垂直置中', b: '靠下' };
+$('#alignBtns').innerHTML = Object.entries(ALIGN).map(([k, p]) => `<button data-al="${k}" title="${ALIGN_T[k]}（單選對齊畫布，多選對齊彼此）"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${p}</svg></button>`).join('');
+$('#alignBtns').addEventListener('click', e => { const b = e.target.closest('[data-al]'); if (b) alignSel(b.dataset.al); });
+function applyProp(k) {
+  const s = cur(), o = objById(sel[0]); if (!s || !o) return;
+  const r = { ...getRect(s, o) }, v = +$('#p' + k).value; if (!isFinite(v)) return;
+  const lock = $('#pLock').checked;
+  if (k === 'X') r.x = v; if (k === 'Y') r.y = v;
+  if (k === 'W' && v > 0) { if (lock) r.h = r.h * v / r.w; r.w = v; }
+  if (k === 'H' && v > 0) { if (lock) r.w = r.w * v / r.h; r.h = v; }
+  setRect(s, o.id, r); commit();
+}
+['X', 'Y', 'W', 'H'].forEach(k => $('#p' + k).addEventListener('change', () => applyProp(k)));
+$('#pReset').onclick = () => { const s = cur(); if (!s) return; sel.forEach(id => delete s.layout[id]); commit(); };
+
+$('#pdfGap').oninput = e => $('#pdfGapV').textContent = e.target.value;
+$('#dlgPdf').addEventListener('change', () => $('#gapRow').hidden = $('input[name=pmode]:checked', $('#dlgPdf')).value !== 'split');
+
+document.addEventListener('keydown', e => {
+  if ($('dialog[open]')) return;
+  const inField = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName);
+  const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (mod && k === 's') { e.preventDefault(); saveProject(); return; }
+  if (inField) return;
+  if (mod && k === 'z') { e.preventDefault(); undoRedo(e.shiftKey ? 1 : -1); return; }
+  if (mod && k === 'y') { e.preventDefault(); undoRedo(1); return; }
+  if (mod && k === 'g') { e.preventDefault(); e.shiftKey ? splitSel() : mergeSel(); return; }
+  if (mod && k === 'a') { e.preventDefault(); sel = liveObjs().filter(o => !cur()?.hidden[o.id] && !o.locked).map(o => o.id); renderSel(); return; }
+  if (e.key === 'Escape') { if (bgMode) { bgMode = false; renderAll(); } else if (sel.length) { sel = []; renderSel(); } return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && sel.length) { e.preventDefault(); deleteSel(); return; }
+  const arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  if (arrows[e.key] && sel.length && cur()) {
+    e.preventDefault();
+    const s = cur(), st = e.shiftKey ? 10 : 1, [dx, dy] = arrows[e.key];
+    sel.map(objById).filter(o => !o.locked).forEach(o => { const r = getRect(s, o); setRect(s, o.id, { ...r, x: r.x + dx * st, y: r.y + dy * st }); });
+    commit();
+  }
+});
+
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; document.body.classList.add('dragover'); });
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragover'); } });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', async e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragover');
+  const files = [...(e.dataTransfer?.files || [])]; if (!files.length) return;
+  const toBg = !!e.target.closest?.('#bgList, #bgUpload');
+  await importFiles(files, toBg);
+});
+
+/* ---------- boot ---------- */
+(async () => {
+  newProject();
+  if (await restoreAutosave()) {
+    $('#pname').value = P.name || '未命名';
+    if (P.objects.length || P.bg.items.length) toast('已還原上次的工作（按「新專案」可清空）');
+  }
+  resetHistory();
+  renderAll();
+})();
+</script>
+</body>
+</html>
