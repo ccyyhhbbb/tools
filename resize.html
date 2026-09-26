@@ -319,7 +319,7 @@
       <div class="sizes" id="sizes"></div>
       <div class="tools" style="margin-top:8px">
         <button id="sMaster">設為主版</button>
-        <button id="sRelayout">重新自動排位</button>
+        <button id="sRelayout" title="清除此尺寸的手動調整：物件依主版重新推算位置與大小，底圖也改回依主版的方式自動縮放">重新自動排位與縮放</button>
         <button id="sCanvas">調整畫布大小</button>
         <button id="sRename">改名</button>
         <button id="sDel" class="danger">刪除</button>
@@ -1227,7 +1227,11 @@ function setMaster() {
 }
 function relayout() {
   const s = cur(); if (!s || s.id === P.masterId) return;
-  s.layout = {}; commit(); toast('此尺寸已全部改回依主版自動排位');
+  s.layout = {};
+  // 底圖跟著主版的填滿方式；主版若是「自由」（絕對位置，不適用其他尺寸）就改回填滿裁切置中
+  const mb = master().bg;
+  s.bg = mb.fit === 'free' ? { fit: 'cover', fx: .5, fy: .5, zoom: 1 } : { fit: mb.fit, fx: mb.fx, fy: mb.fy, zoom: mb.zoom };
+  commit(); toast('此尺寸的物件與底圖已依主版重新自動排位與縮放');
 }
 function freeRectOf(size) {
   const bb = bgBox(size) || { x: 0, y: 0, w: size.w, h: size.h };
