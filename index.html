@@ -310,11 +310,25 @@ body {
         </div>
       </div>
 
+      <div class="tool-card" onclick="openTool('pdf-editor.html', 'PDF 編輯器')">
+        <div class="tool-card-top">
+          <div class="tool-icon icon-navy">📝</div>
+          <div class="arrow-icon">↗</div>
+        </div>
+        <div class="tool-name">PDF 編輯器</div>
+        <div class="tool-desc">直接修改或刪除 PDF 內的文字而不影響排版，自動偵測中文／英文／數字字型，可設定對齊方式並加入 PNG 或手寫簽名，全程在瀏覽器本地處理不上傳。</div>
+        <div class="tool-tags">
+          <span class="tag">PDF</span>
+          <span class="tag">文字編輯</span>
+          <span class="tag">電子簽名</span>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <div id="frame-wrap">
-    <iframe id="tool-frame" src="" title="工具"></iframe>
+    <iframe id="tool-frame" src="" title="工具" allow="local-fonts"></iframe>
   </div>
 
 </div>
