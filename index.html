@@ -337,7 +337,8 @@ body {
   function openTool(file, name) {
     document.getElementById('home').style.display = 'none';
     document.getElementById('frame-wrap').style.display = 'flex';
-    document.getElementById('tool-frame').src = file + '?v=2';
+    // 每次開啟都帶新的版本參數，避免瀏覽器沿用舊版工具
+    document.getElementById('tool-frame').src = file + (file.includes('?') ? '&' : '?') + 't=' + Date.now();
     document.getElementById('tool-label').textContent = name;
     document.getElementById('tool-label').style.display = 'block';
     document.getElementById('back-btn').style.display = 'flex';

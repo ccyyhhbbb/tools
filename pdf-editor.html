@@ -72,6 +72,19 @@ main{flex:1;display:flex;min-height:0}
 .obj-rs{position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;background:var(--accent);border:2px solid #fff;border-radius:2px;cursor:nwse-resize;display:none;z-index:2}
 .obj.text .obj-rs{cursor:ew-resize;bottom:calc(50% - 6px)}
 .obj:hover .obj-del,.obj:hover .obj-rs,.obj.sel .obj-del,.obj.sel .obj-rs{display:block}
+.obj-rot{position:absolute;left:50%;top:-30px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:2px solid var(--accent);cursor:grab;display:none;z-index:2}
+.obj-rot::after{content:"";position:absolute;left:50%;top:12px;width:2px;height:14px;margin-left:-1px;background:var(--accent)}
+.obj.sig:hover .obj-rot,.obj.sig.sel .obj-rot{display:block}
+.guide{position:absolute;pointer-events:none;z-index:30;background:#e5368b}
+.guide.v{top:0;bottom:0;width:1px}
+.guide.h{left:0;right:0;height:1px}
+.cellflash{position:absolute;pointer-events:none;z-index:29;border:2px solid #e5368b;background:rgba(229,54,139,.08);border-radius:2px;transition:opacity .6s}
+.sect{font-size:13px;font-weight:600;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+.algrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.algrid button{display:flex;align-items:center;justify-content:center;gap:4px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:5px 4px;cursor:pointer;font:inherit;font-size:12px}
+.algrid button:hover{border-color:var(--accent);color:var(--accent)}
+.seg.full{display:flex}
+.seg.full button{flex:1;justify-content:center}
 textarea.tb-edit{position:absolute;inset:0;width:100%;min-height:0;border:0;border-radius:0;outline:none;resize:none;overflow:hidden;background:rgba(255,255,255,.92);white-space:pre-wrap;overflow-wrap:anywhere;cursor:text}
 #empty{position:absolute;inset:24px;border:2px dashed var(--muted);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:10px;text-align:center;padding:16px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 #empty:hover,#empty.drag{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
@@ -173,7 +186,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
 
 const $ = id => document.getElementById(id);
 // pages：目前的頁面順序（P.src = 原始 PDF 的頁碼索引）；objs：新增的簽名 / 文字框 / 符號
-const S = { bytes:null, name:'', doc:null, pages:[], scale:1.3, sel:null, objs:[], pending:null, dragP:null };
+const S = { bytes:null, name:'', doc:null, pages:[], scale:1.3, sel:null, objs:[], pending:null, dragP:null,
+            alignBase:'page', alignRef:null, snap:true };
 
 /* ---------- 字型目錄 ----------
    family: 系統字型家族名稱，匯出時從使用者電腦讀取（Chrome / Edge 的 Local Font Access）
@@ -690,7 +704,8 @@ function layoutText(o){
 
 function posObj(o){
   const k=S.scale;
-  Object.assign(o.el.style,{left:o.x*k+'px',top:o.y*k+'px',width:o.w*k+'px',height:o.h*k+'px'});
+  Object.assign(o.el.style,{left:o.x*k+'px',top:o.y*k+'px',width:o.w*k+'px',height:o.h*k+'px',
+    transform:o.rot?`rotate(${o.rot}deg)`:''});
 }
 function drawObj(o){
   const el=o.el; if(!el || !el.isConnected) return;
@@ -721,25 +736,37 @@ function drawTextObj(o, body){
 }
 function mountObj(o){
   const el=document.createElement('div'); el.className='obj '+o.type; o.el=el;
-  el.innerHTML='<div class="obj-body"></div><button class="obj-del" title="刪除">×</button><span class="obj-rs" title="拖曳調整大小"></span>';
+  el.innerHTML='<div class="obj-body"></div><button class="obj-del" title="刪除">×</button><span class="obj-rs" title="拖曳調整大小"></span>'
+    + (o.type==='sig' ? '<span class="obj-rot" title="拖曳旋轉（按住 Shift 以 15° 為一格）"></span>' : '');
   o.P.overlay.append(el);
   drawObj(o);
   el.querySelector('.obj-del').onclick=e=>{ e.stopPropagation(); removeObj(o); };
   el.addEventListener('pointerdown',e=>{
     if(o.editing || e.target.closest('.obj-del')) return;
     e.preventDefault(); e.stopPropagation();
-    const k=S.scale, rs=e.target.classList.contains('obj-rs'), sx=e.clientX, sy=e.clientY, s0={x:o.x,y:o.y,w:o.w};
+    const k=S.scale, rs=e.target.classList.contains('obj-rs'), rot=e.target.classList.contains('obj-rot');
+    const sx=e.clientX, sy=e.clientY, s0={x:o.x,y:o.y,w:o.w,h:o.h};
+    const snap = !rs && !rot ? snapTargets(o) : null;
     el.setPointerCapture(e.pointerId);
     const mv=ev=>{
       const dx=(ev.clientX-sx)/k, dy=(ev.clientY-sy)/k;
-      if(!rs){ o.x=s0.x+dx; o.y=s0.y+dy; posObj(o); return; }
+      if(rot){                                  // 以圖片中心為軸旋轉
+        const r=el.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+        let a=Math.atan2(ev.clientY-cy, ev.clientX-cx)*180/Math.PI+90;
+        a = ev.shiftKey ? Math.round(a/15)*15 : (Math.abs(a-Math.round(a/90)*90)<4 ? Math.round(a/90)*90 : Math.round(a));
+        o.rot=normAngle(a); posObj(o); if(S.sel===o) syncRotInput(o); return;
+      }
+      if(!rs){ o.x=s0.x+dx; o.y=s0.y+dy; if(!ev.altKey) applySnap(o,snap); else hideGuides(o.P); posObj(o); return; }
       if(o.type==='text'){ o.w=Math.max(20,s0.w+dx); drawObj(o); return; }
-      if(o.type==='sig'){ o.w=Math.max(15,s0.w+dx); o.h=o.w*o.ratio; }
+      const a=(o.rot||0)*Math.PI/180, dl=dx*Math.cos(a)+dy*Math.sin(a);   // 沿圖片自身的方向縮放
+      if(o.type==='sig'){ o.w=Math.max(15,s0.w+dl); o.h=o.w*o.ratio; }
       else o.w=o.h=Math.max(4,s0.w+Math.max(dx,dy));
+      if(o.rot){ o.x=s0.x+(s0.w-o.w)/2; o.y=s0.y+(s0.h-o.h)/2; }        // 旋轉後以中心縮放
       posObj(o);
     };
     const up=()=>{
       el.removeEventListener('pointermove',mv); el.removeEventListener('pointerup',up);
+      hideGuides(o.P);
       if(o.type==='text') drawObj(o);           // 重新對齊像素格線
       if(S.sel===o) showSide();
     };
@@ -748,6 +775,166 @@ function mountObj(o){
   el.addEventListener('click',e=>{ e.stopPropagation(); if(S.sel!==o) select(o); });
   el.addEventListener('dblclick',e=>{ e.stopPropagation(); if(o.type==='text') editText(o); });
 }
+/* ---------- 對齊、吸附、旋轉 ---------- */
+const normAngle = a => { a=((a%360)+360)%360; return a>180 ? a-360 : a; };
+// 物件（含旋轉後）的外框，單位 pt
+function bbox(o){
+  const r=(o.rot||0)*Math.PI/180, c=Math.abs(Math.cos(r)), si=Math.abs(Math.sin(r));
+  const w=o.w*c+o.h*si, h=o.w*si+o.h*c, cx=o.x+o.w/2, cy=o.y+o.h/2;
+  return {x:cx-w/2, y:cy-h/2, w, h, cx, cy};
+}
+function moveBBox(o, nx, ny){ const b=bbox(o); o.x+=nx-b.x; o.y+=ny-b.y; }
+
+/* 從算繪好的頁面找出水平 / 垂直框線（排除文字區域），結果以 pt 為單位快取 */
+function detectLines(P){
+  if(P.lines) return P.lines;
+  const c=P.canvas, W=c.width, H=c.height, k=W/P.vp1.width;
+  const d=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,H).data;
+  const dark=new Uint8Array(W*H);
+  for(let i=0,j=0;j<W*H;i+=4,j++) dark[j] = d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11 < 160 ? 1 : 0;
+  const textBoxes=(P.items||[]).map(it=>{ const g=geom(it,P.vp1); return [g.x+1,g.y+1,g.x+g.w-1,g.y+g.h-1]; });
+  const inText=(x,y)=>textBoxes.some(b=>x>b[0]&&x<b[2]&&y>b[1]&&y<b[3]);
+  const gap=Math.round(1.5*k)+1, off=Math.round(3*k)+2;
+  // 掃描一個方向：along=沿線方向長度，across=另一方向長度，at(a,b) 取像素
+  function scan(along, across, at, minLen){
+    const segs=[];
+    for(let b=0;b<across;b++){
+      let a=0;
+      while(a<along){
+        if(!at(a,b)){ a++; continue; }
+        const a0=a; let miss=0;
+        while(a<along && (at(a,b) || miss<gap)){ miss = at(a,b) ? 0 : miss+1; a++; }
+        const a1=a-miss;
+        if(a1-a0<minLen) continue;
+        let thick=0, n=0;                       // 線條要細：兩側一段距離外不能也是深色
+        for(let t=a0;t<a1;t+=3){ n++; if(b-off>=0 && b+off<across && at(t,b-off) && at(t,b+off)) thick++; }
+        if(thick/n<0.3) segs.push({b,a0,a1});
+      }
+    }
+    // 相鄰列合併成一條線（粗線會佔好幾列）
+    const lines=[];
+    for(const sg of segs){
+      const L=lines.find(l=>sg.b-l.b1<=1 && Math.min(l.a1,sg.a1)-Math.max(l.a0,sg.a0) > 0.5*Math.min(l.a1-l.a0,sg.a1-sg.a0));
+      if(L){ L.b1=sg.b; L.a0=Math.min(L.a0,sg.a0); L.a1=Math.max(L.a1,sg.a1); }
+      else lines.push({b0:sg.b,b1:sg.b,a0:sg.a0,a1:sg.a1});
+    }
+    return lines.map(l=>({pos:(l.b0+l.b1+1)/2/k, t:(l.b1-l.b0+1)/k, from:l.a0/k, to:l.a1/k}));
+  }
+  const h=scan(W,H,(x,y)=>dark[y*W+x],20*k).filter(l=>!inText((l.from+l.to)/2,l.pos));
+  const v=scan(H,W,(y,x)=>dark[y*W+x],12*k).filter(l=>!inText(l.pos,(l.from+l.to)/2));
+  return P.lines={h,v};
+}
+// 找出點 (cx,cy) 所在的框格；只有底線時以底線的左右端為範圍
+function findCell(P, cx, cy){
+  const L=detectLines(P), m=2;
+  let l=null, r=null, t=null, b=null;
+  for(const v of L.v){ if(v.from-m>cy || v.to+m<cy) continue;
+    if(v.pos<=cx && (!l || v.pos>l.pos)) l=v; if(v.pos>=cx && (!r || v.pos<r.pos)) r=v; }
+  for(const h of L.h){ if(h.from-m>cx || h.to+m<cx) continue;
+    if(h.pos<=cy && (!t || h.pos>t.pos)) t=h; if(h.pos>=cy && (!b || h.pos<b.pos)) b=h; }
+  if(!l && !r && !t && !b) return null;
+  const hl=b||t, vl=l||r;
+  return {
+    x0: l ? l.pos+l.t/2 : hl ? hl.from : 0,  x1: r ? r.pos-r.t/2 : hl ? hl.to : P.vp1.width,
+    y0: t ? t.pos+t.t/2 : vl ? vl.from : 0,  y1: b ? b.pos-b.t/2 : vl ? vl.to : P.vp1.height };
+}
+function flashRect(P, R){
+  const k=S.scale, el=document.createElement('div'); el.className='cellflash';
+  Object.assign(el.style,{left:R.x0*k+'px',top:R.y0*k+'px',width:(R.x1-R.x0)*k+'px',height:(R.y1-R.y0)*k+'px'});
+  P.overlay.append(el);
+  setTimeout(()=>el.style.opacity='0',700); setTimeout(()=>el.remove(),1400);
+}
+const otherImages = o => S.objs.filter(x=>x!==o && x.P===o.P && x.type==='sig');
+function alignTarget(o){
+  const P=o.P;
+  if(S.alignBase==='page') return {x0:0, y0:0, x1:P.vp1.width, y1:P.vp1.height};
+  if(S.alignBase==='frame'){
+    const b=bbox(o), c=findCell(P,b.cx,b.cy);
+    if(!c) toast('物件附近找不到框線。請先把它拖到要對齊的格子裡，再按對齊。');
+    return c;
+  }
+  const ref=S.alignRef;
+  if(!ref || ref.P!==P || ref===o){ toast('這一頁沒有其他圖片可以對齊'); return null; }
+  const rb=bbox(ref); return {x0:rb.x, y0:rb.y, x1:rb.x+rb.w, y1:rb.y+rb.h};
+}
+function alignObj(o, how){
+  const T=alignTarget(o); if(!T) return;
+  if(how==='fit'){                              // 等比例縮放到剛好放進框內，再置中
+    const pad=S.alignBase==='frame'?1:0, b=bbox(o);
+    const f=Math.min((T.x1-T.x0-pad*2)/b.w, (T.y1-T.y0-pad*2)/b.h), cx=b.cx, cy=b.cy;
+    o.w*=f; o.h*=f; o.x=cx-o.w/2; o.y=cy-o.h/2;
+    const nb=bbox(o); moveBBox(o,(T.x0+T.x1-nb.w)/2,(T.y0+T.y1-nb.h)/2);
+  }else{
+    const b=bbox(o); let nx=b.x, ny=b.y;
+    if(how==='l') nx=T.x0; else if(how==='ch') nx=(T.x0+T.x1-b.w)/2; else if(how==='r') nx=T.x1-b.w;
+    else if(how==='t') ny=T.y0; else if(how==='cv') ny=(T.y0+T.y1-b.h)/2; else if(how==='b') ny=T.y1-b.h;
+    moveBBox(o,nx,ny);
+  }
+  drawObj(o); flashRect(o.P,T); showSide();
+}
+/* 拖曳吸附：頁面邊緣與中線、底圖框線、其他圖片 */
+function snapTargets(o){
+  if(!S.snap) return null;
+  const P=o.P, W=P.vp1.width, H=P.vp1.height, xs=[0,W/2,W], ys=[0,H/2,H];
+  const L=detectLines(P);
+  L.v.forEach(v=>xs.push(v.pos-v.t/2, v.pos+v.t/2));
+  L.h.forEach(h=>ys.push(h.pos-h.t/2, h.pos+h.t/2));
+  S.objs.filter(x=>x!==o && x.P===P && x.type!=='text').forEach(x=>{ const b=bbox(x); xs.push(b.x,b.cx,b.x+b.w); ys.push(b.y,b.cy,b.y+b.h); });
+  return {xs,ys};
+}
+function applySnap(o, T){
+  hideGuides(o.P);
+  if(!T) return;
+  const thr=6/S.scale, b=bbox(o);
+  const best=(edges,targets)=>{ let r=null; for(const e of edges) for(const t of targets){ const d=t-e; if(Math.abs(d)<thr && (!r || Math.abs(d)<Math.abs(r.d))) r={d,t}; } return r; };
+  const bx=best([b.x,b.cx,b.x+b.w],T.xs), by=best([b.y,b.cy,b.y+b.h],T.ys);
+  if(bx){ o.x+=bx.d; showGuide(o.P,'v',bx.t); }
+  if(by){ o.y+=by.d; showGuide(o.P,'h',by.t); }
+}
+function showGuide(P, dir, pos){
+  const g=document.createElement('div'); g.className='guide '+dir;
+  g.style[dir==='v'?'left':'top']=pos*S.scale+'px';
+  P.overlay.append(g);
+}
+const hideGuides = P => P.overlay.querySelectorAll('.guide').forEach(g=>g.remove());
+function syncRotInput(o){ const i=$('sgRot'); if(i) i.value=Math.round(o.rot||0); }
+
+const AL_ICONS = {
+  l:'<rect x="1" y="1" width="1.5" height="14"/><rect x="4" y="4" width="10" height="3"/><rect x="4" y="9" width="6" height="3"/>',
+  ch:'<rect x="7.25" y="1" width="1.5" height="14"/><rect x="2" y="4" width="12" height="3"/><rect x="4" y="9" width="8" height="3"/>',
+  r:'<rect x="13.5" y="1" width="1.5" height="14"/><rect x="2" y="4" width="10" height="3"/><rect x="6" y="9" width="6" height="3"/>',
+  t:'<rect x="1" y="1" width="14" height="1.5"/><rect x="4" y="4" width="3" height="10"/><rect x="9" y="4" width="3" height="6"/>',
+  cv:'<rect x="1" y="7.25" width="14" height="1.5"/><rect x="4" y="2" width="3" height="12"/><rect x="9" y="4" width="3" height="8"/>',
+  b:'<rect x="1" y="13.5" width="14" height="1.5"/><rect x="4" y="2" width="3" height="10"/><rect x="9" y="6" width="3" height="6"/>'
+};
+const AL_LABEL = {l:'靠左', ch:'水平置中', r:'靠右', t:'靠上', cv:'垂直置中', b:'靠下'};
+const BASE_LABEL = {page:'整個頁面', frame:'底圖框線', img:'其他圖片'};
+function alignPanelHtml(o){
+  const others=otherImages(o), allImgs=S.objs.filter(x=>x.type==='sig' && x.P===o.P);
+  if(S.alignBase==='img' && (!S.alignRef || !others.includes(S.alignRef))){   // 預設選最近的圖片
+    const b=bbox(o), dist=x=>{ const q=bbox(x); return Math.hypot(q.cx-b.cx,q.cy-b.cy); };
+    S.alignRef=[...others].sort((p,q)=>dist(p)-dist(q))[0]||null;
+  }
+  const note = S.alignBase==='frame' ? '以物件中心所在的表格格子（或底線）為準'
+    : S.alignBase==='img' && !others.length ? '這一頁沒有其他圖片' : '';
+  return `<div class="sect">對齊</div>
+    <div class="seg full" id="alBase">${Object.entries(BASE_LABEL).map(([k,l])=>`<button type="button" data-b="${k}" class="${S.alignBase===k?'on':''}">${l}</button>`).join('')}</div>
+    ${S.alignBase==='img' && others.length ? `<div class="kv"><span class="k">參考圖片</span><select id="alRef">${others.map(x=>`<option value="${allImgs.indexOf(x)}" ${x===S.alignRef?'selected':''}>圖片 ${allImgs.indexOf(x)+1}</option>`).join('')}</select></div>` : ''}
+    ${note?`<div class="muted" style="margin-top:6px">${note}</div>`:''}
+    <div class="algrid">${Object.keys(AL_LABEL).map(k=>`<button type="button" data-al="${k}" title="${AL_LABEL[k]}"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">${AL_ICONS[k]}</svg>${AL_LABEL[k]}</button>`).join('')}</div>
+    ${o.type!=='text' && S.alignBase!=='img' ? `<button class="btn" id="alFit" style="width:100%">⤢ 等比例縮放填入${S.alignBase==='frame'?'格子':'頁面'}</button>` : ''}
+    <label class="muted" style="display:block;margin-top:10px"><input type="checkbox" id="alSnap" ${S.snap?'checked':''}> 拖曳時自動吸附對齊（按住 Alt 暫停）</label>`;
+}
+function bindAlignPanel(o){
+  const allImgs=S.objs.filter(x=>x.type==='sig' && x.P===o.P);
+  $('alBase').querySelectorAll('button').forEach(b=>b.onclick=()=>{ S.alignBase=b.dataset.b; showSide(); });
+  if($('alRef')) $('alRef').onchange=e=>{ S.alignRef=allImgs[+e.target.value];
+    const rb=bbox(S.alignRef); flashRect(o.P,{x0:rb.x,y0:rb.y,x1:rb.x+rb.w,y1:rb.y+rb.h}); };
+  document.querySelectorAll('[data-al]').forEach(b=>b.onclick=()=>alignObj(o,b.dataset.al));
+  if($('alFit')) $('alFit').onclick=()=>alignObj(o,'fit');
+  $('alSnap').onchange=e=>{ S.snap=e.target.checked; };
+}
+
 function removeObj(o){
   S.objs=S.objs.filter(x=>x!==o); o.el?.remove();
   if(S.sel===o){ S.sel=null; showSide(); }
@@ -905,7 +1092,9 @@ function sideText(side, o){
     <label class="muted">內容（可換行）</label>
     <textarea id="tbText" style="text-align:${o.align}">${esc(o.text)}</textarea>
     <div class="row"><button class="btn danger" id="tbDel">🗑 刪除文字框</button></div>
-    <p class="muted" style="margin-top:14px">雙擊文字框可直接在頁面上輸入；拖曳移動，拉右側藍點調整寬度，文字會自動換行。</p>`;
+    <p class="muted" style="margin-top:14px">雙擊文字框可直接在頁面上輸入；拖曳移動，拉右側藍點調整寬度，文字會自動換行。</p>
+    ${alignPanelHtml(o)}`;
+  bindAlignPanel(o);
   const upd=()=>{ drawObj(o); status(); };
   $('tbFont').onchange=e=>{ setTextFont(o,e.target.value); showSide(); upd(); };
   $('tbSize').oninput=e=>{ const v=+e.target.value; if(v>0){ o.size=v; upd(); } };
@@ -925,20 +1114,36 @@ function sideMark(side, o){
       <span class="k">顏色</span><span class="sw"><input type="color" id="mkCol" value="${toHex(o.color)}"></span>
     </div>
     <div class="row"><button class="btn danger" id="mkDel">🗑 刪除符號</button></div>
-    <p class="muted" style="margin-top:14px">拖曳移動，拉右下角調整大小。</p>`;
+    <p class="muted" style="margin-top:14px">拖曳移動，拉右下角調整大小。</p>
+    ${alignPanelHtml(o)}`;
+  bindAlignPanel(o);
   $('mkShape').querySelectorAll('button').forEach(b=>b.onclick=()=>{ o.shape=b.dataset.s; drawObj(o); showSide(); });
   $('mkSize').oninput=e=>{ const v=+e.target.value; if(v>0){ const c=[o.x+o.w/2,o.y+o.h/2]; o.w=o.h=v; o.x=c[0]-v/2; o.y=c[1]-v/2; drawObj(o); } };
   $('mkCol').oninput=e=>{ o.color=fromHex(e.target.value); drawObj(o); };
   $('mkDel').onclick=()=>removeObj(o);
 }
 function sideSig(side, o){
+  const n=S.objs.filter(x=>x.type==='sig' && x.P===o.P).indexOf(o)+1;
   side.innerHTML = `
-    <h2>圖片 <span class="muted">· 第 ${pageNo(o.P)} 頁</span></h2>
-    <img src="${o.url}" alt="簽名" style="max-width:100%;max-height:120px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px">
-    <div class="kv"><span class="k">寬度</span><span class="sw"><input type="number" id="sgW" min="5" max="1000" step="1" value="${Math.round(o.w)}" style="width:80px"> pt</span></div>
-    <div class="row"><button class="btn danger" id="sgDel">🗑 刪除圖片</button></div>`;
-  $('sgW').oninput=e=>{ const v=+e.target.value; if(v>0){ o.w=v; o.h=v*o.ratio; drawObj(o); } };
+    <h2>圖片 ${n} <span class="muted">· 第 ${pageNo(o.P)} 頁</span></h2>
+    <img src="${o.url}" alt="圖片預覽" style="max-width:100%;max-height:120px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px;transform:rotate(${o.rot||0}deg)">
+    <div class="kv">
+      <span class="k">寬度</span><span class="sw"><input type="number" id="sgW" min="5" max="2000" step="1" value="${Math.round(o.w)}" style="width:80px"> pt</span>
+      <span class="k">旋轉</span><span class="sw">
+        <button class="btn" id="sgL" title="逆時針 90°" style="padding:3px 8px">⟲ 90°</button>
+        <button class="btn" id="sgR" title="順時針 90°" style="padding:3px 8px">⟳ 90°</button>
+        <input type="number" id="sgRot" min="-180" max="180" step="1" value="${Math.round(o.rot||0)}" style="width:62px">°</span>
+    </div>
+    <div class="row"><button class="btn danger" id="sgDel">🗑 刪除圖片</button></div>
+    <p class="muted" style="margin-top:14px">拖曳移動，拉右下角縮放，拖曳上方圓點旋轉（按住 Shift 以 15° 為一格）。</p>
+    ${alignPanelHtml(o)}`;
+  const rotTo=a=>{ o.rot=normAngle(a); drawObj(o); showSide(); };
+  $('sgW').oninput=e=>{ const v=+e.target.value; if(v>0){ const b=bbox(o); o.w=v; o.h=v*o.ratio; o.x=b.cx-o.w/2; o.y=b.cy-o.h/2; drawObj(o); } };
+  $('sgL').onclick=()=>rotTo((o.rot||0)-90);
+  $('sgR').onclick=()=>rotTo((o.rot||0)+90);
+  $('sgRot').onchange=e=>rotTo(+e.target.value||0);
   $('sgDel').onclick=()=>removeObj(o);
+  bindAlignPanel(o);
 }
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const countEdits = () => S.pages.reduce((n,P)=>n+(P.items||[]).filter(isChanged).length,0);
@@ -1113,7 +1318,11 @@ async function exportPdf(only){
       for(const o of S.objs.filter(o=>o.P===P)){
         const R=pdfRect(P,o.x,o.y,o.w,o.h), color=o.color && rgb(...o.color.map(v=>v/255));
         if(o.type==='sig'){
-          pg.drawImage(o.imgType==='jpg' ? await doc.embedJpg(o.bytes) : await doc.embedPng(o.bytes), R);
+          const img = o.imgType==='jpg' ? await doc.embedJpg(o.bytes) : await doc.embedPng(o.bytes);
+          // PDF 的 rotate 以左下角為軸、逆時針為正；換算成以中心旋轉
+          const f=-(o.rot||0)*Math.PI/180, cx=R.x+R.width/2, cy=R.y+R.height/2, w=R.width, h=R.height;
+          pg.drawImage(img,{x:cx-(Math.cos(f)*w/2-Math.sin(f)*h/2), y:cy-(Math.sin(f)*w/2+Math.cos(f)*h/2),
+            width:w, height:h, rotate:degrees(-(o.rot||0))});
         }else if(o.type==='mark'){
           if(o.shape==='square') pg.drawRectangle({...R, color, borderWidth:0});
           else if(o.shape==='circle') pg.drawEllipse({x:R.x+R.width/2, y:R.y+R.height/2, xScale:R.width/2, yScale:R.height/2, color, borderWidth:0});
