@@ -61,6 +61,18 @@ nav.rail{width:52px;flex:none;background:var(--panel);border-right:1px solid var
 #stage{flex:1;overflow:auto;background:var(--stage);position:relative;min-width:0}
 #board{display:grid;place-items:center;min-width:100%;min-height:100%;width:max-content;height:max-content;padding:40px}
 #board .canvas-container{box-shadow:0 2px 14px rgba(0,0,0,.28);background:repeating-conic-gradient(#cfd3d9 0 25%,#fff 0 50%) 0 0/20px 20px}
+/* 畫布邊緣的調整控制點 */
+.art-h{position:absolute;z-index:5;background:#fff;border:2px solid var(--accent);border-radius:4px;touch-action:none;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.art-h:hover{background:var(--accent)}
+.art-n,.art-s{left:50%;width:36px;height:9px;margin-left:-18px;cursor:ns-resize}
+.art-n{top:-17px}.art-s{bottom:-17px}
+.art-e,.art-w{top:50%;width:9px;height:36px;margin-top:-18px;cursor:ew-resize}
+.art-e{right:-17px}.art-w{left:-17px}
+.art-nw,.art-ne,.art-sw,.art-se{width:13px;height:13px}
+.art-nw{left:-19px;top:-19px;cursor:nwse-resize}.art-se{right:-19px;bottom:-19px;cursor:nwse-resize}
+.art-ne{right:-19px;top:-19px;cursor:nesw-resize}.art-sw{left:-19px;bottom:-19px;cursor:nesw-resize}
+#artPreview{position:absolute;z-index:4;border:2px dashed var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);pointer-events:none}
+#artLabel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#111827;color:#fff;padding:4px 10px;border-radius:6px;font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
 #empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
 #empty .card{pointer-events:auto;background:color-mix(in srgb,var(--panel) 92%,transparent);border:2px dashed var(--line);border-radius:16px;padding:22px 28px;text-align:center;max-width:360px;margin:16px;box-shadow:0 8px 30px rgba(0,0,0,.12)}
 #empty strong{display:block;font-size:16px;margin-bottom:4px}
@@ -259,8 +271,8 @@ dialog h4{font-size:12px;color:var(--muted);margin:14px 0 6px;font-weight:600}
 
       <!-- 裁切 -->
       <div class="sec" id="secCrop">
-        <h3>裁切圖片</h3>
-        <p class="hint">拖曳藍框調整要保留的範圍，按 <kbd>Enter</kbd> 套用、<kbd>Esc</kbd> 取消。</p>
+        <h3 id="cropTitle">裁切圖片</h3>
+        <p class="hint" id="cropHint">拖曳藍框調整要保留的範圍，按 <kbd>Enter</kbd> 套用、<kbd>Esc</kbd> 取消。</p>
         <div class="grid3" id="cropRatios">
           <button class="mini on" data-ratio="free">自由</button>
           <button class="mini" data-ratio="orig">原比例</button>
@@ -272,6 +284,7 @@ dialog h4{font-size:12px;color:var(--muted);margin:14px 0 6px;font-weight:600}
           <button class="mini" data-ratio="0.8">4:5</button>
           <button class="mini" data-ratio="canvas">畫布比例</button>
         </div>
+        <label class="chk" id="cropUnifyRow" style="margin-top:10px"><input type="checkbox" id="cropUnify">套用後統一成相同大小</label>
         <div class="grid2" style="margin-top:10px">
           <button class="btn" data-act="cropCancel">取消</button>
           <button class="btn primary" data-act="cropApply">套用裁切</button>
@@ -358,6 +371,19 @@ dialog h4{font-size:12px;color:var(--muted);margin:14px 0 6px;font-weight:600}
         <p class="hint" data-remove>用來去除純色背景（例如白底），把該顏色變成透明。</p>
       </div>
 
+      <!-- 多張圖片 -->
+      <div class="sec" id="secMulti">
+        <h3 id="multiTitle">多張圖片</h3>
+        <button class="btn" data-act="cropMulti" style="width:100%;justify-content:center"><svg class="i"><use href="#i-crop"/></svg>一併裁切（逐張調整取景）</button>
+        <h3 style="margin-top:14px">裁切成相同大小</h3>
+        <div class="row"><label>比例</label><select id="unRatio">
+          <option value="first">跟第一張相同</option><option value="1">1:1 正方形</option><option value="1.3333">4:3 橫式</option><option value="0.75">3:4 直式</option><option value="1.5">3:2 橫式</option><option value="0.6667">2:3 直式</option><option value="1.7778">16:9 橫式</option><option value="0.5625">9:16 直式</option><option value="0.8">4:5 直式</option><option value="canvas">畫布比例</option>
+        </select></div>
+        <div class="row"><label>寬 × 高</label><input type="number" id="unW" min="8"><span>×</span><input type="number" id="unH" min="8"><span class="muted">px</span></div>
+        <button class="btn primary" data-act="unify" style="width:100%;justify-content:center;margin-top:4px">套用相同大小</button>
+        <p class="hint">以每張圖目前畫面的中央裁切，位置不變。想個別調整取景，可按上方「一併裁切」並勾選「套用後統一成相同大小」；要排整齊可到「畫布」分頁用自動拼貼排版。</p>
+      </div>
+
       <!-- 文字 -->
       <div class="sec" id="secText">
         <h3>文字</h3>
@@ -407,12 +433,14 @@ dialog h4{font-size:12px;color:var(--muted);margin:14px 0 6px;font-weight:600}
     <div class="pane" id="pane-canvas" hidden>
       <div class="sec">
         <h3>畫布尺寸</h3>
+        <p class="hint">也可以直接拖曳畫布四邊與四角的控制點自由調整（角落按住 Shift 維持比例）。</p>
         <div class="row"><select id="cvPreset"></select></div>
         <div class="row"><label>寬 × 高</label><input type="number" id="cvW" min="16" max="10000"><span>×</span><input type="number" id="cvH" min="16" max="10000"></div>
         <label class="chk" style="margin:6px 0"><input type="checkbox" id="cvScale">內容跟著等比縮放</label>
         <div class="grid2" style="margin-top:8px">
           <button class="mini" id="cvSwap">⇄ 直橫互換</button>
           <button class="mini" id="cvApply" style="color:var(--accent);font-weight:600">套用尺寸</button>
+          <button class="mini" id="cvTrim" style="grid-column:span 2" title="把畫布縮放到剛好包住所有物件（含外邊距）">畫布貼合內容</button>
         </div>
       </div>
       <div class="sec">
@@ -502,7 +530,7 @@ dialog h4{font-size:12px;color:var(--muted);margin:14px 0 6px;font-weight:600}
       <kbd>T</kbd> / <kbd>N</kbd><span>文字 / 便利貼</span>
       <kbd>M</kbd><span>編號標記（每次點擊自動 +1）</span>
       <kbd>X</kbd><span>馬賽克 / 模糊遮蔽</span>
-      <kbd>C</kbd><span>裁切選取的圖片（或雙擊圖片）</span>
+      <kbd>C</kbd><span>裁切選取的圖片（多選時一併裁切；或雙擊圖片）</span>
       <kbd>Ctrl+V</kbd><span>貼上圖片、截圖或複製的物件</span>
       <kbd>Ctrl+C / X / D</kbd><span>複製 / 剪下 / 原地再製</span>
       <kbd>Delete</kbd><span>刪除選取</span>
@@ -824,11 +852,73 @@ function resizeCanvas(w, h, { scaleContent = false, recenter = true } = {}) {
   syncCanvasTab();
   commit();
 }
+// 改變畫布大小並平移內容（拖曳左 / 上邊時內容要跟著位移，看起來才像只動那一邊）
+function resizeCanvasAnchored(w, h, ox, oy) {
+  if (w === W && h === H && !ox && !oy) return;
+  canvas.discardActiveObject();
+  userObjects().forEach(o => { o.set({ left: o.left + ox, top: o.top + oy }); o.setCoords(); });
+  W = w; H = h;
+  applyZoom(zoom);
+  syncCanvasTab();
+  commit();
+}
+function trimCanvasToContent() {
+  const objs = userObjects().filter(o => o.visible);
+  if (!objs.length) return toast('畫布上還沒有物件');
+  canvas.discardActiveObject();
+  const b = unionBounds(objs), m = +$('#lyMargin').value || 0;
+  resizeCanvasAnchored(Math.round(Math.max(16, b.width + m * 2)), Math.round(Math.max(16, b.height + m * 2)), m - b.left, m - b.top);
+  fitZoom();
+  toast(`畫布已貼合內容：${W} × ${H} px（外邊距沿用自動排版的設定）`);
+}
+function buildArtHandles() {
+  const wrap = canvas.wrapperEl;
+  const box = document.createElement('div'); box.id = 'artPreview'; box.hidden = true;
+  const label = document.createElement('div'); label.id = 'artLabel'; box.appendChild(label);
+  wrap.appendChild(box);
+  ['n', 's', 'e', 'w', 'nw', 'ne', 'sw', 'se'].forEach(d => {
+    const h = document.createElement('div');
+    h.className = 'art-h art-' + d; h.title = '拖曳調整畫布大小（角落按住 Shift 維持比例）';
+    h.addEventListener('pointerdown', e => startArtDrag(e, d, box, label));
+    wrap.appendChild(h);
+  });
+}
+function startArtDrag(e, d, box, label) {
+  if (e.button !== 0) return;
+  e.preventDefault(); e.stopPropagation();
+  if (crop) exitCrop(false);
+  const h = e.currentTarget; h.setPointerCapture(e.pointerId);
+  const x0 = e.clientX, y0 = e.clientY;
+  let res = null;
+  const clamp = v => Math.round(Math.max(16, Math.min(10000, v)));
+  const move = ev => {
+    const dx = (ev.clientX - x0) / zoom, dy = (ev.clientY - y0) / zoom;
+    let w = W, hh = H;
+    if (d.includes('e')) w = W + dx;
+    if (d.includes('w')) w = W - dx;
+    if (d.includes('s')) hh = H + dy;
+    if (d.includes('n')) hh = H - dy;
+    if (ev.shiftKey && d.length === 2) { const k = Math.max(w / W, hh / H); w = W * k; hh = H * k; }
+    w = clamp(w); hh = clamp(hh);
+    const l = d.includes('w') ? W - w : 0, t = d.includes('n') ? H - hh : 0;
+    res = { w, h: hh, l, t };
+    Object.assign(box.style, { left: l * zoom + 'px', top: t * zoom + 'px', width: w * zoom + 'px', height: hh * zoom + 'px' });
+    label.textContent = `${w} × ${hh} px`;
+    box.hidden = false;
+  };
+  const up = () => {
+    h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+    box.hidden = true;
+    if (res) resizeCanvasAnchored(res.w, res.h, -res.l, -res.t);
+  };
+  h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+}
+
 function updateStatus() {
   $('#stSize').textContent = `${W} × ${H} px`;
   $('#stZoom').textContent = `縮放 ${Math.round(zoom * 100)}%`;
   const objs = canvas.getActiveObjects();
-  $('#stSel').textContent = crop ? '裁切中：Enter 套用、Esc 取消'
+  $('#stSel').textContent = crop ? `裁切中${crop.items.length > 1 ? `（${crop.items.length} 張）` : ''}：Enter 套用、Esc 取消`
     : objs.length > 1 ? `已選取 ${objs.length} 個物件`
     : objs.length === 1 ? `已選取：${objs[0].name || labelOf(objs[0])}` : '';
 }
@@ -1063,11 +1153,7 @@ function ensureFontSoon(o) { clearTimeout(fontTimers.get(o)); fontTimers.set(o, 
 // ============================================================
 // 裁切
 // ============================================================
-function enterCrop(img) {
-  if (!isImage(img) || img.locked) return;
-  if (crop) exitCrop(false);
-  setTool('select');
-  canvas.discardActiveObject();
+function makeCropItem(img) {
   const nat = natural(img);
   const saved = { cropX: img.cropX, cropY: img.cropY, width: img.width, height: img.height, left: img.left, top: img.top, clipPath: img.clipPath };
   const visCenter = img.getCenterPoint();
@@ -1084,65 +1170,147 @@ function enterCrop(img) {
   img.set({ cropX: 0, cropY: 0, width: nat.w, height: nat.h, clipPath: null });
   img.setPositionByOrigin(fullCenter, 'center', 'center');
   img.setCoords();
+  return { img, rect, saved };
+}
+// 可傳入一張圖片或圖片陣列：多張時每張各有一個裁切框，可逐張調整取景
+function enterCrop(input) {
+  const imgs = (Array.isArray(input) ? input : [input]).filter(o => isImage(o) && !o.locked);
+  if (!imgs.length) return;
+  if (crop) exitCrop(false);
+  setTool('select');
+  canvas.discardActiveObject();
   const evented = new Map();
   userObjects().forEach(o => { evented.set(o, [o.evented, o.selectable]); o.set({ evented: false, selectable: false }); });
-  crop = { img, rect, saved, evented, prevUniform: canvas.uniformScaling };
-  canvas.add(rect); rect.setCoords();
-  canvas.setActiveObject(rect);
+  const items = imgs.map(makeCropItem);
+  crop = { items, evented, prevUniform: canvas.uniformScaling, ratio: 'free', ratioValue: null };
+  items.forEach(it => { canvas.add(it.rect); it.rect.setCoords(); });
+  canvas.setActiveObject(items[0].rect);
+  const multi = items.length > 1;
+  $('#cropTitle').textContent = multi ? `一併裁切 ${items.length} 張圖片` : '裁切圖片';
+  $('#cropHint').innerHTML = multi
+    ? '點選任一藍框個別調整取景，比例按鈕會同時套用到每一張。按 <kbd>Enter</kbd> 全部套用、<kbd>Esc</kbd> 取消。'
+    : '拖曳藍框調整要保留的範圍，按 <kbd>Enter</kbd> 套用、<kbd>Esc</kbd> 取消。';
+  $('#cropUnifyRow').hidden = !multi;
+  $('#cropUnify').checked = false;
   setCropRatio('free');
   canvas.requestRenderAll();
   updatePanel(); updateStatus();
 }
+function cropRatioValue(r, it) {
+  if (r === 'free') return null;
+  if (r === 'orig') { const n = natural(it.img); return n.w / n.h; }
+  if (r === 'canvas') return W / H;
+  return parseFloat(r);
+}
 function setCropRatio(r) {
   if (!crop) return;
+  // 要統一尺寸時每張比例必須相同：「自由」「原比例」改用第一個框目前的比例
+  if ($('#cropUnify').checked && (r === 'free' || r === 'orig') && crop.items.length > 1) {
+    const r0 = crop.items[0].rect;
+    r = String((r0.width * r0.scaleX) / (r0.height * r0.scaleY));
+  }
+  crop.ratio = r;
   $$('#cropRatios .mini').forEach(b => b.classList.toggle('on', b.dataset.ratio === r));
-  const { rect, img } = crop;
   const free = r === 'free';
   canvas.uniformScaling = !free;
-  rect.setControlsVisibility({ mt: free, mb: free, ml: free, mr: free, mtr: false });
-  if (free) { canvas.requestRenderAll(); return; }
-  const nat = natural(img);
-  const ratio = r === 'orig' ? nat.w / nat.h : r === 'canvas' ? W / H : parseFloat(r);
-  const iw = nat.w * img.scaleX, ih = nat.h * img.scaleY;
-  let w = iw, h = iw / ratio;
-  if (h > ih) { h = ih; w = ih * ratio; }
-  rect.set({ width: w, height: h, scaleX: 1, scaleY: 1 });
-  rect.setPositionByOrigin(img.getCenterPoint(), 'center', 'center');
-  rect.setCoords();
-  canvas.setActiveObject(rect);
+  const active = canvas.getActiveObject();
+  crop.items.forEach(it => {
+    const { rect, img } = it;
+    rect.setControlsVisibility({ mt: free, mb: free, ml: free, mr: free, mtr: false });
+    if (free) return;
+    const nat = natural(img);
+    const ratio = cropRatioValue(r, it);
+    const iw = nat.w * img.scaleX, ih = nat.h * img.scaleY;
+    let w = iw, h = iw / ratio;
+    if (h > ih) { h = ih; w = ih * ratio; }
+    rect.set({ width: w, height: h, scaleX: 1, scaleY: 1 });
+    rect.setPositionByOrigin(img.getCenterPoint(), 'center', 'center');
+    rect.setCoords();
+  });
+  crop.ratioValue = free ? null : cropRatioValue(r, crop.items[0]);
+  canvas.setActiveObject(active && active.isCropRect ? active : crop.items[0].rect);
   canvas.requestRenderAll();
+}
+function applyCropItem({ img, rect }) {
+  const nat = natural(img);
+  const M = img.calcTransformMatrix();
+  const lc = fabric.util.transformPoint(rect.getCenterPoint(), fabric.util.invertTransform(M));
+  let cw = rect.width * rect.scaleX / img.scaleX, ch = rect.height * rect.scaleY / img.scaleY;
+  let x0 = lc.x + nat.w / 2 - cw / 2, y0 = lc.y + nat.h / 2 - ch / 2;
+  const x1 = Math.min(nat.w, x0 + cw), y1 = Math.min(nat.h, y0 + ch);
+  x0 = Math.max(0, x0); y0 = Math.max(0, y0);
+  cw = x1 - x0; ch = y1 - y0;
+  if (cw < 2 || ch < 2) return false;
+  const nc = fabric.util.transformPoint(new fabric.Point(x0 + cw / 2 - nat.w / 2, y0 + ch / 2 - nat.h / 2), M);
+  img.set({ cropX: x0, cropY: y0, width: cw, height: ch });
+  img.setPositionByOrigin(nc, 'center', 'center');
+  return true;
 }
 function exitCrop(apply) {
   if (!crop) return;
-  const { img, rect, saved, evented, prevUniform } = crop;
-  let ok = false;
-  if (apply) {
-    const nat = natural(img);
-    const M = img.calcTransformMatrix();
-    const lc = fabric.util.transformPoint(rect.getCenterPoint(), fabric.util.invertTransform(M));
-    let cw = rect.width * rect.scaleX / img.scaleX, ch = rect.height * rect.scaleY / img.scaleY;
-    let x0 = lc.x + nat.w / 2 - cw / 2, y0 = lc.y + nat.h / 2 - ch / 2;
-    const x1 = Math.min(nat.w, x0 + cw), y1 = Math.min(nat.h, y0 + ch);
-    x0 = Math.max(0, x0); y0 = Math.max(0, y0);
-    cw = x1 - x0; ch = y1 - y0;
-    if (cw >= 2 && ch >= 2) {
-      const nc = fabric.util.transformPoint(new fabric.Point(x0 + cw / 2 - nat.w / 2, y0 + ch / 2 - nat.h / 2), M);
-      img.set({ cropX: x0, cropY: y0, width: cw, height: ch });
-      img.setPositionByOrigin(nc, 'center', 'center');
-      ok = true;
+  const { items, evented, prevUniform } = crop;
+  canvas.discardActiveObject();
+  // 統一尺寸的目標寬度：各裁切框寬度的平均
+  const ratio = crop.ratioValue;
+  const unify = apply && items.length > 1 && $('#cropUnify').checked && ratio;
+  const targetW = unify ? items.reduce((sum, it) => sum + it.rect.width * it.rect.scaleX, 0) / items.length : 0;
+  let changed = 0;
+  items.forEach(it => {
+    const ok = apply && applyCropItem(it);
+    if (!ok) it.img.set(it.saved);
+    else {
+      changed++;
+      if (unify) {
+        const c = it.img.getCenterPoint();
+        it.img.set({ scaleX: targetW / it.img.width, scaleY: targetW / ratio / it.img.height });
+        it.img.setPositionByOrigin(c, 'center', 'center');
+      }
     }
-  }
-  if (!ok) img.set(saved);
+    canvas.remove(it.rect);
+  });
   evented.forEach(([ev, sel], o) => o.set({ evented: ev, selectable: sel }));
-  canvas.remove(rect);
   canvas.uniformScaling = prevUniform;
   crop = null;
-  applyRound(img);
-  img.setCoords();
-  canvas.setActiveObject(img);
-  canvas.requestRenderAll();
-  if (ok) commit();
+  items.forEach(({ img }) => { applyRound(img); img.setCoords(); });
+  reselect(items.map(it => it.img));
+  if (changed) commit();
   updatePanel(); updateStatus();
+}
+
+// 多張圖片裁切成相同大小（以各自目前畫面中央為準）
+function unifyRatio(imgs, key) {
+  if (key === 'canvas') return W / H;
+  if (key === 'first') { const a = imgs[0]; return (a.width * a.scaleX) / (a.height * a.scaleY); }
+  return parseFloat(key);
+}
+function selectedImages() { return canvas.getActiveObjects().filter(o => isImage(o) && !o.locked); }
+function syncUnifyInputs(from) {
+  const imgs = selectedImages(); if (imgs.length < 2) return;
+  const ratio = unifyRatio(imgs, $('#unRatio').value);
+  if (from === 'h') { $('#unW').value = Math.max(8, Math.round(+$('#unH').value * ratio)); return; }
+  if (from !== 'w') {
+    // 物件在多選群組裡時 scale 是相對值，改用外框尺寸計算平均寬度
+    $('#unW').value = Math.round(imgs.reduce((sum, o) => sum + o.getScaledWidth(), 0) / imgs.length);
+  }
+  $('#unH').value = Math.max(8, Math.round(+$('#unW').value / ratio));
+}
+function unifyImages() {
+  const imgs = selectedImages(); if (imgs.length < 2) return;
+  const ratio = unifyRatio(imgs, $('#unRatio').value);
+  const tw = +$('#unW').value, th = tw / ratio;
+  if (!(tw >= 8)) return toast('請輸入有效的寬度');
+  canvas.discardActiveObject();
+  imgs.forEach(img => {
+    const c = img.getCenterPoint();
+    let cw = img.width, ch = img.height;
+    if (cw / ch > ratio) cw = ch * ratio; else ch = cw / ratio;
+    img.set({ cropX: img.cropX + (img.width - cw) / 2, cropY: img.cropY + (img.height - ch) / 2, width: cw, height: ch, scaleX: tw / cw, scaleY: th / ch });
+    img.setPositionByOrigin(c, 'center', 'center');
+    applyRound(img); img.setCoords();
+  });
+  reselect(imgs);
+  commit();
+  toast(`已把 ${imgs.length} 張圖片裁成 ${Math.round(tw)} × ${Math.round(th)} px`);
 }
 
 // ============================================================
@@ -1348,6 +1516,7 @@ canvas.on('object:moving', e => {
   if (sy) { o.top += sy.d; guides.push({ y: sy.at }); }
   o.setCoords();
 });
+const cropMask = document.createElement('canvas');
 canvas.on('after:render', opt => {
   const ctx = opt.ctx;
   if (ctx !== canvas.contextContainer || (!guides.length && !crop)) return;
@@ -1355,21 +1524,31 @@ canvas.on('after:render', opt => {
   const v = canvas.viewportTransform;
   ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
   if (crop) {
-    const r = crop.rect, M = r.calcTransformMatrix(), w = r.width / 2, h = r.height / 2;
-    const pts = [[-w, -h], [w, -h], [w, h], [-w, h]].map(([x, y]) => fabric.util.transformPoint(new fabric.Point(x, y), M));
-    ctx.beginPath();
-    ctx.rect(-W * 4, -H * 4, W * 9, H * 9);
-    ctx.moveTo(pts[0].x, pts[0].y); pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath();
-    ctx.fillStyle = 'rgba(15,17,20,.6)';
-    ctx.fill('evenodd');
+    // 先在離屏畫布畫暗色遮罩，再挖掉每個裁切框（多個框重疊也不會反轉）
+    const el = canvas.lowerCanvasEl, k = el.width / canvas.getWidth();
+    cropMask.width = el.width; cropMask.height = el.height;
+    const m = cropMask.getContext('2d');
+    m.fillStyle = 'rgba(15,17,20,.6)';
+    m.fillRect(0, 0, el.width, el.height);
+    m.setTransform(k * v[0], 0, 0, k * v[3], k * v[4], k * v[5]);
+    m.globalCompositeOperation = 'destination-out';
+    const frames = crop.items.map(({ rect: r }) => {
+      const M = r.calcTransformMatrix(), w = r.width / 2, h = r.height / 2;
+      const P = (x, y) => fabric.util.transformPoint(new fabric.Point(x, y), M);
+      const pts = [P(-w, -h), P(w, -h), P(w, h), P(-w, h)];
+      m.beginPath(); m.moveTo(pts[0].x, pts[0].y); pts.slice(1).forEach(q => m.lineTo(q.x, q.y)); m.closePath(); m.fill();
+      return { P, w, h };
+    });
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(cropMask, 0, 0); ctx.restore();
     // 三分線
     ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1 / zoom;
     ctx.beginPath();
-    for (const t of [1 / 3, 2 / 3]) {
-      const a = fabric.util.transformPoint(new fabric.Point(-w + 2 * w * t, -h), M), b = fabric.util.transformPoint(new fabric.Point(-w + 2 * w * t, h), M);
-      const c = fabric.util.transformPoint(new fabric.Point(-w, -h + 2 * h * t), M), d = fabric.util.transformPoint(new fabric.Point(w, -h + 2 * h * t), M);
-      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y);
-    }
+    frames.forEach(({ P, w, h }) => {
+      for (const t of [1 / 3, 2 / 3]) {
+        const a = P(-w + 2 * w * t, -h), b = P(-w + 2 * w * t, h), c = P(-w, -h + 2 * h * t), d = P(w, -h + 2 * h * t);
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y);
+      }
+    });
     ctx.stroke();
   }
   if (guides.length) {
@@ -1653,7 +1832,13 @@ function updatePanel() {
   $('#secText').hidden = !objs.some(isText);
   $('#secShape').hidden = !objs.some(isShape);
   $('#secBadge').hidden = !(one && one.kind === 'badge');
-  $('#railCrop').disabled = !(one && isImage(one));
+  const imgsSel = objs.filter(o => isImage(o) && !o.locked);
+  $('#secMulti').hidden = imgsSel.length < 2;
+  if (imgsSel.length >= 2) {
+    $('#multiTitle').textContent = `已選 ${imgsSel.length} 張圖片`;
+    if (document.activeElement !== $('#unW') && document.activeElement !== $('#unH')) syncUnifyInputs();
+  }
+  $('#railCrop').disabled = !imgsSel.length && !crop;
   $('#railCrop').classList.toggle('on', !!crop);
 
   if (tool !== 'select' && !crop) {
@@ -2066,7 +2251,7 @@ document.addEventListener('keydown', e => {
   if (k === ']') return order('forward');
   if (k === '[') return order('backward');
   if (k === '?') return $('#dlgHelp').showModal();
-  if (k === 'c') { const a = canvas.getActiveObject(); if (isImage(a)) enterCrop(a); return; }
+  if (k === 'c') { const imgs = selectedImages(); if (imgs.length) enterCrop(imgs); return; }
   if (k.startsWith('arrow')) {
     const objs = canvas.getActiveObjects(); if (!objs.length) return;
     e.preventDefault();
@@ -2099,6 +2284,8 @@ const ACTIONS = {
   distH: () => distribute('h'), distV: () => distribute('v'),
   group, ungroup,
   crop: () => enterCrop(canvas.getActiveObject()),
+  cropMulti: () => enterCrop(selectedImages()),
+  unify: unifyImages,
   cropApply: () => exitCrop(true), cropCancel: () => exitCrop(false),
   resetImg: () => {
     const o = canvas.getActiveObject(); if (!isImage(o)) return;
@@ -2121,7 +2308,12 @@ document.addEventListener('click', e => {
   if (b && ACTIONS[b.dataset.act]) { e.preventDefault(); ACTIONS[b.dataset.act](); }
 });
 $$('.tool[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
-$('#railCrop').addEventListener('click', () => { if (crop) exitCrop(true); else enterCrop(canvas.getActiveObject()); });
+$('#railCrop').addEventListener('click', () => { if (crop) exitCrop(true); else enterCrop(selectedImages()); });
+$('#cropUnify').addEventListener('change', () => { if (crop) setCropRatio(crop.ratio); });
+$('#unRatio').addEventListener('change', () => syncUnifyInputs('ratio'));
+$('#unW').addEventListener('input', () => syncUnifyInputs('w'));
+$('#unH').addEventListener('input', () => syncUnifyInputs('h'));
+$('#cvTrim').addEventListener('click', trimCanvasToContent);
 $('#railHelp').addEventListener('click', () => $('#dlgHelp').showModal());
 $('#stHelp').addEventListener('click', () => $('#dlgHelp').showModal());
 $$('#cropRatios [data-ratio]').forEach(b => b.addEventListener('click', () => setCropRatio(b.dataset.ratio)));
@@ -2157,6 +2349,7 @@ buildFontSelects();
 buildSwatches();
 buildPresetSelect();
 buildPresetDialog();
+buildArtHandles();
 fitZoom();
 setTool('select');
 syncCanvasTab();
