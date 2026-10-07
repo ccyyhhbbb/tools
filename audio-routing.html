@@ -53,7 +53,15 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 
 /* ── layout ── */
 #mid{flex:1;display:flex;min-height:0;position:relative}
-#lib{width:236px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;min-height:0}
+#lib{width:var(--libw,236px);background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;min-height:0;position:relative}
+.lib-rz{position:absolute;top:0;bottom:0;right:-4px;width:8px;cursor:ew-resize;z-index:6}
+.lib-rz::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:2px;background:transparent;transition:background .15s}
+.lib-rz:hover::after,.lib-rz.on::after{background:var(--accent)}
+.lib-add{width:100%;margin-top:6px;height:28px;border:1px dashed var(--line2);border-radius:7px;background:transparent;cursor:pointer;font-size:12px;color:var(--dim)}
+.lib-add:hover{border-color:var(--accent);color:var(--accent)}
+.lib-ed{width:22px;height:22px;flex:none;border:0;border-radius:5px;background:transparent;color:var(--dim);cursor:pointer;font-size:12px;margin-left:2px}
+.lib-ed:hover{background:var(--panel2);color:var(--accent)}
+.srcb{display:inline-block;padding:0 5px;border-radius:4px;font-size:10px;font-weight:700;line-height:15px;margin-right:3px}
 .lib-head{padding:10px 10px 4px}
 #lib-list{overflow-y:auto;flex:1;padding:2px 8px 16px}
 .lib-cat{font-size:11px;color:var(--dim);letter-spacing:.06em;margin:14px 6px 5px;display:flex;align-items:center;gap:7px;font-weight:600}
@@ -219,7 +227,8 @@ kbd{font-family:inherit;font-size:10.5px;padding:1px 5px;border:1px solid var(--
 @media (max-width:900px){
   .only-m{display:inline-flex}
   #lib,#side{position:absolute;top:0;bottom:0;z-index:40;transition:transform .2s;box-shadow:var(--shadow)}
-  #lib{left:0;transform:translateX(-105%)}
+  #lib{left:0;transform:translateX(-105%);width:min(var(--libw,236px),88vw)}
+  .lib-rz{display:none}
   #side{right:0;transform:translateX(105%);width:min(330px,92vw)}
   #lib.open,#side.open{transform:none}
   .hide-m{display:none!important}
@@ -227,8 +236,8 @@ kbd{font-family:inherit;font-size:10.5px;padding:1px 5px;border:1px solid var(--
 }
 
 /* ── library tabs / inventory ── */
-.lib-tabs{display:flex;gap:3px;padding:8px 10px 2px}
-.lib-tabs button{flex:1;height:28px;border:1px solid var(--line2);background:transparent;border-radius:7px;font-size:11.5px;cursor:pointer;color:var(--dim);white-space:nowrap;padding:0 4px}
+.lib-tabs{display:flex;flex-wrap:wrap;gap:3px;padding:8px 10px 2px}
+.lib-tabs button{flex:1 1 auto;height:28px;border:1px solid var(--line2);background:transparent;border-radius:7px;font-size:11.5px;cursor:pointer;color:var(--dim);white-space:nowrap;padding:0 4px}
 .lib-tabs button.on{background:var(--accent-bg);color:var(--accent);border-color:transparent;font-weight:600}
 #lib-list details{margin-bottom:2px}
 #lib-list summary{list-style:none;cursor:pointer;font-size:11px;color:var(--dim);letter-spacing:.04em;margin:12px 6px 5px;display:flex;align-items:center;gap:7px;font-weight:600}
@@ -299,6 +308,10 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
 .ico-b.on{border-color:var(--accent);background:var(--accent-bg)}
 @media (max-width:900px){ #clv{padding:10px 8px 60px} .cl-meta{grid-template-columns:auto minmax(0,1fr)} }
 
+.cust-ic{display:flex;flex-wrap:wrap;gap:3px}
+.cust-row{display:grid;grid-template-columns:88px 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.cust-row>span{color:var(--dim);font-size:12px}
+
 #print-area{display:none}
 @media print{
   @page{size:A4 landscape;margin:10mm}
@@ -354,10 +367,11 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
 
 <div id="mid">
   <aside id="lib">
-    <div class="lib-tabs"><button data-lt="inv" title="臺灣聲響實驗室器材清單（含庫存數量）">TSL 器材</button><button data-lt="campus" title="各場地現有設備（C-LAB 展演空間使用手冊）">園區器材</button><button data-lt="model" title="各品牌型號，接口依原廠規格">品牌型號</button><button data-lt="generic" title="通用裝置、椅子、坐墊、桌子">通用</button></div>
-    <div class="lib-head"><input id="lib-q" type="search" placeholder="搜尋（SM58、X32、喇叭、Mipro…）"></div>
+    <div class="lib-tabs"><button data-lt="inv" title="臺灣聲響實驗室器材清單（含庫存數量）">TSL 器材</button><button data-lt="campus" title="各場地現有設備（C-LAB 展演空間使用手冊）">園區器材</button><button data-lt="model" title="各品牌型號，接口依原廠規格">品牌型號</button><button data-lt="generic" title="通用裝置、人物・樂器、椅子、坐墊、桌子">通用</button><button data-lt="event" title="各活動臨時進場的器材，以及自訂器材">活動臨時</button></div>
+    <div class="lib-head"><input id="lib-q" type="search" placeholder="搜尋（SM58、X32、喇叭、Mipro…）"><button class="lib-add" id="cust-new" title="臨時進來、清單裡沒有的器材，可以自己建立">＋ 新增自訂器材</button></div>
     <div id="lib-list"></div>
     <div class="lib-foot" id="lib-foot">點一下加入畫布中央，或直接拖曳到想放的位置。</div>
+    <div class="lib-rz" id="lib-rz" title="拖曳調整寬度（雙擊還原）"></div>
   </aside>
 
   <main id="stage">
@@ -452,6 +466,13 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
         <li>「品牌型號」分頁的接口依原廠規格建立（例如 X32、WING、dLive、MIPRO 無線系統）；無線發射器和接收機不同系列會被標成不相容。</li>
         <li>標示「型號待確認」的品項（Focusrite Red、MOTU MK5）是依名稱推測的型號，接口可在右側面板自行修改。</li>
       </ul>
+      <h3>活動臨時器材、自訂器材、來源標註</h3>
+      <ul>
+        <li>左側「活動臨時」分頁依活動列出臨時進場的器材（例如 2026Forum 的紅外線口譯系統），會一直保留，之後也查得到。</li>
+        <li><b>＋ 新增自訂器材</b>：清單裡沒有的器材，可以自己填名稱、型號、數量、類型（決定接口）、圖示、來源與活動分組。自訂器材存在這台電腦的瀏覽器，並會一起存進 JSON；清單上的 ✎ 可以修改或刪除。</li>
+        <li><b>來源</b>：每台裝置會標示 <span class="srcb" style="background:rgba(59,130,246,.18);color:#3b82f6">TSL</span><span class="srcb" style="background:rgba(16,185,129,.18);color:#10b981">場地</span><span class="srcb" style="background:rgba(245,158,11,.2);color:#f59e0b">自備</span>（來者自備）。從 TSL／園區器材加入會自動標示，也可以在右側面板改；多選時可以一次設定。器材清單報表會列出來源。</li>
+        <li>左側欄的右邊緣可以拖曳調整寬度，雙擊還原。</li>
+      </ul>
       <h3>場地配置與線長</h3>
       <ul>
         <li>上方切到 <b>🗺 場地配置</b>，從選單選 C-LAB 場地（比例已依手冊圖面尺寸換算），或「上傳平面圖」用自己的圖再「⚖ 校正比例」。</li>
@@ -476,6 +497,13 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <h3>存檔</h3>
       <p>內容會自動保存在這台電腦的瀏覽器裡。要備份或分享給別人，請用「檔案 → 儲存 JSON」，對方用「開啟 JSON」即可載入。</p>
     </div>
+  </div>
+</div>
+
+<div id="cust" class="modal-wrap" hidden>
+  <div class="modal">
+    <div class="m-head"><b id="cust-t">新增自訂器材</b><div class="grow"></div><button class="x" data-close>✕</button></div>
+    <div class="m-body" id="cust-body"></div>
   </div>
 </div>
 
@@ -577,7 +605,7 @@ const TYPES={
   mic_dyn:{cat:'src',icon:'🎤',name:'動圈麥克風',kw:'mic dynamic sm58 sm57 麥克風 人聲 收音',make:()=>({name:'Mic',model:'SM58',ports:[P('out','Out','XLR','mic')]})},
   mic_con:{cat:'src',icon:'🎙️',name:'電容麥克風',kw:'mic condenser 電容 麥克風 收音',make:()=>({name:'Condenser',ph:'need',ports:[P('out','Out','XLR','mic')]})},
   mic_rib:{cat:'src',icon:'🎙️',name:'鋁帶麥克風',kw:'mic ribbon 鋁帶 麥克風',make:()=>({name:'Ribbon',ph:'avoid',ports:[P('out','Out','XLR','mic')]})},
-  mic_wl:{cat:'src',icon:'📡',name:'無線麥克風',kw:'wireless mic 無線 手持 領夾 麥克風',make:()=>({name:'Wireless Mic',ports:[P('out','RF','RF','rf')]})},
+  mic_wl:{cat:'src',icon:'🎤',name:'無線麥克風',kw:'wireless mic 無線 手持 領夾 麥克風',make:()=>({name:'Wireless Mic',ports:[P('out','RF','RF','rf')]})},
   wl_rx:{cat:'src',icon:'📻',name:'無線接收器',kw:'wireless receiver 無線 接收機',make:()=>({name:'Wireless RX',ports:[...seq(2,'in','RF','RF','rf'),...seq(2,'out','Out','XLR','mic')]})},
   guitar:{cat:'src',icon:'🎸',name:'電吉他／貝斯',kw:'guitar bass 吉他 貝斯 樂器',make:()=>({name:'Guitar',ports:[P('out','Out','TS','inst')]})},
   gtr_amp:{cat:'src',icon:'🔶',name:'吉他／貝斯音箱',kw:'amp cabinet 音箱 吉他',make:()=>({name:'Guitar Amp',ports:[P('in','Input','TS','inst'),P('out','Line Out','XLR','line')]})},
@@ -703,6 +731,12 @@ function parsePorts(spec){
 }
 const MIDI_IO='in|MIDI In|MIDI|midi;out|MIDI Out|MIDI|midi';
 const MODELS=[
+  // TAIDEN 數位紅外線同步口譯系統（2026Forum 活動臨時器材）
+  ['taiden_5100ma','pa','📶','TAIDEN','HCS-5100MA','數位紅外線發射主機','','in|8*Ch|RCA|line;in|Aux 1,Aux 2|XLR|line;in|HF In|BNC|rf;out|6*HF Out|BNC|rf','taiden hcs-5100ma 紅外線 輻射主機 發射主機 同步口譯 翻譯 ir transmitter'],
+  ['taiden_5100t25','pa','🟪','TAIDEN','HCS-5100T/25','25W 紅外線發射器（輻射板）','','in|HF In|BNC|rf;out|HF Out|BNC|rf;out|IR|RF|rf','taiden hcs-5100t 紅外線 發射器 輻射板 radiator'],
+  ['taiden_ir_rx','pa','📟','TAIDEN','數位紅外線接收器','紅外線接收器','','in|IR|RF|rf;out|Phones|MINI|hp','taiden 紅外線 接收器 receiver 口譯 聽眾'],
+  ['taiden_interp','mix','🎛️','TAIDEN','雙人翻譯員操作台','口譯員操作台','','in|Mic 1,Mic 2|MINI|mic;out|Phones 1,Phones 2|MINI|hp;io|主機連接|RJ45|ctrl','taiden interpreter 翻譯員 口譯 操作台 口譯間'],
+  ['taiden_headset','src','🎧','TAIDEN','頭戴式耳機麥克風','耳機麥克風','','in|Phones|MINI|hp;out|Mic|MINI|mic','taiden headset 頭戴 耳機 麥克風 口譯'],
   // key, cat, icon, brand, model, kind, ph, spec, keywords
   // ── 混音器・控台 ──
   ['yamaha_mg16xu','mix','🎛️','Yamaha','MG16XU','類比混音器','','in|8*Ch|COMBO|micline;in|Ch 9/10 Mic,Ch 11/12 Mic|XLR|mic;in|Ch 9 L,Ch 10 R,Ch 11 L,Ch 12 R,Ch 13 L,Ch 14 R,Ch 15 L,Ch 16 R|TRS|line;out|Stereo L,Stereo R|XLR|line;out|Monitor|TRS|line;out|4*Aux|TRS|line;out|4*Group|TRS|line;out|Phones|TRS|hp;io|USB|USBB|usb|ch=2×2','mg16 yamaha mixer 混音器'],
@@ -774,8 +808,8 @@ const MODELS=[
   ['mipro_act747','src','📻','MIPRO','ACT-747','類比四頻道接收機','','in|RF 1,RF 2,RF 3,RF 4|RF|rf|sys=MIPRO ACT-7;in|Ant A,Ant B|TNC|rf;out|4*Out|XLR|line;out|Mix Out|XLR|line;out|Mix Out TRS|TRS|line;out|Phones|TRS|hp','mipro act747 receiver 接收機'],
   ['mipro_ta80','src','📡','MIPRO','TA-80','數位插接式發射器','','in|Mic In|XLR|mic;out|RF|RF|rf|sys=MIPRO ACT-8','mipro ta80 plug-on 插接'],
   ['mipro_act800t','src','📡','MIPRO','ACT-800T','數位腰包發射器','','in|Mic In|MXLR4|mic;out|RF|RF|rf|sys=MIPRO ACT-8','mipro act800t bodypack 腰包'],
-  ['mipro_act300h','src','📡','MIPRO','ACT-300H','類比手握發射器','','out|RF|RF|rf|sys=MIPRO ACT-3','mipro act300h handheld 手握'],
-  ['mipro_act700h','src','📡','MIPRO','ACT-700H','類比手握發射器','','out|RF|RF|rf|sys=MIPRO ACT-7','mipro act700h handheld 手握'],
+  ['mipro_act300h','src','🎤','MIPRO','ACT-300H','類比手握發射器','','out|RF|RF|rf|sys=MIPRO ACT-3','mipro act300h handheld 手握'],
+  ['mipro_act700h','src','🎤','MIPRO','ACT-700H','類比手握發射器','','out|RF|RF|rf|sys=MIPRO ACT-7','mipro act700h handheld 手握'],
   ['mipro_act700t','src','📡','MIPRO','ACT-700T','類比腰包發射器','','in|Mic In|MXLR4|mic;out|RF|RF|rf|sys=MIPRO ACT-7','mipro act700t bodypack 腰包'],
   ['mipro_mu55l','src','🎙️','MIPRO','MU-55L','全指向領夾麥克風','','out|Out|MXLR4|mic','mipro mu55 lavalier 領夾'],
   ['mipro_mu53hns','src','🎙️','MIPRO','MU-53HNS','頭戴麥克風','','out|Out|MXLR4|mic','mipro mu53 headset 頭戴'],
@@ -838,7 +872,7 @@ const MODELS=[
   ['mipro_ma708','pa','🔊','MIPRO','MA-708','移動式無線音箱','','in|Mic In|COMBO|micline;in|Line In|RCA|line;in|RF 1,RF 2|RF|rf|sys=MIPRO MA;out|Line Out|RCA|line;out|Ext Speaker|TS|spk;io|藍牙|BT|bt','mipro ma708 portable pa 移動式音響'],
   ['mipro_ma_hh','src','🎤','MIPRO','MA-708 無線手握麥克風','無線麥克風','','out|RF|RF|rf|sys=MIPRO MA','mipro ma wireless handheld'],
   ['mipro_act312b','src','📻','MIPRO','ACT-312B','類比雙頻道接收機','','in|RF 1,RF 2|RF|rf|sys=MIPRO ACT-3;in|Ant A,Ant B|BNC|rf;out|Out 1,Out 2|XLR|line;out|Mix Out|TRS|line','mipro act312 receiver 接收機'],
-  ['mipro_act32h','src','📡','MIPRO','ACT-32H','類比手握發射器','','out|RF|RF|rf|sys=MIPRO ACT-3','mipro act32h handheld 手握'],
+  ['mipro_act32h','src','🎤','MIPRO','ACT-32H','類比手握發射器','','out|RF|RF|rf|sys=MIPRO ACT-3','mipro act32h handheld 手握'],
   ['epson_g7400u','rec','📽️','Epson','EB-G7400U','雷射投影機','','in|HDMI In|HDMI|hdmi;in|HDBaseT|RJ45|hdmi;io|LAN|RJ45|net','epson projector 投影機'],
   ['epson_u42','rec','📽️','Epson','EB-U42','投影機','','in|HDMI 1,HDMI 2|HDMI|hdmi;in|Audio In L,Audio In R|RCA|line','epson projector 投影機'],
   ['roly_a500w','rec','📽️','ROLY','RL-A500W','投影機','','in|HDMI|HDMI|hdmi','roly projector 投影機'],
@@ -867,6 +901,8 @@ const INV_SECS=[
   {id:'pc',name:'TSL 倉庫・電腦設備'},
   {id:'other',name:'TSL 倉庫・其它'},
   {id:'stage',name:'舞台板腳'},
+  // 活動臨時器材（ev）：依活動分組，永久保留；src 是預設來源（未定就留空）
+  {id:'ev-2026forum',name:'2026Forum',ev:true,open:true,src:''},
   {id:'v-r102',name:'R102 共享吧',campus:true,owner:['r102'],open:true},
   {id:'v-graybox',name:'聯合餐廳灰盒子 Gray Box',campus:true,owner:['graybox'],open:true},
   {id:'v-r101',name:'R101 排練吧',campus:true,owner:['r101'],open:true},
@@ -904,6 +940,13 @@ const INV=[
   ['fvl-par','fvl','防水舞台染色燈','URANUS LED PAR IP65',6,'par_ip65'],
   ['fvl-mover','fvl','電腦燈','Jolly LX-740',2,'mover_lx740'],
   ['sl-chair','fvl','椅子','',42,'f_chair'],
+
+  // 2026Forum：數位式紅外線設備照片.pdf（型號與數量待確認）
+  ['ev26f-ma','ev-2026forum','數位式紅外線輻射主機','TAIDEN HCS-5100MA',1,'taiden_5100ma','','細項型號（頻道數）與數量待確認'],
+  ['ev26f-rad','ev-2026forum','25 瓦紅外線發射器','TAIDEN HCS-5100T/25',1,'taiden_5100t25','','數量待確認'],
+  ['ev26f-rx','ev-2026forum','數位式紅外線接收器','',1,'taiden_ir_rx','','附耳機；型號與數量待確認'],
+  ['ev26f-interp','ev-2026forum','雙人翻譯員操作台','',1,'taiden_interp','','裝置於口譯間內；型號、接口與數量待確認'],
+  ['ev26f-headset','ev-2026forum','頭戴式耳機／麥克風','',2,'taiden_headset','','型號與數量待確認'],
 
   ['st3-x32r','st3','音響控台主機','Behringer X32 Rack',1,'bx_x32rack'],
   ['st3-sd8','st3','音響控台擴充 IO','Behringer SD8',1,'bx_sd8'],
@@ -1251,10 +1294,13 @@ const TH={
 /* =========================================================
    state
    ========================================================= */
+/* 器材來源（sanitize 會用到，要在 doc 建立前定義） */
+const SRC={tsl:{l:'TSL',full:'TSL 器材',c:'#3b82f6'},venue:{l:'場地',full:'場地設備',c:'#10b981'},byo:{l:'自備',full:'來者自備',c:'#f59e0b'}};
+const srcBadge=k=>SRC[k]?`<span class="srcb" style="background:${SRC[k].c}2e;color:${SRC[k].c}">${SRC[k].l}</span>`:'';
 const KEY='audioRouting.v1';
 let doc=sanitize({name:'未命名專案'});
 let view={x:60,y:60,k:1};
-const settings={wire:'curve',snap:true,osnap:true,labels:true,arrows:true,trace:false,theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
+const settings={wire:'curve',snap:true,osnap:true,libW:236,labels:true,arrows:true,trace:false,theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
 let sel={n:new Set(),w:new Set(),z:new Set(),f:new Set(),i:new Set()};
 let undoS=[],redoS=[],pendingSnap=null;
 let compatCache=new Map(), issues=[], cablePlan={rows:[],summary:[]};
@@ -1293,7 +1339,7 @@ function uniqueName(base,except){
 }
 function makeNode(type,x,y){
   const T=TYPES[type]||TYPES.custom, d=T.make();
-  return {id:uid(),type:TYPES[type]?type:'custom',icon:T.icon,name:uniqueName(d.name||T.name),model:d.model||'',loc:'',ph:d.ph||'',color:'',w:d.w||210,notes:'',flip:false,x:Math.round(x),y:Math.round(y),ports:d.ports,inv:'',vx:null,vy:null,vz:null};
+  return {id:uid(),type:TYPES[type]?type:'custom',icon:T.icon,src:'',name:uniqueName(d.name||T.name),model:d.model||'',loc:'',ph:d.ph||'',color:'',w:d.w||210,notes:'',flip:false,x:Math.round(x),y:Math.round(y),ports:d.ports,inv:'',vx:null,vy:null,vz:null};
 }
 // key 是 "inv:<id>" 或型別 key
 function makeAny(key,x,y){
@@ -1304,6 +1350,7 @@ function makeAny(key,x,y){
     if(it.type==='prop'){ n.name=uniqueName(it.item); n.model=it.model; n.icon=it.icon||n.icon; n.w=170; }
     else { const T=TYPES[it.type]; if(!T.brand){ n.name=uniqueName(it.item); n.model=it.model; } else if(it.model) n.model=it.model; }
     if(it.note) n.notes=it.note;
+    if(it.custom&&it.icon) n.icon=it.icon;
     return n;
   }
   return makeNode(key,x,y);
@@ -1339,6 +1386,13 @@ function furnAt(vv,x,y,kinds){
   }
   return best;
 }
+/* ── 器材來源：TSL／場地／來者自備；沒手動指定時依器材清單推斷 ── */
+function autoSrc(n){
+  const it=n.inv&&INVM.get(n.inv); if(!it) return '';
+  if(it.src) return it.src; if(it.owner) return 'venue';
+  const s=INV_SECS.find(x=>x.id===it.sec); return s&&s.ev?(s.src||''):'tsl';
+}
+const srcOf=n=>SRC[n.src]?n.src:autoSrc(n);
 const isMicNode=n=>{ const T=TYPES[n.type]||{}; return T.cat==='src'&&/麥克風|mic|發射器/i.test((T.kind||T.name||'')+n.type); };
 // 裝置放在桌上／架上／舞台上時的離地高度
 function supportHeight(n){
@@ -1439,7 +1493,7 @@ function sanitize(d){
   for(const n of (Array.isArray(d.nodes)?d.nodes:[])){
     if(!n||!n.id) continue;
     const T=TYPES[n.type]?n.type:'custom';
-    out.nodes.push({id:String(n.id),type:T,icon:n.icon||TYPES[T].icon,name:String(n.name??''),model:String(n.model??''),loc:String(n.loc??''),ph:n.ph||'',color:n.color||'',
+    out.nodes.push({id:String(n.id),type:T,icon:(n.icon==='📡'&&TYPES[T].icon==='🎤')?'🎤':(n.icon||TYPES[T].icon),src:SRC[n.src]?n.src:'',name:String(n.name??''),model:String(n.model??''),loc:String(n.loc??''),ph:n.ph||'',color:n.color||'',
       w:clamp(+n.w||210,140,480),notes:String(n.notes??''),flip:!!n.flip,x:+n.x||0,y:+n.y||0,inv:INVM.has(n.inv)?n.inv:'',vx:num(n.vx),vy:num(n.vy),vz:num(n.vz),vv:n.vv?String(n.vv):(num(n.vx)!=null?out.venue:''),
       ports:(Array.isArray(n.ports)?n.ports:[]).filter(p=>p&&p.id).map(p=>({id:String(p.id),dir:['in','out','io'].includes(p.dir)?p.dir:'in',name:String(p.name??''),conn:CONN[p.conn]?p.conn:'XLR',sig:SIG[p.sig]?p.sig:'line',ch:String(p.ch??''),p48:!!p.p48,grp:p.grp||'',sys:p.sys?String(p.sys):''}))});
   }
@@ -1650,7 +1704,9 @@ function nodeSVG(n,T,o){
   if(Ly.nio&&Ly.main){ const yy=HEAD+PADT+Ly.main*ROW+SEP/2; s+=`<line x1="10" x2="${w-10}" y1="${yy}" y2="${yy}" stroke="${T.stroke}" stroke-dasharray="3 3"/>`; }
   s+=`<rect width="${w}" height="${h}" rx="8" fill="none" stroke="${isSel?T.sel:T.stroke}" stroke-width="${isSel?1.6:1}"/>`;
   s+=`<text x="12" y="30" font-size="18">${esc(n.icon||'⬜')}</text>`;
-  s+=`<text x="40" y="21" font-size="13" font-weight="600" fill="${T.text}">${esc(ell(n.name,w-50,'600 13px'))}</text>`;
+  const sk=srcOf(n), sT=SRC[sk], sW=sT?tw(sT.l,'700 9.5px')+10:0;
+  if(sT) s+=`<rect x="${w-sW-8}" y="8" width="${sW}" height="15" rx="4" fill="${sT.c}" fill-opacity=".2"/><text x="${w-sW/2-8}" y="19" text-anchor="middle" font-size="9.5" font-weight="700" fill="${sT.c}">${sT.l}</text>`;
+  s+=`<text x="40" y="21" font-size="13" font-weight="600" fill="${T.text}">${esc(ell(n.name,w-50-(sW?sW+6:0),'600 13px'))}</text>`;
   const sub=[n.model,n.loc].filter(Boolean).join(' · ');
   const phT=n.ph==='need'?'+48V':n.ph==='avoid'?'禁 48V':'';
   const phW=phT?tw(phT,'700 9.5px')+10:0;
@@ -1748,6 +1804,7 @@ function markerSVG(n,T,o){
   if(!o.exp) s+=`<circle class="vh" r="${r+8}" fill="transparent" stroke="${isSel?T.sel:'transparent'}" stroke-width="2" stroke-dasharray="3 3"/>`;
   s+=`<circle r="${r}" fill="${T.node}" stroke="${isSel?T.sel:col}" stroke-width="${isSel?3:2.2}"/>`;
   s+=`<text y="5.5" text-anchor="middle" font-size="14">${esc(n.icon)}</text>`;
+  const sT=SRC[srcOf(n)]; if(sT) s+=`<circle cx="${r*.78}" cy="${-r*.78}" r="4.5" fill="${sT.c}" stroke="${T.node}" stroke-width="1.5"><title>${sT.full}</title></circle>`;
   const lab=ell(n.name,130,'600 10.5px'), lw=tw(lab,'600 10.5px')+10;
   s+=`<rect x="${-lw/2}" y="${r+3}" width="${lw}" height="15" rx="4" fill="${T.pill}" fill-opacity=".92" stroke="${isSel?T.sel:T.stroke}"/><text y="${r+14}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${T.text}">${esc(lab)}</text>`;
   return s+'</g>';
@@ -2695,7 +2752,7 @@ function openPick(el,o){
 function renderQA(){
   if(!qa) return; const raw=$('#qa-in').value.trim(), q=raw.toLowerCase();
   const all=[
-    ...INV.filter(i=>i.type!=='prop'&&(isVenue()||!TYPES[i.type].furn)).map(i=>{ const t=TYPES[i.type], sec=INV_SECS.find(x=>x.id===i.sec); return {k:'inv:'+i.id,t,icon:i.icon||t.icon,name:i.model||i.item,sub:(sec&&sec.campus?'園區 '+venueShort(sec.owner[0])+' ':'TSL ')+i.item,s:i.item+' '+i.model+' '+(t.kw||'')}; }),
+    ...INV.filter(i=>i.type!=='prop'&&(isVenue()||!TYPES[i.type].furn)).map(i=>{ const t=TYPES[i.type], sec=INV_SECS.find(x=>x.id===i.sec); return {k:'inv:'+i.id,t,icon:i.icon||t.icon,name:i.model||i.item,sub:(sec&&sec.campus?'園區 '+venueShort(sec.owner[0])+' ':sec&&sec.ev?(i.custom?'自訂 ':'活動 ')+sec.name+' ':'TSL ')+i.item,s:i.item+' '+i.model+' '+(t.kw||'')}; }),
     ...Object.entries(TYPES).filter(([k,t])=>isVenue()||!t.furn).map(([k,t])=>({k,t,icon:t.icon,name:t.name,sub:t.brand?t.kind:t.furn?'家具':'通用',s:t.name+' '+(t.kw||'')+' '+k})),
   ];
   let list=all.filter(it=>!q||it.s.toLowerCase().includes(q)).map(it=>({...it,lv:-1}));
@@ -2795,13 +2852,15 @@ function panelNode(n){
   h+=fld('圖示',`<div class="icos">${[...new Set([n.icon,...ICONS])].map(i=>`<button class="ico-b${n.icon===i?' on':''}" data-act="seticon" data-ico="${i}" title="換成這個圖示">${i}</button>`).join('')}</div>`);
   h+=fld('名稱',`<input data-nf="name" value="${esc(n.name)}">`);
   h+=fld('型號',`<input data-nf="model" value="${esc(n.model)}" placeholder="例如 SM58、X32、Scarlett 4i4">`);
+  const au=autoSrc(n);
+  h+=fld('來源',`<select data-nf="src">${opts([['',`自動（${au?SRC[au].full:'未標示'}）`],...Object.entries(SRC).map(([k,v])=>[k,v.full])],n.src||'')}</select>`);
   h+=fld('位置',`<input data-nf="loc" value="${esc(n.loc)}" list="locs" placeholder="舞台、FOH、機櫃…">`);
   h+=fld('幻象電源',`<select data-nf="ph">${opts([['','不需要'],['need','需要 +48V（電容麥／主動 DI）'],['avoid','禁止 +48V（鋁帶麥）']],n.ph)}</select>`);
   h+=fld('顏色',swatches('nc',n.color));
   h+=fld('寬度',`<input type="range" min="150" max="420" step="10" data-nf="w" value="${n.w}">`);
   h+=`<label class="chk"><input type="checkbox" data-nf="flip"${n.flip?' checked':''}> 左右翻轉（輸入在右、輸出在左）</label>`;
   h+=fld('備註',`<textarea data-nf="notes" rows="2" placeholder="設定、場地備註…">${esc(n.notes)}</textarea>`);
-  if(n.inv){ const it=INVM.get(n.inv), u=invUsed(n.inv); if(it) h+=`<div class="msg ${u>it.qty?'lv2':'lv1'}">${it.owner?'園區器材':'TSL 器材'}：${esc(INV_SECS.find(s=>s.id===it.sec)?.name||'')}・${esc(it.item)}　共 ${it.qty}，已用 ${u}${u>it.qty?'（不足）':''}${it.owner&&n.vv&&!it.owner.includes(n.vv)?`<br>⚠ 這是${esc(venueShort(it.owner[0]))}的設備，目前放在${esc(venueShort(n.vv))}`:''}</div>`; }
+  if(n.inv){ const it=INVM.get(n.inv), u=invUsed(n.inv), sec=INV_SECS.find(s=>s.id===it?.sec); if(it) h+=`<div class="msg ${u>it.qty?'lv2':'lv1'}">${it.owner?'園區器材':sec&&sec.ev?(it.custom?'自訂器材':'活動臨時器材'):'TSL 器材'}：${esc(INV_SECS.find(s=>s.id===it.sec)?.name||'')}・${esc(it.item)}　共 ${it.qty}，已用 ${u}${u>it.qty?'（不足）':''}${it.owner&&n.vv&&!it.owner.includes(n.vv)?`<br>⚠ 這是${esc(venueShort(it.owner[0]))}的設備，目前放在${esc(venueShort(n.vv))}`:''}</div>`; }
   if(doc.venue||isVenue()){
     h+=secH('場地擺放');
     const sh=supportHeight(n);
@@ -2916,6 +2975,7 @@ function panelMulti(){
     h+=secH('批次設定');
     h+=fld('位置',`<div style="display:flex;gap:5px"><input id="mloc" list="locs" placeholder="舞台、FOH…"><button class="btn" data-act="setloc">套用</button></div>`);
     h+=fld('顏色',swatches('mc',''));
+    h+=fld('來源',`<select id="msrc"><option value="" selected>— 設定來源 —</option>${Object.entries(SRC).map(([k,v])=>`<option value="${k}">${v.full}</option>`).join('')}<option value="auto">自動（依器材清單）</option></select>`);
   }
   h+=secH('操作');
   h+=`<div class="btns">${sel.n.size?'<button class="btn" data-act="dup">再製</button><button class="btn" data-act="wrap">用區域框框住</button>':''}<button class="btn danger" data-act="del">刪除</button></div>`;
@@ -3035,6 +3095,7 @@ side.addEventListener('change',e=>{
   if(el.dataset.gconn!=null||el.dataset.gsig!=null){ pendingSnap=null; if(!el.value) return; const n=selNode(), isC=el.dataset.gconn!=null, g=isC?el.dataset.gconn:el.dataset.gsig; edit(()=>n.ports.filter(p=>p.grp===g).forEach(p=>{ p[isC?'conn':'sig']=el.value; if(!isC&&(SIG[el.value]||SIG.line).fam!=='a') p.p48=false; })); return; }
   if(el.dataset.extra!=null){ pendingSnap=null; if(!el.value) return; const n=selNode(), ex=EXTRAS.find(x=>x[0]===el.value); if(n&&ex) edit(()=>{ n.ports.push(...ex[2]()); }); return; }
   if(el.id==='mloc') return;
+  if(el.id==='msrc'){ pendingSnap=null; const v=el.value==='auto'?'':el.value; if(el.value) edit(()=>doc.nodes.forEach(x=>{ if(sel.n.has(x.id)) x.src=v; })); return; }
   applyField(el);
   if(el.tagName==='SELECT'||el.type==='checkbox') renderPanel();
 });
@@ -3175,7 +3236,9 @@ function invRow(i){
   const title=br?((i.model||'').replace(new RegExp('^'+br.replace(/[.*+?^${}()|[\]\\&]/g,'\\$&')+'\\s*','i'),'')||i.item):i.item;
   const fk=t.furn, sz=fk&&i.f?(fk==='stand'?'h'+Math.round(i.f.h*100):Math.round(i.f.w*100)+'×'+Math.round(i.f.d*100)+(fk==='table'||fk==='stage'?' h'+Math.round(i.f.h*100):'')):'';
   const sub=[br,br?(i.model&&i.item!==i.model?i.item:''):i.model,fk?(FURN[fk].name.replace(/（.*）/,'')+(sz?' '+sz:'')):i.type==='prop'?'':ioSummary(i.type),i.note].filter(Boolean).join(' · ');
-  return libItem('inv:'+i.id,i.icon||t.icon,title,sub,st);
+  const ed=i.custom?`<button class="lib-ed" data-cedit="${esc(i.id)}" title="修改或刪除這個自訂器材">✎</button>`:'';
+  const sb=i.custom||INV_SECS.find(s=>s.id===i.sec)?.ev?srcBadge(i.src||(INV_SECS.find(s=>s.id===i.sec)||{}).src):'';
+  return libItem('inv:'+i.id,i.icon||t.icon,title,sub,st+ed).replace('<span class="io">',`<span class="io">${sb}`);
 }
 function renderLib(){
   const q=$('#lib-q').value.trim().toLowerCase(), tab=settings.libTab||'inv';
@@ -3185,18 +3248,22 @@ function renderLib(){
   const genMatch=([k,t])=>!t.brand&&m(t.name+' '+(t.kw||'')+' '+k);
   const modMatch=([k,t])=>t.brand&&m(t.name+' '+(t.kw||'')+' '+k);
   let h='';
-  const invHTML=campus=>INV_SECS.filter(s=>!!s.campus===campus).map(s=>{ const list=INV.filter(i=>i.sec===s.id&&invMatch(i)); if(!list.length) return ''; const cur=campus&&doc.venue&&s.owner.includes(doc.venue); return `<details${s.open||q||cur?' open':''}><summary>${cur?'📍 ':''}${esc(s.name)}<span class="cnt">${list.length}</span></summary>${list.map(invRow).join('')}</details>`; }).join('');
+  // 活動臨時器材：內建分組與自訂器材同名的放在一起
+  const evHTML=()=>{ const by=new Map(); INV_SECS.filter(s=>s.ev).forEach(s=>{ const list=INV.filter(i=>i.sec===s.id&&invMatch(i)); if(!list.length) return; if(!by.has(s.name)) by.set(s.name,[]); by.get(s.name).push(...list); });
+    return [...by.entries()].map(([nm,list])=>`<details open><summary>${esc(nm)}<span class="cnt">${list.length}</span></summary>${list.map(invRow).join('')}</details>`).join(''); };
+  const invHTML=campus=>INV_SECS.filter(s=>!s.ev&&!!s.campus===campus).map(s=>{ const list=INV.filter(i=>i.sec===s.id&&invMatch(i)); if(!list.length) return ''; const cur=campus&&doc.venue&&s.owner.includes(doc.venue); return `<details${s.open||q||cur?' open':''}><summary>${cur?'📍 ':''}${esc(s.name)}<span class="cnt">${list.length}</span></summary>${list.map(invRow).join('')}</details>`; }).join('');
   const modHTML=()=>{ const by=new Map(); Object.entries(TYPES).filter(modMatch).forEach(([k,t])=>{ const b=t.brand==='—'?'其他':t.brand; if(!by.has(b)) by.set(b,[]); by.get(b).push([k,t]); });
     return [...by.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([b,list])=>`<details${q||by.size<4?' open':''}><summary>${esc(b)}<span class="cnt">${list.length}</span></summary>${list.map(([k,t])=>libItem(k,t.icon,t.model,t.kind+' · '+ioSummary(k))).join('')}</details>`).join(''); };
   const genHTML=()=>CATS.map(c=>{ const list=Object.entries(TYPES).filter(([k,t])=>t.cat===c.id).filter(genMatch); if(!list.length) return ''; return `<div class="lib-cat"><i style="background:${c.color}"></i>${c.name}</div>`+list.map(([k,t])=>libItem(k,t.icon,t.name,ioSummary(k)||(t.iconOnly?'圖示・無接口':''))).join(''); }).join('');
-  if(q){ const a=invHTML(false), a2=invHTML(true), b=modHTML(), c=genHTML(); h=(a?'<div class="lib-sub">TSL 器材</div>'+a:'')+(a2?'<div class="lib-sub">園區器材</div>'+a2:'')+(b?'<div class="lib-sub">品牌型號</div>'+b:'')+(c?'<div class="lib-sub">通用</div>'+c:''); }
-  else h=tab==='inv'?invHTML(false):tab==='campus'?invHTML(true):tab==='model'?modHTML():genHTML();
+  if(q){ const a=invHTML(false), a2=invHTML(true), a3=evHTML(), b=modHTML(), c=genHTML(); h=(a?'<div class="lib-sub">TSL 器材</div>'+a:'')+(a2?'<div class="lib-sub">園區器材</div>'+a2:'')+(a3?'<div class="lib-sub">活動臨時器材</div>'+a3:'')+(b?'<div class="lib-sub">品牌型號</div>'+b:'')+(c?'<div class="lib-sub">通用</div>'+c:''); }
+  else h=tab==='inv'?invHTML(false):tab==='campus'?invHTML(true):tab==='event'?evHTML()||'<div class="dim" style="padding:14px 8px">還沒有活動臨時器材，按上方「＋ 新增自訂器材」建立。</div>':tab==='model'?modHTML():genHTML();
   $('#lib-list').innerHTML=h||'<div class="dim" style="padding:14px 8px">找不到符合的裝置，可以用「通用 → 自訂裝置」。</div>';
-  $('#lib-foot').textContent=tab==='campus'&&!q?'各場地現有設備（📍 為目前場地）。數字為「已用／數量」；拿到別的場地使用會提醒。':tab==='inv'&&!q?'數字為「已用／庫存」，超過庫存會變紅。點一下加入，或拖曳到想放的位置。':isVenue()?'拖曳到平面圖上的位置；拖曳裝置外圈可以拉線。':'點一下加入畫布中央，或直接拖曳到想放的位置。';
+  $('#lib-foot').textContent=tab==='event'&&!q?'各活動臨時進場的器材，會一直保留。✎ 可以修改自訂器材；數字為「已用／數量」。':tab==='campus'&&!q?'各場地現有設備（📍 為目前場地）。數字為「已用／數量」；拿到別的場地使用會提醒。':tab==='inv'&&!q?'數字為「已用／庫存」，超過庫存會變紅。點一下加入，或拖曳到想放的位置。':isVenue()?'拖曳到平面圖上的位置；拖曳裝置外圈可以拉線。':'點一下加入畫布中央，或直接拖曳到想放的位置。';
 }
 $('#lib-q').addEventListener('input',renderLib);
 $('.lib-tabs').addEventListener('click',e=>{ const b=e.target.closest('[data-lt]'); if(!b) return; settings.libTab=b.dataset.lt; $('#lib-q').value=''; renderLib(); save(); });
 $('#lib-list').addEventListener('click',e=>{
+  const ce=e.target.closest('[data-cedit]'); if(ce){ e.stopPropagation(); openCustom(ce.dataset.cedit); return; }
   const it=e.target.closest('.lib-item'); if(!it) return;
   const c=viewCenter(), k=libAddN++%6;
   if(isVenue()) addAny(it.dataset.key,c.x+(k-2.5)*24,c.y+(k-2.5)*24,false);
@@ -3214,7 +3281,7 @@ window.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&cropping){ endCrop(); return; }
   if(e.key==='Escape'){ closeFloating(); $$('.modal-wrap').forEach(m=>m.hidden=true); if(settings.seat){ settings.seat=null; $('#Lt').innerHTML=''; renderAll(); toast('已結束座位模式'); return; } if(!inField&&(sel.n.size||sel.w.size||sel.z.size||sel.f.size)){ clearSel(); renderAll(); } return; }
   if(inField) return;
-  if(!$('#rep').hidden||!$('#help').hidden) return;
+  if(!$('#rep').hidden||!$('#help').hidden||!$('#cust').hidden) return;
   const mod=e.ctrlKey||e.metaKey, k=e.key.toLowerCase();
   if(cropping&&k==='enter'){ e.preventDefault(); endCrop(); return; }
   // Channel List 畫面只保留復原／重做／存檔
@@ -3329,7 +3396,8 @@ function repGear(){
   const list=[...g.values()].sort((a,b)=>order(catOf(a.n))-order(catOf(b.n)));
   const stock=it=>{ const iv=it.n.inv&&INVM.get(it.n.inv); if(!iv) return '<td class="dim">—</td><td></td>'; return `<td class="num">${iv.qty}</td><td>${it.c>iv.qty?`<span class="lv l2">缺 ${it.c-iv.qty}</span>`:'<span class="lv l0">✓</span>'}</td>`; };
   const own=it=>{ const iv=it.n.inv&&INVM.get(it.n.inv); return iv&&iv.owner?` <span class="dim">（${esc(venueShort(iv.owner[0]))}設備）</span>`:''; };
-  return `<div class="rep-h">裝置</div><table class="tbl"><thead><tr><th></th><th>類型</th><th>型號</th><th>使用</th><th>庫存</th><th></th><th>名稱</th><th>場地</th><th>位置</th></tr></thead><tbody>${list.map(it=>`<tr><td>${it.n.icon}</td><td>${esc(it.n.inv?INVM.get(it.n.inv).item:(TYPES[it.n.type]||TYPES.custom).name)}${own(it)}</td><td>${esc(it.n.model)}</td><td class="num"><b>${it.c}</b></td>${stock(it)}<td>${it.names.map(esc).join('、')}</td><td>${[...it.vs].map(v=>esc(venueShort(v))).join('、')}</td><td>${[...it.locs].map(esc).join('、')}</td></tr>`).join('')}</tbody></table><div class="dim">共 ${doc.nodes.length} 台裝置；「庫存」欄只計從 TSL／園區器材加入的品項。</div>`+repFurn();
+  const srcs=it=>[...new Set(doc.nodes.filter(n=>(n.inv?'inv|'+n.inv:n.type+'|'+n.model)===(it.n.inv?'inv|'+it.n.inv:it.n.type+'|'+it.n.model)).map(srcOf))].map(k=>SRC[k]?SRC[k].full:'未標示').join('、');
+  return `<div class="rep-h">裝置</div><table class="tbl"><thead><tr><th></th><th>類型</th><th>型號</th><th>來源</th><th>使用</th><th>庫存</th><th></th><th>名稱</th><th>場地</th><th>位置</th></tr></thead><tbody>${list.map(it=>`<tr><td>${it.n.icon}</td><td>${esc(it.n.inv?INVM.get(it.n.inv).item:(TYPES[it.n.type]||TYPES.custom).name)}${own(it)}</td><td>${esc(it.n.model)}</td><td>${srcs(it)}</td><td class="num"><b>${it.c}</b></td>${stock(it)}<td>${it.names.map(esc).join('、')}</td><td>${[...it.vs].map(v=>esc(venueShort(v))).join('、')}</td><td>${[...it.locs].map(esc).join('、')}</td></tr>`).join('')}</tbody></table><div class="dim">共 ${doc.nodes.length} 台裝置；「庫存」欄只計從 TSL／園區器材加入的品項。</div>`+repFurn();
 }
 function repIssues(){
   if(!issues.length) return '<div class="rep-empty">✓ 沒有發現問題</div>';
@@ -3392,10 +3460,10 @@ function downloadCSV(tab){
    ========================================================= */
 const fname=()=>(doc.name||'routing').replace(/[\\/:*?"<>|]+/g,'_').trim()||'routing';
 function download(name,blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); }
-function saveJSON(){ download(fname()+'.routing.json',new Blob([JSON.stringify({app:'audio-routing',version:1,saved:new Date().toISOString(),doc,assets:usedAssets()},null,1)],{type:'application/json'})); toast('已下載 JSON 檔'); }
+function saveJSON(){ download(fname()+'.routing.json',new Blob([JSON.stringify({app:'audio-routing',version:1,saved:new Date().toISOString(),doc,assets:usedAssets(),custom:CUSTOM},null,1)],{type:'application/json'})); toast('已下載 JSON 檔'); }
 function readJSONFile(f){
   const r=new FileReader();
-  r.onload=()=>{ try{ const j=JSON.parse(r.result); const d=j.doc||j; if(!Array.isArray(d.nodes)) throw 0; if(j.assets&&typeof j.assets==='object'){ Object.assign(ASSETS,j.assets); assetsDirty=true; } pushUndo(snapshot()); doc=sanitize(d); clearSel(); renderAll(); fitView(); toast('已載入 '+f.name); }catch(e){ alert('無法讀取這個檔案，請確認是本工具儲存的 JSON。'); } };
+  r.onload=()=>{ try{ const j=JSON.parse(r.result); const d=j.doc||j; if(!Array.isArray(d.nodes)) throw 0; if(j.assets&&typeof j.assets==='object'){ Object.assign(ASSETS,j.assets); assetsDirty=true; } const nc=mergeCustom(j.custom); pushUndo(snapshot()); doc=sanitize(d); if(nc) renderLib(); clearSel(); renderAll(); fitView(); toast('已載入 '+f.name); }catch(e){ alert('無法讀取這個檔案，請確認是本工具儲存的 JSON。'); } };
   r.readAsText(f);
 }
 $('#fileIn').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) readJSONFile(f); e.target.value=''; });
@@ -3780,6 +3848,83 @@ function clPrint(){
 }
 
 /* =========================================================
+   自訂器材：使用者自己建立的臨時器材（存在瀏覽器，並隨 JSON 一起儲存）
+   ========================================================= */
+const CKEY=KEY+'.custom';
+let CUSTOM=[]; // {id, grp, item, model, qty, type, icon, note, src}
+function syncCustom(){
+  for(let k=INV.length-1;k>=0;k--) if(INV[k].custom){ INVM.delete(INV[k].id); INV.splice(k,1); }
+  for(let k=INV_SECS.length-1;k>=0;k--) if(INV_SECS[k].custom) INV_SECS.splice(k,1);
+  for(const c of CUSTOM){
+    const sid='cu:'+c.grp;
+    if(!INV_SECS.some(s=>s.id===sid)) INV_SECS.push({id:sid,name:c.grp,ev:true,custom:true,open:true,src:''});
+    const it={id:c.id,sec:sid,item:c.item,model:c.model,qty:c.qty,type:TYPES[c.type]?c.type:'custom',icon:c.icon||'',note:c.note,f:null,owner:null,src:SRC[c.src]?c.src:'',custom:true};
+    INV.push(it); INVM.set(it.id,it);
+  }
+}
+const cleanCustom=c=>({id:String(c.id||('cu_'+uid())),grp:String(c.grp||'自訂器材').trim()||'自訂器材',item:String(c.item||'自訂器材'),model:String(c.model??''),qty:Math.max(0,Math.round(+c.qty||0)),type:TYPES[c.type]&&!TYPES[c.type].furn?c.type:'custom',icon:String(c.icon??''),note:String(c.note??''),src:SRC[c.src]?c.src:''});
+function saveCustom(){ try{ localStorage.setItem(CKEY,JSON.stringify(CUSTOM)); }catch(e){} }
+function mergeCustom(list){ let k=0; for(const c of (Array.isArray(list)?list:[])){ if(!c||!c.id||CUSTOM.some(x=>x.id===c.id)) continue; CUSTOM.push(cleanCustom(c)); k++; } if(k){ syncCustom(); saveCustom(); } return k; }
+let custEdit=null;
+function openCustom(id){
+  const c=id?CUSTOM.find(x=>x.id===id):null; if(id&&!c) return;
+  custEdit=c?{...c}:{id:'',grp:(CUSTOM[CUSTOM.length-1]||{}).grp||'2026Forum',item:'',model:'',qty:1,type:'custom',icon:'',note:'',src:'byo'};
+  $('#cust-t').textContent=c?'修改自訂器材':'新增自訂器材';
+  renderCustom(); $('#cust').hidden=false; setTimeout(()=>$('#cust [data-cu="item"]')?.focus(),0);
+}
+function renderCustom(){
+  const c=custEdit, groups=[...new Set([...INV_SECS.filter(s=>s.ev).map(s=>s.name),...CUSTOM.map(x=>x.grp)])];
+  const T=TYPES[c.type]||TYPES.custom, ic=c.icon||T.icon, row=(l,inner)=>`<div class="cust-row"><span>${l}</span>${inner}</div>`;
+  let h=row('品項名稱',`<input data-cu="item" value="${esc(c.item)}" placeholder="例如 會議麥克風、口譯耳機">`);
+  h+=row('型號',`<input data-cu="model" value="${esc(c.model)}" placeholder="可留空">`);
+  h+=row('數量',`<input type="number" min="0" step="1" data-cu="qty" value="${c.qty}">`);
+  h+=row('類型',`<select data-cu="type">${typeOpts(c.type)}</select>`);
+  h+=row('',`<div class="hint" style="margin:0">類型決定預設的接口（${esc(ioSummary(c.type)||'無接口')}）；加入畫布後可以在右側面板再調整接口。沒有接口的道具選「其他 → 道具／配件」。</div>`);
+  h+=row('圖示',`<div class="cust-ic">${[...new Set([ic,...ICONS])].map(i=>`<button class="ico-b${i===ic?' on':''}" data-cuic="${i}">${i}</button>`).join('')}</div>`);
+  h+=row('來源',`<select data-cu="src">${opts([['','未標示'],...Object.entries(SRC).map(([k,v])=>[k,v.full])],c.src)}</select>`);
+  h+=row('活動分組',`<input data-cu="grp" value="${esc(c.grp)}" list="cust-grps" placeholder="例如 2026Forum"><datalist id="cust-grps">${groups.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>`);
+  h+=row('備註',`<input data-cu="note" value="${esc(c.note)}" placeholder="例如 主辦單位租借、需自備電池">`);
+  h+=`<div class="hint">自訂器材會出現在左側「活動臨時」分頁，存在這台電腦的瀏覽器，也會一起存進「儲存 JSON」的檔案；換電腦時開啟那個 JSON 就會帶過去。</div>`;
+  h+=`<div class="btns"><button class="btn pri" data-cua="save">儲存</button><button class="btn" data-cua="add">儲存並加入畫布</button>${c.id?'<button class="btn danger" data-cua="del">刪除</button>':''}</div>`;
+  $('#cust-body').innerHTML=h;
+}
+$('#cust').addEventListener('input',e=>{ const el=e.target; if(!custEdit||!el.dataset.cu) return; custEdit[el.dataset.cu]=el.value; });
+$('#cust').addEventListener('change',e=>{ const el=e.target; if(!custEdit||el.dataset.cu!=='type') return; custEdit.type=el.value; renderCustom(); });
+$('#cust').addEventListener('click',e=>{
+  if(e.target===$('#cust')||e.target.closest('[data-close]')){ $('#cust').hidden=true; custEdit=null; return; }
+  const ic=e.target.closest('[data-cuic]'); if(ic){ custEdit.icon=ic.dataset.cuic; renderCustom(); return; }
+  const b=e.target.closest('[data-cua]'); if(!b) return;
+  const a=b.dataset.cua, c=custEdit;
+  if(a==='del'){
+    const used=doc.nodes.filter(n=>n.inv===c.id).length;
+    if(!confirm(`刪除自訂器材「${c.item}」？${used?`\n畫布上的 ${used} 台會保留，但不再對應到這個器材。`:''}`)) return;
+    CUSTOM=CUSTOM.filter(x=>x.id!==c.id); doc.nodes.forEach(n=>{ if(n.inv===c.id) n.inv=''; });
+  } else {
+    if(!String(c.item).trim()){ toast('請填品項名稱'); $('#cust [data-cu="item"]').focus(); return; }
+    const v=cleanCustom({...c,id:c.id||('cu_'+uid())});
+    const i=CUSTOM.findIndex(x=>x.id===v.id); if(i>=0) CUSTOM[i]=v; else CUSTOM.push(v);
+    custEdit=v;
+  }
+  syncCustom(); saveCustom(); $('#cust').hidden=true;
+  settings.libTab='event'; $('#lib-q').value=''; renderLib(); renderAll();
+  if(a==='add'){ const ctr=viewCenter(); addAny('inv:'+custEdit.id,isVenue()?ctr.x:ctr.x-100,isVenue()?ctr.y:ctr.y-40,false); }
+  toast(a==='del'?'已刪除自訂器材':'已儲存自訂器材');
+  custEdit=null;
+});
+$('#cust-new').addEventListener('click',()=>openCustom(null));
+
+/* ── 左側欄拖曳調寬 ── */
+function applyLibW(){ document.documentElement.style.setProperty('--libw',clamp(+settings.libW||236,200,560)+'px'); }
+(()=>{
+  const rz=$('#lib-rz'); let st=null;
+  rz.addEventListener('pointerdown',e=>{ if(e.button!==0) return; e.preventDefault(); st={x:e.clientX,w:$('#lib').getBoundingClientRect().width}; rz.classList.add('on'); try{ rz.setPointerCapture(e.pointerId); }catch(_){} });
+  rz.addEventListener('pointermove',e=>{ if(!st) return; settings.libW=Math.round(clamp(st.w+e.clientX-st.x,200,560)); applyLibW(); });
+  const end=()=>{ if(!st) return; st=null; rz.classList.remove('on'); save(); };
+  rz.addEventListener('pointerup',end); rz.addEventListener('pointercancel',end);
+  rz.addEventListener('dblclick',()=>{ settings.libW=236; applyLibW(); save(); });
+})();
+
+/* =========================================================
    templates
    ========================================================= */
 function builder(){
@@ -3879,13 +4024,14 @@ function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show')
   try{
     const s=JSON.parse(localStorage.getItem(KEY)||'null');
     try{ ASSETS=JSON.parse(localStorage.getItem(KEY+'.assets')||'{}')||{}; }catch(e){ ASSETS={}; }
+    try{ CUSTOM=(JSON.parse(localStorage.getItem(CKEY)||'[]')||[]).map(cleanCustom); syncCustom(); }catch(e){ CUSTOM=[]; }
     if(s&&s.doc){ doc=sanitize(s.doc); loaded=true;
       if(s.view&&isFinite(s.view.x)&&isFinite(s.view.y)&&isFinite(s.view.k)) view={x:s.view.x,y:s.view.y,k:clamp(s.view.k,.15,3)};
       if(s.settings) for(const k in settings) if(k in s.settings) settings[k]=s.settings[k];
     }
   }catch(e){}
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{ if(!settings.theme){ applyTheme(); renderAll(); } });
-  applyTheme(); renderLib(); renderAll();
+  applyLibW(); applyTheme(); renderLib(); renderAll();
   const origCanvas=renderCanvas;
   // 「從空白開始」後不再顯示歡迎卡
   renderCanvas=function(){ origCanvas(); if($('#empty').dataset.dismissed) $('#empty').hidden=true; };
