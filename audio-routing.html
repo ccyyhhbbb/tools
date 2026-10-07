@@ -243,6 +243,8 @@ kbd{font-family:inherit;font-size:10.5px;padding:1px 5px;border:1px solid var(--
 .tbsel{height:30px;width:auto;max-width:240px;font-size:12.5px;padding:3px 6px;flex-shrink:0}
 body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
 #cv .vh{cursor:crosshair}
+#cv .img{cursor:move}
+#cv .ires{cursor:nwse-resize}
 #cv .vnode:hover .vh{stroke:#4c9aff;stroke-opacity:.7}
 .unp{display:flex;align-items:center;gap:8px;padding:5px 7px;border:1px solid var(--line);border-radius:8px;margin-bottom:4px;background:var(--panel2);cursor:grab;font-size:12px}
 .unp span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -290,6 +292,7 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
   <div class="sep"></div>
   <button class="tb flow-only" data-cmd="zone" title="新增區域框（若有選取裝置，會自動框住）">▭ 區域框</button>
   <button class="tb flow-only" data-cmd="text" title="新增文字標註">T 文字</button>
+  <button class="tb" data-cmd="image" title="插入圖片（也可以把圖檔拖進畫布，或按 Ctrl+V 貼上）">🖼 圖片</button>
   <button class="tb venue-only" data-cmd="seat" title="座位模式：框選區域排椅子或坐墊">🪑 座位</button>
   <button class="tb venue-only" data-tog="measure" title="在平面圖上拖曳量測距離">📏 量測</button>
   <button class="tb venue-only" data-cmd="calib" title="點兩個已知距離的點來校正比例">⚖ 校正比例</button>
@@ -401,6 +404,7 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
         <li><b>📏 量測</b> 可直接在圖上量距離；報表的「線材清單」會列出需要的線材數量與庫存差額。</li>
         <li><b>多場地</b>：用上方選單把其他場地加入同一個活動，每台裝置放在其中一個場地；器材、家具、線材數量會把所有場地加總。兩端在不同場地的線無法估算，請手動填長度。</li>
         <li><b>椅子／坐墊</b>：在「通用」或器材清單點椅子、坐墊會進入座位模式（或按 🪑 座位），在圖上拖曳框出區域，選「整齊填滿」「隨機散落」或「依排列平均分佈」；也可以輸入幾排幾列直接放置。<kbd>R</kbd> 旋轉選取的家具。</li>
+        <li><b>插入圖片</b>：按 🖼 圖片、把圖檔拖進畫布，或 <kbd>Ctrl</kbd>+<kbd>V</kbd> 貼上截圖。兩個畫面都能用，可移動、拉右下角調整大小、調透明度、放最上層或最下層、鎖定。在場地配置可以把插座迴路圖等圖面調成半透明疊在平面圖上對位。圖片會一起存進專案與 JSON。</li>
         <li><b>桌子／架子／舞台平台</b>可設定尺寸與高度。裝置放在上面時，線長估算會自動用桌高、架高或舞台高度。</li>
       </ul>
       <h3>畫布</h3>
@@ -420,6 +424,7 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
 <div id="toast"></div>
 <input type="file" id="fileIn" accept=".json,application/json" hidden>
 <input type="file" id="planIn" accept="image/*" hidden>
+<input type="file" id="imgIn" accept="image/*" multiple hidden>
 <datalist id="locs"></datalist>
 <div id="print-area"></div>
 
@@ -1161,7 +1166,7 @@ const KEY='audioRouting.v1';
 let doc=sanitize({name:'未命名專案'});
 let view={x:60,y:60,k:1};
 const settings={wire:'curve',snap:true,labels:true,arrows:true,trace:false,theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
-let sel={n:new Set(),w:new Set(),z:new Set(),f:new Set()};
+let sel={n:new Set(),w:new Set(),z:new Set(),f:new Set(),i:new Set()};
 let undoS=[],redoS=[],pendingSnap=null;
 let compatCache=new Map(), issues=[], cablePlan={rows:[],summary:[]};
 let drag=null, spaceDown=false, lastMouse={cx:0,cy:0,x:0,y:0};
@@ -1172,6 +1177,7 @@ const getPort=(n,pid)=>n&&n.ports.find(p=>p.id===pid);
 const getWire=id=>doc.wires.find(w=>w.id===id);
 const getZone=id=>doc.zones.find(z=>z.id===id);
 const getFurn=id=>doc.furn.find(f=>f.id===id);
+const getImg=id=>doc.images.find(im=>im.id===id);
 const catOf=n=>(TYPES[n.type]||TYPES.custom).cat;
 const nodeColor=n=>n.color||(CATS.find(c=>c.id===catOf(n))||CATS[4]).color;
 const themeName=()=>settings.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
@@ -1183,10 +1189,10 @@ const selNode=()=>sel.n.size===1&&!sel.w.size&&!sel.z.size?getNode([...sel.n][0]
 const selWire=()=>sel.w.size===1?getWire([...sel.w][0]):null;
 const selZone=()=>sel.z.size===1?getZone([...sel.z][0]):null;
 function removeWiresOfPort(nid,pid){ doc.wires=doc.wires.filter(w=>!((w.a.n===nid&&w.a.p===pid)||(w.b.n===nid&&w.b.p===pid))); }
-function clearSel(){ sel.n.clear(); sel.w.clear(); sel.z.clear(); sel.f.clear(); }
+function clearSel(){ sel.n.clear(); sel.w.clear(); sel.z.clear(); sel.f.clear(); sel.i.clear(); }
 function selectOnly(k,id){ clearSel(); sel[k].add(id); }
 function toggleSel(k,id){ sel[k].has(id)?sel[k].delete(id):sel[k].add(id); }
-function fixSel(){ for(const id of [...sel.n]) if(!getNode(id)) sel.n.delete(id); for(const id of [...sel.w]) if(!getWire(id)) sel.w.delete(id); for(const id of [...sel.z]) if(!getZone(id)) sel.z.delete(id); for(const id of [...sel.f]) if(!getFurn(id)) sel.f.delete(id); }
+function fixSel(){ for(const id of [...sel.n]) if(!getNode(id)) sel.n.delete(id); for(const id of [...sel.w]) if(!getWire(id)) sel.w.delete(id); for(const id of [...sel.z]) if(!getZone(id)) sel.z.delete(id); for(const id of [...sel.f]) if(!getFurn(id)) sel.f.delete(id); for(const id of [...sel.i]) if(!getImg(id)) sel.i.delete(id); }
 
 function uniqueName(base,except){
   const taken=new Set(doc.nodes.filter(n=>n!==except).map(n=>n.name));
@@ -1324,12 +1330,17 @@ const snapshot=()=>JSON.stringify(doc);
 function pushUndo(s){ undoS.push(s); if(undoS.length>150) undoS.shift(); redoS=[]; }
 function takeSnap(){ if(pendingSnap){ pushUndo(pendingSnap); pendingSnap=null; } }
 function edit(fn){ const s=snapshot(); const r=fn(); if(r!==false) pushUndo(s); renderAll(); return r; }
-function undo(){ if(!undoS.length) return; redoS.push(snapshot()); doc=JSON.parse(undoS.pop()); fixSel(); renderAll(); }
-function redo(){ if(!redoS.length) return; undoS.push(snapshot()); doc=JSON.parse(redoS.pop()); fixSel(); renderAll(); }
+function undo(){ if(!undoS.length) return; assetsDirty=true; redoS.push(snapshot()); doc=JSON.parse(undoS.pop()); fixSel(); renderAll(); }
+function redo(){ if(!redoS.length) return; assetsDirty=true; undoS.push(snapshot()); doc=JSON.parse(redoS.pop()); fixSel(); renderAll(); }
 let saveT;
-function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(KEY,JSON.stringify({doc,view,settings})); }catch(e){} },400); }
+let assetsDirty=false, quotaWarned=false;
+function usedAssets(){ const o={}; doc.images.forEach(im=>{ if(ASSETS[im.a]) o[im.a]=ASSETS[im.a]; }); return o; }
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{
+  try{ if(assetsDirty){ localStorage.setItem(KEY+'.assets',JSON.stringify(usedAssets())); assetsDirty=false; } localStorage.setItem(KEY,JSON.stringify({doc,view,settings})); }
+  catch(e){ if(!quotaWarned){ quotaWarned=true; toast('瀏覽器儲存空間不足（圖片太大）：請用「檔案 → 儲存 JSON」保存，或刪掉部分圖片'); } }
+},400); }
 function sanitize(d){
-  const out={name:String(d.name||'未命名專案'),nodes:[],wires:[],zones:[],furn:[],venue:String(d.venue||''),vcal:(d.vcal&&typeof d.vcal==='object')?d.vcal:{},
+  const out={name:String(d.name||'未命名專案'),nodes:[],wires:[],zones:[],furn:[],images:[],venue:String(d.venue||''),vcal:(d.vcal&&typeof d.vcal==='object')?d.vcal:{},
     vopt:Object.assign({slack:10,ends:1},d.vopt||{}),customVenue:d.customVenue&&d.customVenue.img?d.customVenue:null,
     venues:Array.isArray(d.venues)?d.venues.map(String):(d.venue?[String(d.venue)]:[])};
   if(out.venue&&!out.venues.includes(out.venue)) out.venues.push(out.venue);
@@ -1344,6 +1355,7 @@ function sanitize(d){
   const has=(r)=>{ const n=out.nodes.find(x=>x.id===r?.n); return n&&n.ports.some(p=>p.id===r.p); };
   for(const w of (Array.isArray(d.wires)?d.wires:[])) if(w&&has(w.a)&&has(w.b)) out.wires.push({id:String(w.id||uid()),a:{n:w.a.n,p:w.a.p},b:{n:w.b.n,p:w.b.p},label:String(w.label??''),len:String(w.len??''),cable:String(w.cable??''),color:w.color||'',note:String(w.note??'')});
   for(const z of (Array.isArray(d.zones)?d.zones:[])) if(z) out.zones.push({id:String(z.id||uid()),kind:z.kind==='text'?'text':'frame',title:String(z.title??''),x:+z.x||0,y:+z.y||0,w:+z.w||400,h:+z.h||300,color:z.color||'',fs:+z.fs||18,note:String(z.note??'')});
+  for(const im of (Array.isArray(d.images)?d.images:[])) if(im&&im.a) out.images.push({id:String(im.id||uid()),m:im.m==='venue'?'venue':'flow',vv:String(im.vv||''),x:+im.x||0,y:+im.y||0,w:Math.max(.05,+im.w||1),h:Math.max(.05,+im.h||1),ar:+im.ar||((+im.w||1)/(+im.h||1)),a:String(im.a),name:String(im.name??''),op:clamp(+(im.op??1),.05,1),lock:!!im.lock,front:!!im.front});
   for(const f of (Array.isArray(d.furn)?d.furn:[])) if(f&&FURN[f.k]) out.furn.push({id:String(f.id||uid()),k:f.k,vv:String(f.vv||''),x:+f.x||0,y:+f.y||0,w:clamp(+f.w||FURN[f.k].w,.05,30),d:clamp(+f.d||FURN[f.k].d,.05,30),h:clamp(+f.h||0,0,20),rot:+f.rot||0,label:String(f.label??''),inv:INVM.has(f.inv)?f.inv:''});
   return out;
 }
@@ -1673,6 +1685,69 @@ function vwireLayer(T,o){
   });
   return s;
 }
+/* ── 圖片：圖檔本體放在 ASSETS（不進復原紀錄），doc.images 只存位置與設定 ── */
+let ASSETS={};
+const assetURL=new Map();
+function assetHref(a){
+  if(assetURL.has(a)) return assetURL.get(a);
+  const d=ASSETS[a]; if(!d) return '';
+  try{
+    const i=d.indexOf(','), mime=(d.slice(0,i).match(/data:([^;]+)/)||[])[1]||'image/png', bin=atob(d.slice(i+1)), u=new Uint8Array(bin.length);
+    for(let k=0;k<bin.length;k++) u[k]=bin.charCodeAt(k);
+    const url=URL.createObjectURL(new Blob([u],{type:mime})); assetURL.set(a,url); return url;
+  }catch(e){ return d; }
+}
+const imgsOf=mode=>doc.images.filter(im=>im.m===mode&&(mode==='flow'||im.vv===doc.venue));
+function imgSVG(im,T,o){
+  const S=im.m==='venue'?VS:1, w=im.w*S, h=im.h*S, isSel=!o.exp&&sel.i.has(im.id);
+  const href=o.exp?(ASSETS[im.a]||''):assetHref(im.a);
+  let g=`<g class="img" data-i="${im.id}" transform="translate(${im.x*S},${im.y*S})"${im.lock&&!o.exp?' pointer-events="none"':''}>`;
+  g+=href?`<image href="${href}" width="${w}" height="${h}" preserveAspectRatio="none" opacity="${im.op??1}"/>`
+    :`<rect width="${w}" height="${h}" fill="${T.dim}" fill-opacity=".12" stroke="${T.dim}" stroke-dasharray="6 4"/><text x="${w/2}" y="${h/2}" text-anchor="middle" font-size="12" fill="${T.dim}">圖片遺失</text>`;
+  if(!o.exp){
+    g+=`<rect class="ihit" width="${w}" height="${h}" fill="transparent" stroke="${isSel?T.sel:'none'}" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+    if(isSel&&!im.lock){ const q=14/view.k; g+=`<rect class="ires" x="${w-q}" y="${h-q}" width="${q}" height="${q}" rx="${q/4}" fill="${T.sel}"/>`; }
+  }
+  return g+'</g>';
+}
+function loadImageFile(f){
+  return new Promise((res,rej)=>{
+    const r=new FileReader(); r.onerror=rej;
+    r.onload=()=>{ const img=new Image(); img.onerror=rej; img.onload=()=>{
+      const W0=img.naturalWidth||800, H0=img.naturalHeight||600, sc=Math.min(1,1600/Math.max(W0,H0));
+      if(sc===1&&f.size<500e3&&!/svg/.test(f.type)) return res({src:r.result,w:W0,h:H0});
+      const c=document.createElement('canvas'); c.width=Math.round(W0*sc); c.height=Math.round(H0*sc);
+      const ctx=c.getContext('2d'), alpha=/png|gif|svg|webp/.test(f.type);
+      if(!alpha){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); }
+      ctx.drawImage(img,0,0,c.width,c.height);
+      let src=alpha?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.85);
+      if(alpha&&src.length>1.5e6){ const c2=document.createElement('canvas'); c2.width=c.width; c2.height=c.height; const x=c2.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c2.width,c2.height); x.drawImage(c,0,0); src=c2.toDataURL('image/jpeg',.85); }
+      res({src,w:c.width,h:c.height});
+    }; img.src=r.result; };
+    r.readAsDataURL(f);
+  });
+}
+// 插入圖片：場地配置裡以公尺計（預設寬 4 m），訊號流程裡以畫布單位計
+async function insertImages(files,at){
+  const list=[...files].filter(f=>f.type.startsWith('image/')); if(!list.length) return false;
+  const venue=isVenue(); if(venue&&!doc.venue){ toast('請先選擇場地，再插入圖片'); return true; }
+  const s=snapshot(), S=venue?VS:1, c=at||viewCenter(); let k=0; clearSel();
+  for(const f of list){
+    let r; try{ r=await loadImageFile(f); }catch(e){ toast(`無法讀取 ${f.name}`); continue; }
+    const a=uid(); ASSETS[a]=r.src; assetsDirty=true;
+    const W=venue?4:Math.min(480,r.w), H=W*r.h/r.w;
+    const im={id:uid(),m:venue?'venue':'flow',vv:venue?doc.venue:'',x:c.x/S-W/2+k*(venue?.5:24),y:c.y/S-H/2+k*(venue?.5:24),w:W,h:H,ar:r.w/r.h,a,name:f.name.replace(/\.[^.]+$/,''),op:1,lock:false,front:false};
+    doc.images.push(im); sel.i.add(im.id); k++;
+  }
+  if(k){ pushUndo(s); renderAll(); openSide(); toast(`已插入 ${k} 張圖片，右下角可調整大小`); }
+  return true;
+}
+function startImgResize(id,pt){
+  const im=getImg(id); if(!im) return;
+  selectOnly('i',id); renderAll();
+  drag={kind:'ires',im,S:im.m==='venue'?VS:1,w0:im.w,h0:im.h,x0:pt.x,y0:pt.y,before:snapshot(),moved:false};
+}
+
 /* ── 家具 ── */
 function furnSVG(f,T,o){
   const isSel=!o.exp&&sel.f.has(f.id), W=f.w*VS, D=f.d*VS, sw=isSel?2.2:1, st=c=>isSel?T.sel:c;
@@ -1743,9 +1818,9 @@ function seatRectMenu(R,cx,cy){
 
 function renderVenue(T,o){
   const v=curVenue();
-  $('#Lz').innerHTML=venueBgSVG(v,T,false)+doc.furn.filter(f=>f.vv===doc.venue).map(f=>furnSVG(f,T,o)).join('');
+  $('#Lz').innerHTML=venueBgSVG(v,T,false)+imgsOf('venue').filter(im=>!im.front).map(im=>imgSVG(im,T,o)).join('')+doc.furn.filter(f=>f.vv===doc.venue).map(f=>furnSVG(f,T,o)).join('');
   $('#Lw').innerHTML=vwireLayer(T,o);
-  $('#Ln').innerHTML=doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('');
+  $('#Ln').innerHTML=doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('')+imgsOf('venue').filter(im=>im.front).map(im=>imgSVG(im,T,o)).join('');
 }
 
 let lastO=null;
@@ -1756,9 +1831,9 @@ function renderCanvas(){
   const o={tr:traceSets(),conn:connSet(),cand:drag&&drag.kind==='wire'?drag.cand:null}; lastO=o;
   if(isVenue()){ renderVenue(T,o); $('#empty').hidden=true; save(); return; }
   const zs=[...doc.zones.filter(z=>z.kind!=='text'),...doc.zones.filter(z=>z.kind==='text')];
-  $('#Lz').innerHTML=zs.map(z=>zoneSVG(z,T,o)).join('');
+  $('#Lz').innerHTML=imgsOf('flow').filter(im=>!im.front).map(im=>imgSVG(im,T,o)).join('')+zs.map(z=>zoneSVG(z,T,o)).join('');
   $('#Lw').innerHTML=doc.wires.map(w=>wireSVG(w,T,o)).join('');
-  $('#Ln').innerHTML=doc.nodes.map(n=>nodeSVG(n,T,o)).join('');
+  $('#Ln').innerHTML=doc.nodes.map(n=>nodeSVG(n,T,o)).join('')+imgsOf('flow').filter(im=>im.front).map(im=>imgSVG(im,T,o)).join('');
   $('#empty').hidden=doc.nodes.length>0||doc.zones.length>0;
   save();
 }
@@ -1800,6 +1875,7 @@ $('#venueSel').addEventListener('change',e=>{
   if(v==='__upload'){ e.target.innerHTML=venueOptions(); $('#planIn').click(); return; }
   pushUndo(snapshot()); doc.venue=v; if(v&&!doc.venues.includes(v)) doc.venues.push(v); settings.seat=null; clearSel(); renderAll(); renderLib(); fitView();
 });
+$('#imgIn').addEventListener('change',e=>{ const fs=[...e.target.files]; e.target.value=''; insertImages(fs,null); });
 $('#planIn').addEventListener('change',e=>{
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
   const r=new FileReader();
@@ -1833,6 +1909,7 @@ function applyTheme(){ document.documentElement.dataset.theme=themeName(); build
 function bounds(){
   let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity; const ext=(a,b,c,d)=>{x1=Math.min(x1,a);y1=Math.min(y1,b);x2=Math.max(x2,c);y2=Math.max(y2,d);};
   for(const n of doc.nodes) ext(n.x,n.y,n.x+n.w,n.y+lay(n).h);
+  for(const im of imgsOf('flow')) ext(im.x,im.y,im.x+im.w,im.y+im.h);
   for(const z of doc.zones){ if(z.kind==='text'){ const fs=z.fs||18; ext(z.x,z.y,z.x+tw(z.title||'','700 '+fs+'px'),z.y+fs+(z.note?22:8)); } else ext(z.x,z.y,z.x+z.w,z.y+z.h); }
   if(x1===Infinity) return null;
   return {x:x1-20,y:y1-20,w:x2-x1+40,h:y2-y1+40};
@@ -1840,6 +1917,7 @@ function bounds(){
 function stageRect(){ return cv.getBoundingClientRect(); }
 function venueBounds(){
   const v=curVenue(); let x1=0,y1=-2*VS,x2=v?venueSize(v).w*VS:20*VS,y2=v?venueSize(v).h*VS:10*VS;
+  imgsOf('venue').forEach(im=>{ x1=Math.min(x1,im.x*VS); y1=Math.min(y1,im.y*VS); x2=Math.max(x2,(im.x+im.w)*VS); y2=Math.max(y2,(im.y+im.h)*VS); });
   doc.nodes.filter(placed).forEach(n=>{ x1=Math.min(x1,n.vx*VS-30); y1=Math.min(y1,n.vy*VS-30); x2=Math.max(x2,n.vx*VS+30); y2=Math.max(y2,n.vy*VS+40); });
   return {x:x1-20,y:y1-10,w:x2-x1+40,h:y2-y1+30};
 }
@@ -1877,22 +1955,25 @@ function venueDown(e,t,pt){
   if(calib){ calibClick(pt); drag={kind:'none'}; return; }
   $('#Lt').innerHTML='';
   if(settings.measure){ drag={kind:'measure',x0:pt.x,y0:pt.y,x1:pt.x,y1:pt.y}; return; }
-  const vh=t.closest('.vh'), ng=t.closest('.node'), wg=t.closest('.wire'), fg=t.closest('.furn');
+  const vh=t.closest('.vh'), ng=t.closest('.node'), wg=t.closest('.wire'), fg=t.closest('.furn'), ir=t.closest('.ires'), ig=t.closest('.img');
   if(settings.seat&&!ng&&!wg&&!fg){ drag={kind:'seatrect',x0:pt.x,y0:pt.y,x1:pt.x,y1:pt.y}; return; }
-  const key=ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:fg?'f'+fg.dataset.f:'empty';
+  const key=ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:fg?'f'+fg.dataset.f:ig?'i'+ig.dataset.i:'empty';
   if(isDbl(key)){
     if(ng){ selectOnly('n',ng.dataset.node); renderAll(); openSide(); focusField('[data-nf="name"]'); }
     else if(wg){ selectOnly('w',wg.dataset.w); renderAll(); openSide(); focusField('[data-wf="label"]'); }
     else if(fg){ selectOnly('f',fg.dataset.f); renderAll(); openSide(); focusField('[data-ff="label"]'); }
+    else if(ig){ selectOnly('i',ig.dataset.i); renderAll(); openSide(); focusField('[data-im="name"]'); }
     else openQA(e.clientX,e.clientY,pt,null);
     drag={kind:'none'}; return;
   }
   if(vh&&!e.shiftKey){ const id=vh.closest('.node').dataset.node; drag={kind:'vwire',from:id,sx:e.clientX,sy:e.clientY}; hideTip(); return; }
   if(ng){ startNodeDrag(ng.dataset.node,e,pt); return; }
   if(wg){ const id=wg.dataset.w; if(e.shiftKey) toggleSel('w',id); else selectOnly('w',id); renderAll(); drag={kind:'none'}; return; }
+  if(ir){ startImgResize(ir.closest('.img').dataset.i,pt); return; }
   if(fg){ startNodeDrag(fg.dataset.f,e,pt,'f'); return; }
+  if(ig){ startNodeDrag(ig.dataset.i,e,pt,'i'); return; }
   if(e.pointerType==='touch'){ startPan(e); drag.tapClear=true; return; }
-  if(!e.shiftKey&&(sel.n.size||sel.w.size||sel.f.size)){ clearSel(); renderAll(); }
+  if(!e.shiftKey&&(sel.n.size||sel.w.size||sel.f.size||sel.i.size)){ clearSel(); renderAll(); }
   drag={kind:'marquee',x0:pt.x,y0:pt.y,x1:pt.x,y1:pt.y};
 }
 function moveMeasure(d){
@@ -1984,9 +2065,10 @@ function movePort(n,pid,d){
   [n.ports[i],n.ports[j]]=[n.ports[j],n.ports[i]];
 }
 function delSel(){
-  if(!sel.n.size&&!sel.w.size&&!sel.z.size&&!sel.f.size) return;
+  if(!sel.n.size&&!sel.w.size&&!sel.z.size&&!sel.f.size&&!sel.i.size) return;
   pushUndo(snapshot());
   doc.furn=doc.furn.filter(f=>!sel.f.has(f.id));
+  doc.images=doc.images.filter(im=>!sel.i.has(im.id)); if(sel.i.size) assetsDirty=true;
   doc.nodes=doc.nodes.filter(n=>!sel.n.has(n.id));
   doc.wires=doc.wires.filter(w=>!sel.w.has(w.id)&&!sel.n.has(w.a.n)&&!sel.n.has(w.b.n));
   doc.zones=doc.zones.filter(z=>!sel.z.has(z.id));
@@ -1994,11 +2076,11 @@ function delSel(){
 }
 let clip=null, pasteN=0;
 function copySel(silent){
-  const ns=doc.nodes.filter(n=>sel.n.has(n.id)), zs=doc.zones.filter(z=>sel.z.has(z.id)), fs=doc.furn.filter(f=>sel.f.has(f.id));
-  if(!ns.length&&!zs.length&&!fs.length) return false;
+  const ns=doc.nodes.filter(n=>sel.n.has(n.id)), zs=doc.zones.filter(z=>sel.z.has(z.id)), fs=doc.furn.filter(f=>sel.f.has(f.id)), is=doc.images.filter(im=>sel.i.has(im.id));
+  if(!ns.length&&!zs.length&&!fs.length&&!is.length) return false;
   const ids=new Set(ns.map(n=>n.id));
-  clip=JSON.parse(JSON.stringify({nodes:ns,zones:zs,furn:fs,wires:doc.wires.filter(w=>ids.has(w.a.n)&&ids.has(w.b.n))}));
-  pasteN=0; if(!silent) toast(`已複製 ${ns.length+zs.length+fs.length} 個物件`); return true;
+  clip=JSON.parse(JSON.stringify({nodes:ns,zones:zs,furn:fs,images:is,wires:doc.wires.filter(w=>ids.has(w.a.n)&&ids.has(w.b.n))}));
+  pasteN=0; if(!silent) toast(`已複製 ${ns.length+zs.length+fs.length+is.length} 個物件`); return true;
 }
 function paste(at){
   if(!clip) return; const s=snapshot(); pasteN++;
@@ -2013,16 +2095,18 @@ function paste(at){
   }
   for(const w of c.wires){ const a={n:nm.get(w.a.n),p:pm.get(w.a.n+'|'+w.a.p)}, b={n:nm.get(w.b.n),p:pm.get(w.b.n+'|'+w.b.p)}; w.id=uid(); w.a=a; w.b=b; doc.wires.push(w); }
   for(const z of c.zones){ z.id=uid(); z.x+=dx; z.y+=dy; doc.zones.push(z); sel.z.add(z.id); }
+  for(const im of (c.images||[])){ if(im.m==='venue'&&!doc.venue) continue; im.id=uid(); if(im.m==='venue'){ im.vv=doc.venue; im.x+=.6*pasteN; im.y+=.6*pasteN; } else { im.x+=at?dx:24*pasteN; im.y+=at?dy:24*pasteN; } doc.images.push(im); sel.i.add(im.id); }
   for(const f of (c.furn||[])){ if(!doc.venue) break; f.id=uid(); f.vv=doc.venue; f.x=snapM(f.x+.6*pasteN); f.y=snapM(f.y+.6*pasteN); doc.furn.push(f); sel.f.add(f.id); }
   pushUndo(s); renderAll();
 }
 function dupSel(){ if(copySel(true)) paste(); }
-function selectAll(){ clearSel(); if(isVenue()){ doc.nodes.filter(placed).forEach(n=>sel.n.add(n.id)); doc.furn.filter(f=>f.vv===doc.venue).forEach(f=>sel.f.add(f.id)); } else { doc.nodes.forEach(n=>sel.n.add(n.id)); doc.zones.forEach(z=>sel.z.add(z.id)); } renderAll(); }
+function selectAll(){ clearSel(); if(isVenue()){ doc.nodes.filter(placed).forEach(n=>sel.n.add(n.id)); doc.furn.filter(f=>f.vv===doc.venue).forEach(f=>sel.f.add(f.id)); } else { doc.nodes.forEach(n=>sel.n.add(n.id)); doc.zones.forEach(z=>sel.z.add(z.id)); } imgsOf(isVenue()?'venue':'flow').forEach(im=>{ if(!im.lock) sel.i.add(im.id); }); renderAll(); }
 function rotSel(deg){ if(!sel.f.size) return; edit(()=>doc.furn.forEach(f=>{ if(sel.f.has(f.id)) f.rot=((f.rot||0)+deg+360)%360; })); }
 let lastNudge=0;
 function nudge(dx,dy){
-  if(!sel.n.size&&!sel.z.size&&!sel.f.size) return;
+  if(!sel.n.size&&!sel.z.size&&!sel.f.size&&!sel.i.size) return;
   if(Date.now()-lastNudge>800) pushUndo(snapshot()); lastNudge=Date.now();
+  doc.images.forEach(im=>{ if(sel.i.has(im.id)&&!im.lock){ const m=im.m==='venue'?.05:1; im.x+=dx*m; im.y+=dy*m; } });
   if(isVenue()){ const m=.05;
     doc.nodes.forEach(n=>{ if(sel.n.has(n.id)&&placed(n)){ n.vx=snapM(n.vx+dx*m); n.vy=snapM(n.vy+dy*m); } });
     doc.furn.forEach(f=>{ if(sel.f.has(f.id)){ f.x=Math.round((f.x+dx*m)*100)/100; f.y=Math.round((f.y+dy*m)*100)/100; } });
@@ -2077,12 +2161,13 @@ cv.addEventListener('pointerdown',e=>{
   if(e.button!==0) return;
   const t=e.target, pt=evWorld(e);
   if(isVenue()){ venueDown(e,t,pt); return; }
-  const ph=t.closest('.ph'), ng=t.closest('.node'), wg=t.closest('.wire'), zr=t.closest('.zres'), zh=t.closest('.zhit');
-  const key=ph?'p'+ph.dataset.n+ph.dataset.p:ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:(zh||zr)?'z'+(zh||zr).closest('.zone').dataset.z:'empty';
+  const ph=t.closest('.ph'), ng=t.closest('.node'), wg=t.closest('.wire'), zr=t.closest('.zres'), zh=t.closest('.zhit'), ir=t.closest('.ires'), ig=t.closest('.img');
+  const key=ph?'p'+ph.dataset.n+ph.dataset.p:ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:(zh||zr)?'z'+(zh||zr).closest('.zone').dataset.z:ig?'i'+ig.dataset.i:'empty';
   if(isDbl(key)){
     if(ng&&!ph){ selectOnly('n',ng.dataset.node); renderAll(); openSide(); focusField('[data-nf="name"]'); drag={kind:'none'}; return; }
     if(wg){ selectOnly('w',wg.dataset.w); renderAll(); openSide(); focusField('[data-wf="label"]'); drag={kind:'none'}; return; }
     if(zh){ selectOnly('z',zh.closest('.zone').dataset.z); renderAll(); openSide(); focusField('[data-zf="title"]'); drag={kind:'none'}; return; }
+    if(ig){ selectOnly('i',ig.dataset.i); renderAll(); openSide(); focusField('[data-im="name"]'); drag={kind:'none'}; return; }
     if(key==='empty'){ openQA(e.clientX,e.clientY,pt,null); drag={kind:'none'}; return; }
   }
   try{cv.setPointerCapture(e.pointerId);}catch(_){}
@@ -2091,8 +2176,10 @@ cv.addEventListener('pointerdown',e=>{
   if(wg){ const id=wg.dataset.w; if(e.shiftKey) toggleSel('w',id); else selectOnly('w',id); renderAll(); drag={kind:'none'}; return; }
   if(zr){ const z=getZone(zr.closest('.zone').dataset.z); selectOnly('z',z.id); renderAll(); drag={kind:'zres',z,w0:z.w,h0:z.h,x0:pt.x,y0:pt.y,before:snapshot(),moved:false}; return; }
   if(zh){ startZoneDrag(zh.closest('.zone').dataset.z,e,pt); return; }
+  if(ir){ startImgResize(ir.closest('.img').dataset.i,pt); return; }
+  if(ig){ startNodeDrag(ig.dataset.i,e,pt,'i'); return; }
   if(e.pointerType==='touch'){ startPan(e); drag.tapClear=true; return; }
-  if(!e.shiftKey&&(sel.n.size||sel.w.size||sel.z.size)){ clearSel(); renderAll(); }
+  if(!e.shiftKey&&(sel.n.size||sel.w.size||sel.z.size||sel.i.size)){ clearSel(); renderAll(); }
   drag={kind:'marquee',x0:pt.x,y0:pt.y,x1:pt.x,y1:pt.y};
 });
 cv.addEventListener('pointermove',e=>{
@@ -2116,11 +2203,16 @@ cv.addEventListener('pointermove',e=>{
     if(!d.moved&&Math.abs(dx)+Math.abs(dy)<3/view.k) return; d.moved=true;
     for(const it of d.items){
       if(it.v){ it.o.vx=snapM(it.x+dx/VS); it.o.vy=snapM(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.vx*VS},${it.o.vy*VS})`); }
+      else if(it.im){ if(it.S===1){ it.o.x=snapV(it.x+dx); it.o.y=snapV(it.y+dy); } else { it.o.x=snapM(it.x+dx/VS); it.o.y=snapM(it.y+dy/VS); } if(it.el) it.el.setAttribute('transform',`translate(${it.o.x*it.S},${it.o.y*it.S})`); }
       else if(it.ff){ it.o.x=snapM(it.x+dx/VS); it.o.y=snapM(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x*VS},${it.o.y*VS}) rotate(${it.o.rot||0})`); }
       else { it.o.x=snapV(it.x+dx); it.o.y=snapV(it.y+dy); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x},${it.o.y})`); }
     }
     renderWires();
   }
+  else if(d.kind==='ires'){ d.moved=true; const im=d.im, mn=d.S===1?20:.2;
+    im.w=Math.max(mn,d.w0+(pt.x-d.x0)/d.S);
+    im.h=e.shiftKey?Math.max(mn,d.h0+(pt.y-d.y0)/d.S):im.w/(d.w0/d.h0);
+    const el=cv.querySelector(`.img[data-i="${im.id}"]`); if(el) el.outerHTML=imgSVG(im,theme(),lastO||{conn:connSet()}); }
   else if(d.kind==='zres'){ d.moved=true; d.z.w=Math.max(160,snapV(d.w0+pt.x-d.x0)); d.z.h=Math.max(100,snapV(d.h0+pt.y-d.y0)); const T=theme(); const el=cv.querySelector(`.zone[data-z="${d.z.id}"]`); if(el) el.outerHTML=zoneSVG(d.z,T,lastO); }
   else if(d.kind==='marquee'){ d.x1=pt.x; d.y1=pt.y; const T=theme(); const x=Math.min(d.x0,d.x1), y=Math.min(d.y0,d.y1); $('#Lt').innerHTML=`<rect x="${x}" y="${y}" width="${Math.abs(d.x1-d.x0)}" height="${Math.abs(d.y1-d.y0)}" fill="${T.selBg}" stroke="${T.sel}" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`; }
   else if(d.kind==='wire') moveWire(e,pt);
@@ -2129,7 +2221,7 @@ function endDrag(e){
   if(!drag) return; const d=drag; drag=null; cv.classList.remove('panning');
   try{cv.releasePointerCapture(e.pointerId);}catch(_){}
   if(d.kind==='pan'){ if(d.tapClear&&!d.moved){ clearSel(); renderAll(); } }
-  else if(d.kind==='nodes'||d.kind==='zone'||d.kind==='zres'){
+  else if(d.kind==='nodes'||d.kind==='zone'||d.kind==='zres'||d.kind==='ires'){
     if(d.moved) pushUndo(d.before);
     else if(d.clickId&&sel.n.size>1){ selectOnly('n',d.clickId); }
     renderAll();
@@ -2153,6 +2245,7 @@ function endDrag(e){
     if(x2-x1>3/view.k||y2-y1>3/view.k){
       doc.nodes.forEach(n=>{ if(placed(n)&&n.vx*VS>=x1&&n.vx*VS<=x2&&n.vy*VS>=y1&&n.vy*VS<=y2) sel.n.add(n.id); });
       doc.furn.forEach(f=>{ if(f.vv===doc.venue&&f.x*VS>=x1&&f.x*VS<=x2&&f.y*VS>=y1&&f.y*VS<=y2) sel.f.add(f.id); });
+      imgsOf('venue').forEach(im=>{ const cx=(im.x+im.w/2)*VS, cy=(im.y+im.h/2)*VS; if(!im.lock&&cx>=x1&&cx<=x2&&cy>=y1&&cy<=y2) sel.i.add(im.id); });
       renderAll(); }
   }
   else if(d.kind==='marquee'){
@@ -2160,6 +2253,7 @@ function endDrag(e){
     const x1=Math.min(d.x0,d.x1), x2=Math.max(d.x0,d.x1), y1=Math.min(d.y0,d.y1), y2=Math.max(d.y0,d.y1);
     if(x2-x1>3/view.k||y2-y1>3/view.k){
       for(const n of doc.nodes){ const h=lay(n).h; if(n.x<x2&&n.x+n.w>x1&&n.y<y2&&n.y+h>y1) sel.n.add(n.id); }
+      for(const im of imgsOf('flow')){ const cx=im.x+im.w/2, cy=im.y+im.h/2; if(!im.lock&&cx>=x1&&cx<=x2&&cy>=y1&&cy<=y2) sel.i.add(im.id); }
       for(const z of doc.zones){ const zw=z.kind==='text'?tw(z.title,'700 '+(z.fs||18)+'px'):z.w, zh=z.kind==='text'?(z.fs||18):z.h; if(z.x>=x1&&z.y>=y1&&z.x+zw<=x2&&z.y+zh<=y2) sel.z.add(z.id); }
       renderAll();
     }
@@ -2179,9 +2273,11 @@ function startNodeDrag(id,e,pt,kind='n'){
   if(isVenue()){
     for(const nid of sel.n){ const n=getNode(nid); if(n&&placed(n)) items.push({o:n,x:n.vx,y:n.vy,v:true,el:cv.querySelector(`.node[data-node="${nid}"]`)}); }
     for(const fid of sel.f){ const f=getFurn(fid); if(f) items.push({o:f,x:f.x,y:f.y,ff:true,el:cv.querySelector(`.furn[data-f="${fid}"]`)}); }
+    for(const iid of sel.i){ const im=getImg(iid); if(im&&im.m==='venue'&&im.vv===doc.venue&&!im.lock) items.push({o:im,x:im.x,y:im.y,im:true,S:VS,el:cv.querySelector(`.img[data-i="${iid}"]`)}); }
   } else {
     for(const nid of sel.n){ const n=getNode(nid); if(n) items.push({o:n,x:n.x,y:n.y,el:cv.querySelector(`.node[data-node="${nid}"]`)}); }
     for(const zid of sel.z){ const z=getZone(zid); if(z) items.push({o:z,x:z.x,y:z.y,el:cv.querySelector(`.zone[data-z="${zid}"]`)}); }
+    for(const iid of sel.i){ const im=getImg(iid); if(im&&im.m==='flow'&&!im.lock) items.push({o:im,x:im.x,y:im.y,im:true,S:1,el:cv.querySelector(`.img[data-i="${iid}"]`)}); }
   }
   drag={kind:'nodes',x0:pt.x,y0:pt.y,items,before:snapshot(),moved:false,clickId:was&&kind==='n'?id:null};
 }
@@ -2265,9 +2361,10 @@ cv.addEventListener('wheel',e=>{
 cv.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; });
 cv.addEventListener('drop',e=>{
   e.preventDefault();
-  const f=e.dataTransfer.files&&e.dataTransfer.files[0];
+  const f=e.dataTransfer.files&&e.dataTransfer.files[0], pt=evWorld(e);
+  if(f&&[...e.dataTransfer.files].some(x=>x.type.startsWith('image/'))){ insertImages(e.dataTransfer.files,pt); return; }
   if(f&&/\.json$/i.test(f.name)){ readJSONFile(f); return; }
-  const d=e.dataTransfer.getData('text/plain')||'', pt=evWorld(e);
+  const d=e.dataTransfer.getData('text/plain')||'';
   if(d.startsWith('arkey:')) addAny(d.slice(6),isVenue()?pt.x:pt.x-30,isVenue()?pt.y:pt.y-20,true);
   else if(d.startsWith('arnode:')&&isVenue()){ const n=getNode(d.slice(7)); if(n){ pushUndo(snapshot()); n.vx=snapM(pt.x/VS); n.vy=snapM(pt.y/VS); n.vv=doc.venue; selectOnly('n',n.id); renderAll(); } }
 });
@@ -2275,8 +2372,11 @@ cv.addEventListener('contextmenu',e=>{
   e.preventDefault(); hideTip();
   const t=e.target, pt=evWorld(e), ng=t.closest('.node'), wg=t.closest('.wire'), zg=t.closest('.zone');
   let items;
-  const fg=t.closest('.furn');
-  if(isVenue()&&fg&&!ng){
+  const fg=t.closest('.furn'), ig=t.closest('.img');
+  if(ig&&!ng){
+    const id=ig.dataset.i, im=getImg(id); if(!sel.i.has(id)){ selectOnly('i',id); renderAll(); }
+    items=[['編輯圖片','',()=>{ openSide(); focusField('[data-im="name"]'); }],[im.front?'移到最下層':'移到最上層','',()=>edit(()=>{ im.front=!im.front; })],['鎖定位置','',()=>edit(()=>{ im.lock=true; sel.i.delete(id); })],['再製','Ctrl+D',dupSel],['-'],['刪除圖片','Del',delSel,'danger']];
+  } else if(isVenue()&&fg&&!ng){
     const id=fg.dataset.f; if(!sel.f.has(id)){ selectOnly('f',id); renderAll(); }
     items=[['編輯','',()=>{ openSide(); focusField('[data-ff="label"]'); }],['再製','Ctrl+D',dupSel],['旋轉 90°','R',()=>rotSel(90)],['-'],['刪除','Del',delSel,'danger']];
   } else if(isVenue()&&ng){
@@ -2425,11 +2525,12 @@ function openSide(){ if(innerWidth<900) $('#side').classList.add('open'); }
 
 function renderPanel(){
   const nN=sel.n.size,nW=sel.w.size,nZ=sel.z.size,nF=sel.f.size; let h;
-  if(nN===1&&!nW&&!nZ&&!nF) h=panelNode(getNode([...sel.n][0]));
+  if(nN===1&&!nW&&!nZ&&!nF&&!sel.i.size) h=panelNode(getNode([...sel.n][0]));
   else if(nW===1&&!nN&&!nZ&&!nF) h=panelWire(getWire([...sel.w][0]));
   else if(nZ===1&&!nN&&!nW&&!nF) h=panelZone(getZone([...sel.z][0]));
-  else if(nF===1&&!nN&&!nW&&!nZ) h=panelFurn(getFurn([...sel.f][0]));
-  else if(nN+nW+nZ+nF>1) h=panelMulti();
+  else if(nF===1&&!nN&&!nW&&!nZ&&!sel.i.size) h=panelFurn(getFurn([...sel.f][0]));
+  else if(sel.i.size===1&&!nN&&!nW&&!nZ&&!nF) h=panelImg(getImg([...sel.i][0]));
+  else if(nN+nW+nZ+nF+sel.i.size>1) h=panelMulti();
   else h=panelProject();
   $('#side-body').innerHTML=h;
   const locs=new Set(['舞台','FOH','控制室','錄音間','機櫃','後台','Monitor 位','包廂']); doc.nodes.forEach(n=>n.loc&&locs.add(n.loc));
@@ -2539,8 +2640,27 @@ function panelFurn(f){
   h+=`<div class="btns"><button class="btn" data-act="dup">再製</button><button class="btn danger" data-act="del">刪除</button></div>`;
   return h;
 }
+function panelImg(im){
+  const u=im.m==='venue'?'m':'px', r2=v=>Math.round(v*100)/100;
+  let h=`<div class="ph-head"><div class="big-ico">🖼</div><div><div class="ph-title">${esc(im.name||'圖片')}</div><div class="ph-sub">圖片 · ${im.m==='venue'?esc(venueShort(im.vv)):'訊號流程'}</div></div></div>`;
+  h+=secH('圖片');
+  h+=fld('名稱',`<input data-im="name" value="${esc(im.name)}">`);
+  h+=fld(`寬 (${u})`,`<input type="number" min="0.1" step="${im.m==='venue'?0.1:10}" data-im="w" value="${r2(im.w)}">`);
+  h+=fld(`高 (${u})`,`<input type="number" min="0.1" step="${im.m==='venue'?0.1:10}" data-im="h" value="${r2(im.h)}">`);
+  h+=fld('透明度',`<input type="range" min="0.1" max="1" step="0.05" data-im="op" value="${im.op??1}">`);
+  h+=`<label class="chk"><input type="checkbox" data-im="front"${im.front?' checked':''}> 放在最上層（蓋過裝置與連線）</label>`;
+  h+=`<label class="chk"><input type="checkbox" data-im="lock"${im.lock?' checked':''}> 鎖定位置（鎖定後點擊會穿透，可在沒有選取時的面板解除）</label>`;
+  h+=`<div class="hint">改寬度會維持原比例；拖曳右下角方塊調整大小，按住 Shift 可自由變形。${im.m==='venue'?'降低透明度可以疊在平面圖上對位（例如插座迴路圖），對好後再鎖定。':''}</div>`;
+  h+=`<div class="btns"><button class="btn" data-act="imgratio">恢復原始比例</button><button class="btn" data-act="dup">再製</button><button class="btn danger" data-act="del">刪除</button></div>`;
+  return h;
+}
+function imgListHTML(mode){
+  const list=imgsOf(mode); if(!list.length) return '';
+  return secH(`圖片（${list.length}）`)+list.map(im=>`<div class="unp" style="cursor:default"><b>🖼</b><span>${esc(im.name||'圖片')}${im.lock?' <small class="dim">已鎖定</small>':''}</span><button class="btn" data-act="imgpick" data-i="${im.id}">選取</button><button class="btn" data-act="imglock" data-i="${im.id}">${im.lock?'解鎖':'鎖定'}</button></div>`).join('');
+}
 function panelMulti(){
   let h=`<div class="ph-head"><div class="big-ico">⧉</div><div><div class="ph-title">已選取 ${sel.n.size+sel.w.size+sel.z.size+sel.f.size} 個物件</div><div class="ph-sub">裝置 ${sel.n.size} · 連線 ${sel.w.size}${sel.z.size?' · 區域 '+sel.z.size:''}${sel.f.size?' · 家具 '+sel.f.size:''}</div></div></div>`;
+  if(sel.i.size) h+=`<div class="kv"><b>圖片</b><span>${sel.i.size} 張</span></div>`;
   if(sel.f.size){
     const fs=doc.furn.filter(f=>sel.f.has(f.id)), cnt=new Map(); fs.forEach(f=>{ const k=f.label||FURN[f.k].name; cnt.set(k,(cnt.get(k)||0)+1); });
     h+=secH('家具');
@@ -2592,6 +2712,7 @@ function panelVenue(){
   const sh=cablePlan.summary.filter(s=>s.short), tot=cablePlan.rows.filter(r=>r.need!=null).length;
   h+=`<div class="btns"><button class="btn" data-act="openrep" data-tab="cables">📋 線材需求與庫存（${tot} 條）</button></div>`;
   if(sh.length) h+=sh.slice(0,6).map(s=>`<div class="msg lv2">${esc(s.name)} ${s.len}m：需要 ${s.need}，庫存 ${s.stock}</div>`).join('');
+  h+=imgListHTML('venue');
   const un=doc.nodes.filter(n=>!placedAny(n));
   h+=secH(`尚未擺放（${un.length}）`);
   h+=un.length?`<div class="hint">拖曳到平面圖上，或按「放置」放到畫面中央。</div>`+un.map(n=>`<div class="unp" draggable="true" data-un="${n.id}"><b>${esc(n.icon)}</b><span>${esc(n.name)}</span><button class="btn" data-act="place" data-n="${n.id}">放置</button></div>`).join('')+(un.length>1?`<div class="btns"><button class="btn" data-act="placeall">全部排到平面圖旁邊</button></div>`:''):'<div class="hint">所有裝置都已擺放。</div>';
@@ -2602,6 +2723,7 @@ function panelProject(){
   const T=theme(), warn=issues.filter(i=>i.lv===2).length, err=issues.filter(i=>i.lv===3).length;
   let h=`<div class="ph-head"><div class="big-ico">⇄</div><div><div class="ph-title">${esc(doc.name)}</div><div class="ph-sub">沒有選取物件時顯示專案資訊</div></div></div>`;
   h+=`<div class="stats"><div class="stat" data-act="openrep" data-tab="gear"><b>${doc.nodes.length}</b><span>裝置</span></div><div class="stat" data-act="openrep" data-tab="patch"><b>${doc.wires.length}</b><span>連線</span></div><div class="stat" data-act="openrep" data-tab="issues"><b class="${err?'c-err':warn?'c-warn':'c-ok'}">${err+warn}</b><span>問題</span></div></div>`;
+  h+=imgListHTML('flow');
   h+=secH('線色圖例');
   const leg=['mic','line','inst','hp','spk','usb','net','aes50','adat','aes','midi','rf','clock','hdmi'];
   h+=`<div class="legend">${leg.map(k=>`<span><i style="background:${SIG[k].c[T.ci]}${['rf','bt'].includes(k)?';background:repeating-linear-gradient(90deg,'+SIG[k].c[T.ci]+' 0 5px,transparent 5px 8px)':''}"></i>${esc(SIG[k].l)}</span>`).join('')}</div>`;
@@ -2640,6 +2762,15 @@ function applyField(el){
     else if(k==='rot') f.rot=((+v||0)%360+360)%360;
     else f[k]=v;
     if(k==='label'){ const t=$('#side .ph-title'); if(t) t.textContent=v||FURN[f.k].name; }
+  } else if(el.dataset.im){
+    const im=sel.i.size===1&&getImg([...sel.i][0]); if(!im) return; takeSnap(); const k=el.dataset.im;
+    if(k==='w'){ const x=parseFloat(v); if(x>0){ im.w=x; im.h=x/(im.ar||1); } }
+    else if(k==='h'){ const x=parseFloat(v); if(x>0){ im.h=x; im.w=x*(im.ar||1); } }
+    else if(k==='op') im.op=clamp(+v,.05,1);
+    else if(k==='lock'){ im.lock=!!v; if(im.lock) sel.i.delete(im.id); }
+    else if(k==='front') im.front=!!v;
+    else im[k]=v;
+    if(k==='name'){ const t=$('#side .ph-title'); if(t) t.textContent=v||'圖片'; }
   } else if(el.dataset.so){
     const o=seatOpt(), k=el.dataset.so; takeSnap();
     if(k==='sx'||k==='sy') o[k]=v===''?null:Math.max(.2,+v||.2); else if(k==='rot') o.rot=+v; else o[k]=clamp(Math.round(+v||1),1,60);
@@ -2697,6 +2828,9 @@ side.addEventListener('click',e=>{
     case 'placeall': { if(!doc.venue){ toast('請先選擇場地'); break; } const v=curVenue(), W=v?venueSize(v).w:12, un=doc.nodes.filter(x=>!placedAny(x)); edit(()=>un.forEach((x,i)=>{ x.vx=snapM(W+1.5+(i%3)*2); x.vy=snapM(1+Math.floor(i/3)*1.6); x.vv=doc.venue; })); toast('已排在平面圖右側，再逐一拖到實際位置'); break; }
     case 'unplace': edit(()=>{ n.vx=null; n.vy=null; n.vv=''; }); break;
     case 'applylen': edit(()=>{ selWire().len=b.dataset.v; }); break;
+    case 'imgratio': { const im=getImg([...sel.i][0]); if(im) edit(()=>{ im.h=im.w/(im.ar||1); }); break; }
+    case 'imgpick': { const im=getImg(b.dataset.i); if(im){ if(im.lock) edit(()=>{ im.lock=false; }); selectOnly('i',im.id); renderAll(); } break; }
+    case 'imglock': { const im=getImg(b.dataset.i); if(im) edit(()=>{ im.lock=!im.lock; if(im.lock) sel.i.delete(im.id); }); break; }
     case 'seatoff': settings.seat=null; $('#Lt').innerHTML=''; renderAll(); break;
     case 'seatgrid': { const o=seatOpt(), c=viewCenter(); placeSeats(seatGrid(c.x/VS,c.y/VS,o.rows,o.cols)); break; }
     case 'frot': rotSel(90); break;
@@ -2705,7 +2839,7 @@ side.addEventListener('click',e=>{
     case 'goto-venue': doc.venue=b.dataset.v; settings.seat=null; clearSel(); renderAll(); renderLib(); fitView(); break;
     case 'rm-venue': { const id=b.dataset.v, st=venueStats(id);
       if((st.n||st.f)&&!confirm(`移除「${venueShort(id)}」？上面的 ${st.n} 台裝置會變成未擺放，${st.f} 件家具會刪除（可以復原）。`)) break;
-      edit(()=>{ doc.venues=doc.venues.filter(x=>x!==id); doc.nodes.forEach(n=>{ if(n.vv===id){ n.vx=null; n.vy=null; n.vv=''; } }); doc.furn=doc.furn.filter(f=>f.vv!==id); if(doc.venue===id) doc.venue=doc.venues[0]||''; });
+      edit(()=>{ doc.venues=doc.venues.filter(x=>x!==id); doc.nodes.forEach(n=>{ if(n.vv===id){ n.vx=null; n.vy=null; n.vv=''; } }); doc.furn=doc.furn.filter(f=>f.vv!==id); doc.images=doc.images.filter(im=>!(im.m==='venue'&&im.vv===id)); if(doc.venue===id) doc.venue=doc.venues[0]||''; });
       fitView(); break; }
   }
 });
@@ -2750,6 +2884,7 @@ function cmd(c){
     case 'zoomout': { const r=stageRect(); zoomAt(r.width/2,r.height/2,1/1.2); break; }
     case 'zoom100': { const r=stageRect(); zoomAt(r.width/2,r.height/2,1/view.k); break; }
     case 'fit': fitView(); break;
+    case 'image': if(isVenue()&&!doc.venue){ toast('請先選擇場地，再插入圖片'); break; } $('#imgIn').click(); break;
     case 'seat': if(settings.seat){ settings.seat=null; $('#Lt').innerHTML=''; renderAll(); } else addAny('f_chair',0,0,false); break;
     case 'calib': if(!curVenue()){ toast('請先選擇場地'); break; } if(curVenue().vector){ toast('FVL DOME 是依尺寸繪製的，不需要校正'); break; } settings.measure=false; calib={pts:[]}; $('#Lt').innerHTML=''; renderToolbar(); toast('在平面圖上點兩個已知距離的點（例如圖上標示的尺寸線兩端）'); break;
   }
@@ -2836,7 +2971,7 @@ window.addEventListener('keydown',e=>{
   if(mod&&k==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); return; }
   if(mod&&k==='y'){ e.preventDefault(); redo(); return; }
   if(mod&&k==='c'){ copySel(); return; }
-  if(mod&&k==='v'){ paste(); return; }
+  if(mod&&k==='v'){ pendingPaste=true; setTimeout(()=>{ if(pendingPaste){ pendingPaste=false; paste(); } },60); return; }
   if(mod&&k==='d'){ e.preventDefault(); dupSel(); return; }
   if(mod&&k==='a'){ e.preventDefault(); selectAll(); return; }
   if(mod&&k==='s'){ e.preventDefault(); saveJSON(); return; }
@@ -2849,6 +2984,15 @@ window.addEventListener('keydown',e=>{
   const st=e.shiftKey?10:1;
   if(k==='arrowleft'){ e.preventDefault(); nudge(-st,0); } else if(k==='arrowright'){ e.preventDefault(); nudge(st,0); }
   else if(k==='arrowup'){ e.preventDefault(); nudge(0,-st); } else if(k==='arrowdown'){ e.preventDefault(); nudge(0,st); }
+});
+// Ctrl+V：剪貼簿裡有圖片就插入圖片，否則貼上複製的物件
+let pendingPaste=false;
+document.addEventListener('paste',e=>{
+  if(e.target.matches&&e.target.matches('input,textarea,select,[contenteditable]')) return;
+  const fs=[...(e.clipboardData&&e.clipboardData.files||[])].filter(f=>f.type.startsWith('image/'));
+  pendingPaste=false;
+  if(fs.length){ e.preventDefault(); const r=stageRect(), inside=lastMouse.cx>r.left&&lastMouse.cx<r.right&&lastMouse.cy>r.top&&lastMouse.cy<r.bottom; insertImages(fs,inside?{x:lastMouse.x,y:lastMouse.y}:null); }
+  else paste();
 });
 window.addEventListener('keyup',e=>{ if(e.code==='Space'){ spaceDown=false; cv.classList.remove('space'); } });
 window.addEventListener('blur',()=>{ spaceDown=false; cv.classList.remove('space'); });
@@ -2995,10 +3139,10 @@ function downloadCSV(tab){
    ========================================================= */
 const fname=()=>(doc.name||'routing').replace(/[\\/:*?"<>|]+/g,'_').trim()||'routing';
 function download(name,blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); }
-function saveJSON(){ download(fname()+'.routing.json',new Blob([JSON.stringify({app:'audio-routing',version:1,saved:new Date().toISOString(),doc},null,1)],{type:'application/json'})); toast('已下載 JSON 檔'); }
+function saveJSON(){ download(fname()+'.routing.json',new Blob([JSON.stringify({app:'audio-routing',version:1,saved:new Date().toISOString(),doc,assets:usedAssets()},null,1)],{type:'application/json'})); toast('已下載 JSON 檔'); }
 function readJSONFile(f){
   const r=new FileReader();
-  r.onload=()=>{ try{ const j=JSON.parse(r.result); const d=j.doc||j; if(!Array.isArray(d.nodes)) throw 0; pushUndo(snapshot()); doc=sanitize(d); clearSel(); renderAll(); fitView(); toast('已載入 '+f.name); }catch(e){ alert('無法讀取這個檔案，請確認是本工具儲存的 JSON。'); } };
+  r.onload=()=>{ try{ const j=JSON.parse(r.result); const d=j.doc||j; if(!Array.isArray(d.nodes)) throw 0; if(j.assets&&typeof j.assets==='object'){ Object.assign(ASSETS,j.assets); assetsDirty=true; } pushUndo(snapshot()); doc=sanitize(d); clearSel(); renderAll(); fitView(); toast('已載入 '+f.name); }catch(e){ alert('無法讀取這個檔案，請確認是本工具儲存的 JSON。'); } };
   r.readAsText(f);
 }
 $('#fileIn').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) readJSONFile(f); e.target.value=''; });
@@ -3023,7 +3167,7 @@ async function exportVenueSVG(th){
   const W=Math.ceil(b.w+pad*2), H=Math.ceil(b.h+pad*2+top);
   const o={tr:null,conn:connSet(),cand:null,exp:true};
   const href=await venueHref(v);
-  const inner=venueBgSVG(v,T,true,href)+doc.furn.filter(f=>f.vv===doc.venue).map(f=>furnSVG(f,T,o)).join('')+vwireLayer(T,o)+doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('');
+  const vi=imgsOf('venue'), inner=venueBgSVG(v,T,true,href)+vi.filter(im=>!im.front).map(im=>imgSVG(im,T,o)).join('')+doc.furn.filter(f=>f.vv===doc.venue).map(f=>furnSVG(f,T,o)).join('')+vwireLayer(T,o)+doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('')+vi.filter(im=>im.front).map(im=>imgSVG(im,T,o)).join('');
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><rect width="${W}" height="${H}" fill="${T.bg}"/><g transform="translate(${pad-b.x},${pad+top-b.y})">${inner}</g></svg>`;
   return {svg,W,H};
 }
@@ -3032,7 +3176,7 @@ function exportFlowSVG(th){
   const pad=40, top=46, W=Math.ceil(b.w+pad*2), H=Math.ceil(b.h+pad*2+top);
   const o={tr:null,conn:connSet(),cand:null,exp:true};
   const zs=[...doc.zones.filter(z=>z.kind!=='text'),...doc.zones.filter(z=>z.kind==='text')];
-  const inner=zs.map(z=>zoneSVG(z,T,o)).join('')+doc.wires.map(w=>wireSVG(w,T,o)).join('')+doc.nodes.map(n=>nodeSVG(n,T,o)).join('');
+  const fi=imgsOf('flow'), inner=fi.filter(im=>!im.front).map(im=>imgSVG(im,T,o)).join('')+zs.map(z=>zoneSVG(z,T,o)).join('')+doc.wires.map(w=>wireSVG(w,T,o)).join('')+doc.nodes.map(n=>nodeSVG(n,T,o)).join('')+fi.filter(im=>im.front).map(im=>imgSVG(im,T,o)).join('');
   const date=new Date().toLocaleDateString('zh-TW');
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><rect width="${W}" height="${H}" fill="${T.bg}"/><text x="${pad}" y="38" font-size="20" font-weight="700" fill="${T.text}">${esc(doc.name)}</text><text x="${W-pad}" y="38" font-size="12" fill="${T.dim}" text-anchor="end">${date} · ${doc.nodes.length} 台裝置 · ${doc.wires.length} 條連線</text><g transform="translate(${pad-b.x},${pad+top-b.y})">${inner}</g></svg>`;
   return {svg,W,H};
@@ -3178,6 +3322,7 @@ function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show')
   let loaded=false;
   try{
     const s=JSON.parse(localStorage.getItem(KEY)||'null');
+    try{ ASSETS=JSON.parse(localStorage.getItem(KEY+'.assets')||'{}')||{}; }catch(e){ ASSETS={}; }
     if(s&&s.doc){ doc=sanitize(s.doc); loaded=true;
       if(s.view&&isFinite(s.view.x)&&isFinite(s.view.y)&&isFinite(s.view.k)) view={x:s.view.x,y:s.view.y,k:clamp(s.view.k,.15,3)};
       if(s.settings) for(const k in settings) if(k in s.settings) settings[k]=s.settings[k];
