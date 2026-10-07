@@ -290,6 +290,7 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
   <div class="sep"></div>
   <button class="tb flow-only" data-cmd="zone" title="新增區域框（若有選取裝置，會自動框住）">▭ 區域框</button>
   <button class="tb flow-only" data-cmd="text" title="新增文字標註">T 文字</button>
+  <button class="tb venue-only" data-cmd="seat" title="座位模式：框選區域排椅子或坐墊">🪑 座位</button>
   <button class="tb venue-only" data-tog="measure" title="在平面圖上拖曳量測距離">📏 量測</button>
   <button class="tb venue-only" data-cmd="calib" title="點兩個已知距離的點來校正比例">⚖ 校正比例</button>
   <div class="grow"></div>
@@ -303,7 +304,7 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
 
 <div id="mid">
   <aside id="lib">
-    <div class="lib-tabs"><button data-lt="inv" title="C-LAB 器材清單（含庫存數量）">C-LAB 器材</button><button data-lt="model" title="各品牌型號，接口依原廠規格">品牌型號</button><button data-lt="generic" title="通用裝置類型">通用</button></div>
+    <div class="lib-tabs"><button data-lt="inv" title="臺灣聲響實驗室器材清單（含庫存數量）">TSL 器材</button><button data-lt="campus" title="各場地現有設備（C-LAB 展演空間使用手冊）">園區器材</button><button data-lt="model" title="各品牌型號，接口依原廠規格">品牌型號</button><button data-lt="generic" title="通用裝置、椅子、坐墊、桌子">通用</button></div>
     <div class="lib-head"><input id="lib-q" type="search" placeholder="搜尋（SM58、X32、喇叭、Mipro…）"></div>
     <div id="lib-list"></div>
     <div class="lib-foot" id="lib-foot">點一下加入畫布中央，或直接拖曳到想放的位置。</div>
@@ -318,7 +319,7 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
     <div id="empty" hidden>
       <div class="empty-card">
         <div class="e-title">音訊 Routing 設計器</div>
-        <div class="e-sub">從左側的 C-LAB 器材或品牌型號把裝置拖進畫布，<br>再從接口的圓點拖曳拉線到另一台裝置的輸入。<br>自動檢查電平、接頭、48V 與庫存；切到「🗺 場地配置」可估算線長。</div>
+        <div class="e-sub">從左側的 TSL 器材、園區器材或品牌型號把裝置拖進畫布，<br>再從接口的圓點拖曳拉線到另一台裝置的輸入。<br>自動檢查電平、接頭、48V 與庫存；切到「🗺 場地配置」可估算線長。</div>
         <div class="e-btns">
           <button data-tpl="band">🎸 樂團現場<small>Stage Box ＋ 數位混音器、Wedge、IEM、主喇叭</small></button>
           <button data-tpl="podcast">🎙️ Podcast／直播<small>三人收音、耳機分配、導播機與串流電腦</small></button>
@@ -388,7 +389,7 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
       </ul>
       <h3>C-LAB 器材與庫存</h3>
       <ul>
-        <li>左側「C-LAB 器材」分頁是公司器材清單（2025.12.31 版），右邊數字是「已用／庫存」，用超過會變紅，檢查清單也會提醒。</li>
+        <li>左側「TSL 器材」分頁是臺灣聲響實驗室器材清單（2025.12.31 版）；「園區器材」依場地列出各展演空間的現有設備（手冊 202408 版）。右邊數字是「已用／數量」，用超過會變紅；把某場地的設備拿到別的場地用也會提醒。</li>
         <li>「品牌型號」分頁的接口依原廠規格建立（例如 X32、WING、dLive、MIPRO 無線系統）；無線發射器和接收機不同系列會被標成不相容。</li>
         <li>標示「型號待確認」的品項（Focusrite Red、MOTU MK5）是依名稱推測的型號，接口可在右側面板自行修改。</li>
       </ul>
@@ -398,6 +399,9 @@ body.m-venue .flow-only,body:not(.m-venue) .venue-only{display:none!important}
         <li>把裝置拖到平面圖上；兩個畫面共用同一份資料，流程圖的連線會直接出現在場地圖上。在場地圖拖曳裝置<b>外圈</b>到另一台裝置，可以選接口拉線。</li>
         <li>每條線會估算長度：（平面距離＋兩端高度）×（1＋餘量）＋兩端預留，再依「線材統計」庫存挑最接近、夠長的線；超過最長庫存會建議串接。數字可在右側面板調整。</li>
         <li><b>📏 量測</b> 可直接在圖上量距離；報表的「線材清單」會列出需要的線材數量與庫存差額。</li>
+        <li><b>多場地</b>：用上方選單把其他場地加入同一個活動，每台裝置放在其中一個場地；器材、家具、線材數量會把所有場地加總。兩端在不同場地的線無法估算，請手動填長度。</li>
+        <li><b>椅子／坐墊</b>：在「通用」或器材清單點椅子、坐墊會進入座位模式（或按 🪑 座位），在圖上拖曳框出區域，選「整齊填滿」「隨機散落」或「依排列平均分佈」；也可以輸入幾排幾列直接放置。<kbd>R</kbd> 旋轉選取的家具。</li>
+        <li><b>桌子／架子／舞台平台</b>可設定尺寸與高度。裝置放在上面時，線長估算會自動用桌高、架高或舞台高度。</li>
       </ul>
       <h3>畫布</h3>
       <ul>
@@ -577,7 +581,22 @@ const EXTRAS=[
   ['rfout','無線 RF 輸出',()=>[P('out','RF','RF','rf')]],
 ];
 
-TYPES.prop={cat:'etc',icon:'📦',name:'道具／配件（無接口）',kw:'prop 道具 配件 架 椅 桌 box',make:()=>({name:'Item',ports:[]})};
+TYPES.prop={cat:'etc',icon:'📦',name:'道具／配件（無接口）',kw:'prop 道具 配件 box',make:()=>({name:'Item',ports:[]})};
+
+/* ── 家具・座位：只出現在場地配置，不進訊號流程 ── */
+// sx/sy = 排列時的左右／前後間距（m）
+const FURN={
+  chair:  {name:'椅子',icon:'🪑',w:.45,d:.45,h:.45,sx:.55,sy:.95,kw:'chair 椅子 座位 seat'},
+  cushion:{name:'坐墊',icon:'🟠',w:.4,d:.4,h:.1,sx:.7,sy:.8,kw:'cushion 坐墊 座墊 seat'},
+  table:  {name:'桌子',icon:'🟫',w:1.8,d:.75,h:.75,kw:'table 桌子 工作桌'},
+  stand:  {name:'架子（喇叭架／麥克風架）',icon:'🗼',w:.6,d:.6,h:1.5,kw:'stand 喇叭架 麥克風架 架'},
+  stage:  {name:'舞台平台',icon:'🟪',w:2,d:1,h:.42,kw:'stage riser 舞台 平台 板腳'},
+  block:  {name:'其他物件（櫃子／沙發／展牆）',icon:'⬛',w:1,d:.5,h:1,kw:'block 物件 櫃 沙發 展牆 白板'},
+};
+// 舞台板腳庫存高度（m）→ 每座平台用 4 支
+const STAGE_LEGS=[[1.13,'stg-113'],[1.02,'stg-102'],[.87,'stg-87'],[.68,'stg-68'],[.57,'stg-57'],[.42,'stg-42'],[.27,'stg-27'],[.12,'stg-12']];
+CATS.push({id:'furn',name:'家具・座位（只在場地配置）',color:'#a16207'});
+for(const [k,f] of Object.entries(FURN)) TYPES['f_'+k]={cat:'furn',icon:f.icon,name:f.name,kw:f.kw,furn:k,make:()=>({ports:[]})};
 
 /* =========================================================
    brand models — ports follow the manufacturers' published specs
@@ -724,6 +743,23 @@ const MODELS=[
   ['catsnake_m','etc','🐍','the sssnake','Cat Snake 3M（公頭端）','Cat 類比多芯','','in|Cat|RJ45|snake;out|Out 1,Out 2,Out 3|XLR|micline','cat snake sssnake 多芯'],
   // ── 客製 ──
   ['wfs_array','pa','🔊','C-LAB','WFS 陣列喇叭（訂製）','PoE 網路喇叭陣列','','io|Network (PoE++)|RJ45|net','wfs array wave field 陣列'],
+  // ── 園區場地設備 ──
+  ['qsc_tm16','mix','🎚️','QSC','TouchMix-16','數位混音器','','in|12*In|XLR|micline;in|In 13,In 14,In 15,In 16|COMBO|micline;in|St 17/18 L,St 17/18 R,St 19/20 L,St 19/20 R|TRS|line;in|Talkback|XLR|mic;out|Main L,Main R|XLR|line;out|6*Aux|XLR|line;out|IEM 7/8,IEM 9/10|TRS|hp;out|Cue|TRS|line;out|Phones|TRS|hp;io|USB 1,USB 2|USBA|usb;io|Ethernet|RJ45|net','touchmix qsc mixer 混音器'],
+  ['aster_a550p','pa','⚡','ASTER','A-550P（規格待確認）','擴大機','','in|In A,In B|XLR|line;out|Out A,Out B|SPK|spk','aster amplifier 擴大機'],
+  ['ld_curv_iamp','pa','⚡','LD Systems','CURV 500 iAMP','4 聲道安裝擴大機','','in|4*In|XLR|line;out|4*Ch|SPK|spk','ld systems curv iamp amplifier 擴大機'],
+  ['ld_curv_sub','pa','🔉','LD Systems','CURV 500 iSUB','10" 被動超低音','','in|In|BIND|spk;out|Link|BIND|spk','ld curv sub 超低音 ldcurv555'],
+  ['ld_curv_sat','pa','🔈','LD Systems','CURV 500 IS','被動中高音陣列','','in|In|BIND|spk;out|Link|BIND|spk','ld curv satellite 陣列 ldcurv500'],
+  ['mipro_ma708','pa','🔊','MIPRO','MA-708','移動式無線音箱','','in|Mic In|COMBO|micline;in|Line In|RCA|line;in|RF 1,RF 2|RF|rf|sys=MIPRO MA;out|Line Out|RCA|line;out|Ext Speaker|TS|spk;io|藍牙|BT|bt','mipro ma708 portable pa 移動式音響'],
+  ['mipro_ma_hh','src','🎤','MIPRO','MA-708 無線手握麥克風','無線麥克風','','out|RF|RF|rf|sys=MIPRO MA','mipro ma wireless handheld'],
+  ['mipro_act312b','src','📻','MIPRO','ACT-312B','類比雙頻道接收機','','in|RF 1,RF 2|RF|rf|sys=MIPRO ACT-3;in|Ant A,Ant B|BNC|rf;out|Out 1,Out 2|XLR|line;out|Mix Out|TRS|line','mipro act312 receiver 接收機'],
+  ['mipro_act32h','src','📡','MIPRO','ACT-32H','類比手握發射器','','out|RF|RF|rf|sys=MIPRO ACT-3','mipro act32h handheld 手握'],
+  ['epson_g7400u','rec','📽️','Epson','EB-G7400U','雷射投影機','','in|HDMI In|HDMI|hdmi;in|HDBaseT|RJ45|hdmi;io|LAN|RJ45|net','epson projector 投影機'],
+  ['epson_u42','rec','📽️','Epson','EB-U42','投影機','','in|HDMI 1,HDMI 2|HDMI|hdmi;in|Audio In L,Audio In R|RCA|line','epson projector 投影機'],
+  ['roly_a500w','rec','📽️','ROLY','RL-A500W','投影機','','in|HDMI|HDMI|hdmi','roly projector 投影機'],
+  ['sampo_tv55','rec','📺','SAMPO','EM-55QB2202','55 吋電視','','in|HDMI 1,HDMI 2,HDMI 3|HDMI|hdmi;out|Optical|OPT|spdif','sampo tv 電視'],
+  ['sony_a7r3','rec','📷','Sony','α7R III','相機／錄影','','in|Mic In|MINI|micline;out|Phones|MINI|hp;out|HDMI|HDMI|hdmi;io|USB-C|USBC|usb','sony a7r camera 相機 錄影機'],
+  ['patech_spk','pa','🔈','PATECH','喇叭（型號未標示）','喇叭','','in|In|BIND|spk','patech speaker 喇叭'],
+  ['rack_mixamp','mix','🗄️','—','音響機櫃（型號未標示）','混音擴大機櫃','','in|4*Mic|XLR|mic;in|Line In|RCA|line;out|Spk A,Spk B|BIND|spk','音響機櫃 rack mixer amplifier'],
 ];
 for(const [key,cat,icon,brand,model,kind,ph,spec,kw] of MODELS){
   TYPES[key]={cat,icon,brand,model,kind,name:(brand&&brand!=='—'?brand+' ':'')+model,kw:kw+' '+brand+' '+model+' '+kind,
@@ -745,6 +781,18 @@ const INV_SECS=[
   {id:'pc',name:'TSL 倉庫・電腦設備'},
   {id:'other',name:'TSL 倉庫・其它'},
   {id:'stage',name:'舞台板腳'},
+  {id:'v-r102',name:'R102 共享吧',campus:true,owner:['r102'],open:true},
+  {id:'v-graybox',name:'聯合餐廳灰盒子 Gray Box',campus:true,owner:['graybox'],open:true},
+  {id:'v-r101',name:'R101 排練吧',campus:true,owner:['r101'],open:true},
+  {id:'v-icenter-2f',name:'服務中心二樓 i-Center',campus:true,owner:['icenter-2f'],open:true},
+  {id:'v-multi',name:'多功能廳（116／114／115）',campus:true,owner:['multi'],open:true},
+  {id:'v-as1-1f',name:'聯合餐廳一樓 Art Space I 1F',campus:true,owner:['as1-1f']},
+  {id:'v-as1-2f',name:'聯合餐廳二樓 Art Space I 2F',campus:true,owner:['as1-2f']},
+  {id:'v-as2-1f',name:'圖書館一樓 Art Space II 1F',campus:true,owner:['as2-1f']},
+  {id:'v-as2-2f',name:'圖書館二樓 Art Space II 2F',campus:true,owner:['as2-2f']},
+  {id:'v-as3',name:'通信分隊 Art Space III 1F＋2F',campus:true,owner:['as3-1f','as3-2f']},
+  {id:'v-meiyuan-1f',name:'美援大樓一樓',campus:true,owner:['meiyuan-1f']},
+  {id:'v-soundlab',name:'聲響實驗室 立體聲場',campus:true,owner:['soundlab']},
 ];
 const INV=[
   ['fvl-cdm32','fvl','音響控台主機','Allen & Heath dLive CDM32',1,'ah_cdm32'],
@@ -876,16 +924,16 @@ const INV=[
   ['meas-at1','meas','訊號測量器','At-1 Portable',1,'prop','📟'],
   ['meas-laser','meas','雷射測距儀','Bosch GLM100',1,'prop','📏'],
 
-  ['st-manfrotto','stand','外出麥克風架','Manfrotto MS0490A',1,'prop','🎙️'],
-  ['st-w920b','stand','麥克風架','W-920B',12,'prop','🎙️'],
-  ['st-k503h','stand','麥克風架（矮）','K-503H',1,'prop','🎙️'],
-  ['st-ms320','stand','譜架','MS320',8,'prop','🎼'],
+  ['st-manfrotto','stand','外出麥克風架','Manfrotto MS0490A',1,'f_stand','','',{w:.7,d:.7,h:1.5}],
+  ['st-w920b','stand','麥克風架','W-920B',12,'f_stand','','',{w:.6,d:.6,h:1.5}],
+  ['st-k503h','stand','麥克風架（矮）','K-503H',1,'f_stand','','',{w:.5,d:.5,h:.6}],
+  ['st-ms320','stand','譜架','MS320',8,'f_stand','','',{w:.5,d:.5,h:1.2}],
   ['st-tray','stand','置物盤','譜架置物盤',1,'prop','🗂️'],
   ['st-instr','stand','樂器置物架','',1,'prop','🗂️'],
-  ['st-wp162l','stand','手搖式升降喇叭架（矮）','CNBear WP162B',8,'prop','🗼'],
-  ['st-wp162h','stand','手搖式升降喇叭架（高）','CNBear WP162B',8,'prop','🗼'],
-  ['st-yamaha','stand','普通外場喇叭架','YAMAHA',5,'prop','🗼'],
-  ['st-genelec','stand','Genelec 直立圓盤喇叭架','訂製',16,'prop','🗼'],
+  ['st-wp162l','stand','手搖式升降喇叭架（矮）','CNBear WP162B',8,'f_stand','','',{w:1,d:1,h:1.4}],
+  ['st-wp162h','stand','手搖式升降喇叭架（高）','CNBear WP162B',8,'f_stand','','',{w:1.1,d:1.1,h:2}],
+  ['st-yamaha','stand','普通外場喇叭架','YAMAHA',5,'f_stand','','',{w:1,d:1,h:1.8}],
+  ['st-genelec','stand','Genelec 直立圓盤喇叭架','訂製',16,'f_stand','','',{w:.5,d:.5,h:1.2}],
   ['st-km24499','stand','Genelec 專用延伸單臂扣','K&M 24499',8,'prop','🗜️'],
   ['st-km24493','stand','Genelec 專用單臂扣','K&M 24493',8,'prop','🗜️'],
 
@@ -926,12 +974,12 @@ const INV=[
   ['pc-bd','pc','3D 藍光播放機','AV5.1 聲道光碟機（BD-350）',1,'bd_player'],
 
   ['ot-standlight','other','譜燈','',4,'prop','💡'],
-  ['ot-chair','other','旋轉椅','IKEA ODGER 703.952.63',20,'prop','🪑'],
-  ['ot-fold','other','折疊椅','IKEA',40,'prop','🪑'],
-  ['ot-table','other','折疊工作桌','短×5、長×2、圓×4',9,'prop','🟫'],
-  ['ot-grey','other','灰色演奏椅','',10,'prop','🪑'],
-  ['ot-riser','other','觀眾席','180×90×7.5',24,'prop','🟫'],
-  ['ot-piano','other','鋼琴椅','',1,'prop','🪑'],
+  ['ot-chair','other','旋轉椅','IKEA ODGER 703.952.63',20,'f_chair','','',{w:.55,d:.55,h:.45}],
+  ['ot-fold','other','折疊椅','IKEA',40,'f_chair'],
+  ['ot-table','other','折疊工作桌','短×5、長×2、圓×4',9,'f_table','','尺寸不一，預設 180×75，可在面板修改',{w:1.8,d:.75,h:.75}],
+  ['ot-grey','other','灰色演奏椅','',10,'f_chair'],
+  ['ot-riser','other','觀眾席平台','180×90×7.5',24,'f_stage','','',{w:1.8,d:.9,h:.075}],
+  ['ot-piano','other','鋼琴椅','',1,'f_chair','','',{w:.6,d:.35,h:.5}],
   ['ot-unifi','other','大洞監控系統','Unifi 攝影機與伺服器',1,'unifi_cam'],
   ['ot-rack15','other','移動式瑞克箱','15 吋雙入喇叭瑞克箱',3,'prop','🧳'],
   ['ot-rack10','other','移動式瑞克箱','10 吋雙入喇叭瑞克箱',4,'prop','🧳'],
@@ -948,7 +996,113 @@ const INV=[
   ['stg-42','stage','舞台板腳','高 42 cm',15,'prop','🦵'],
   ['stg-27','stage','舞台板腳','高 27 cm',15,'prop','🦵'],
   ['stg-12','stage','舞台板腳','高 12 cm',12,'prop','🦵'],
-].map(([id,sec,item,model,qty,type,icon,note])=>({id,sec,item,model,qty,type,icon:icon||'',note:note||''}));
+
+  ['as1a-lightrig','v-as1-1f','燈架','',1,'prop','💡'],
+  ['as1a-curtain','v-as1-1f','落地遮光黑幕','',1,'prop','🟫'],
+  ['as1a-floor','v-as1-1f','舞蹈排練用緩衝地板','',1,'prop','🟫'],
+  ['as1a-ladder','v-as1-1f','工作梯','12 呎、10 呎、8 呎各 1',3,'prop','🪜'],
+  ['as1b-chair','v-as1-2f','藍色有背摺疊椅','',2,'f_chair'],
+  ['as1b-table','v-as1-2f','摺疊工作桌','180×75',1,'f_table','','',{w:1.8,d:.75,h:.75}],
+  ['as1b-curtain','v-as1-2f','土金色落地遮光簾','',1,'prop','🟫'],
+  ['as1b-ladder','v-as1-2f','工作梯','12 呎、10 呎、8 呎各 1',3,'prop','🪜'],
+  ['gb-proj','v-graybox','投影機','EPSON EB-U42',2,'epson_u42'],
+  ['gb-screen','v-graybox','150 吋電動升降螢幕','',2,'f_block','🖼️','',{w:3.4,d:.2,h:2.5}],
+  ['gb-mg16','v-graybox','16CH 混音器','YAMAHA MG16XU',1,'yamaha_mg16xu'],
+  ['gb-rx','v-graybox','無線接收機','MIPRO ACT-312B',3,'mipro_act312b','','手冊寫「ACT-312B 無線麥克風 x3」，推測為 3 台雙頻道接收機'],
+  ['gb-mic','v-graybox','無線麥克風','MIPRO ACT-32H',6,'mipro_act32h','','需自備 3 號電池；型號為推測'],
+  ['gb-v1hd','v-graybox','導播機','Roland V-1HD',1,'roland_v1hd'],
+  ['gb-cam','v-graybox','錄影機','SONY A7RIII',1,'sony_a7r3'],
+  ['gb-led','v-graybox','LED 攝影燈','永諾 YN600 II',2,'prop','💡'],
+  ['gb-hdmi','v-graybox','HDMI 傳輸線','',1,'prop','🧵'],
+  ['gb-amp','v-graybox','擴大機','LD Systems CURV 500 I AMP',1,'ld_curv_iamp'],
+  ['gb-sub','v-graybox','10 吋超低音','LD Systems CURV 500 iSUB（LDCURV555）',1,'ld_curv_sub'],
+  ['gb-sat','v-graybox','中高音陣列','LD Systems CURV 500（7 度及 10 度）',2,'ld_curv_sat','','數量依手冊推測，請確認'],
+  ['gb-table180','v-graybox','長折疊工作桌','180 cm',1,'f_table','','',{w:1.8,d:.6,h:.75}],
+  ['gb-table60','v-graybox','藍綠色正方木頭桌','60×60×73',2,'f_table','','',{w:.6,d:.6,h:.73}],
+  ['gb-chair','v-graybox','藍色折疊椅','',50,'f_chair'],
+  ['gb-shelf','v-graybox','黑鐵框木書櫃','200×203（直播用）',1,'f_block','📚','',{w:2,d:.4,h:2.03}],
+  ['gb-sofa','v-graybox','蘋果綠椅墊六人座沙發組','（直播用）',1,'f_block','🛋️','',{w:2.4,d:.9,h:.45}],
+  ['gb-coffee','v-graybox','長茶几','（直播用）',1,'f_table','','',{w:1.2,d:.5,h:.45}],
+  ['as2a-chair','v-as2-1f','藍色有背摺疊椅','',30,'f_chair'],
+  ['as2a-table','v-as2-1f','摺疊工作桌','180×75',3,'f_table','','',{w:1.8,d:.75,h:.75}],
+  ['as2a-wall','v-as2-1f','移動式展牆','L42×W248×H300',8,'f_block','🧱','',{w:2.48,d:.42,h:3}],
+  ['as2a-ladder','v-as2-1f','工作梯','8 呎',1,'prop','🪜'],
+  ['as2b-table','v-as2-2f','摺疊工作桌','180×75',1,'f_table','','',{w:1.8,d:.75,h:.75}],
+  ['as2b-chair','v-as2-2f','藍色有背摺疊椅','',2,'f_chair'],
+  ['as2b-wall','v-as2-2f','移動式展牆','L42×W248×H300',10,'f_block','🧱','',{w:2.48,d:.42,h:3}],
+  ['as2b-curtain','v-as2-2f','淺灰藍色落地遮光簾','',1,'prop','🟫'],
+  ['as2b-ladder','v-as2-2f','工作梯','10 呎',1,'prop','🪜'],
+  ['as3-chair','v-as3','藍色有背摺疊椅','',10,'f_chair'],
+  ['as3-table45','v-as3','白色折疊長桌','180×45',1,'f_table','','',{w:1.8,d:.45,h:.75}],
+  ['as3-table75','v-as3','白色折疊長桌','180×75',1,'f_table','','',{w:1.8,d:.75,h:.75}],
+  ['as3-ladder','v-as3','工作梯','8 呎',1,'prop','🪜'],
+  ['my-ladder','v-meiyuan-1f','梯子','',1,'prop','🪜'],
+  ['sl-furn','v-soundlab','摺疊桌椅','數量未標示（手冊的詳細清單連結已失效）',1,'prop','🪑'],
+  ['mf-proj','v-multi','116 投影機','ROLY RL-A500W',1,'roly_a500w'],
+  ['mf-screen','v-multi','116 投影布幕','',1,'f_block','🖼️','',{w:2.5,d:.2,h:2}],
+  ['mf-spk','v-multi','116 喇叭','PATECH',6,'patech_spk'],
+  ['mf-rack','v-multi','116 音響機櫃','（含擴大，型號未標示）',1,'rack_mixamp'],
+  ['mf-mic','v-multi','116 麥克風','（型號未標示）',4,'mic_dyn'],
+  ['mf-chair-w','v-multi','116 白色椅子','',50,'f_chair'],
+  ['mf-bar','v-multi','116 白色吧檯椅','',1,'f_chair','','',{w:.4,d:.4,h:.75}],
+  ['mf-hightable','v-multi','116 透明高圓桌','',1,'f_table','','',{w:.6,d:.6,h:1.05}],
+  ['mf-t120','v-multi','116 桌子','120×60',6,'f_table','','',{w:1.2,d:.6,h:.75}],
+  ['mf-t100','v-multi','116 桌子','100×50',1,'f_table','','',{w:1,d:.5,h:.75}],
+  ['mf-woodchair','v-multi','116 小木椅','',1,'f_chair'],
+  ['mf-chair-b','v-multi','114 黑色椅子','',22,'f_chair'],
+  ['mf-t120b','v-multi','114 工作桌','120×75',2,'f_table','','',{w:1.2,d:.75,h:.75}],
+  ['mf-t300','v-multi','114 白色工作桌','300×90',1,'f_table','','',{w:3,d:.9,h:.75}],
+  ['mf-cab','v-multi','114 白色置物櫃','',2,'f_block','🗄️','',{w:1.2,d:.4,h:1.2}],
+  ['mf-screenwall','v-multi','114 屏風','',1,'f_block','🧱','',{w:1.8,d:.1,h:1.8}],
+  ['mf-rattan','v-multi','114 藤編高腳椅','',4,'f_chair','','',{w:.45,d:.45,h:.75}],
+  ['mf-lowchair','v-multi','114 矮木椅','',1,'f_chair'],
+  ['mf-tv','v-multi','115 電視','聲寶 SAMPO EM-55QB2202',1,'sampo_tv55'],
+  ['mf-t360','v-multi','115 白色工作桌','360×120',1,'f_table','','',{w:3.6,d:1.2,h:.75}],
+  ['mf-office','v-multi','115 辦公椅','',10,'f_chair','','',{w:.6,d:.6,h:.45}],
+  ['ic-ma708','v-icenter-2f','移動式音響','MIPRO MA-708',1,'mipro_ma708'],
+  ['ic-mic','v-icenter-2f','無線麥克風（MA-708 附）','',2,'mipro_ma_hh','','需自備 3 號電池'],
+  ['ic-chair-b','v-icenter-2f','黑色摺疊椅','',40,'f_chair'],
+  ['ic-chair-blue','v-icenter-2f','藍色摺疊椅','',20,'f_chair'],
+  ['ic-table','v-icenter-2f','摺疊桌','180×75',1,'f_table','','',{w:1.8,d:.75,h:.75}],
+  ['ic-wtable','v-icenter-2f','木頭方桌','60×60×73',2,'f_table','','',{w:.6,d:.6,h:.73}],
+  ['ic-wchair','v-icenter-2f','木頭靠背單人座椅','',2,'f_chair','','',{w:.55,d:.55,h:.45}],
+  ['ic-stool','v-icenter-2f','木圓凳','',4,'f_chair','','',{w:.35,d:.35,h:.45}],
+  ['ic-glass','v-icenter-2f','造型玻璃高桌','',2,'f_table','','',{w:.6,d:.6,h:1.05}],
+  ['ic-sofa','v-icenter-2f','綠色椅墊三人座沙發','',2,'f_block','🛋️','',{w:1.8,d:.8,h:.45}],
+  ['ic-cube','v-icenter-2f','綠椅墊方塊椅','',1,'f_chair','','',{w:.5,d:.5,h:.45}],
+  ['ic-uchair','v-icenter-2f','綠橘椅墊ㄇ型椅','',6,'f_chair'],
+  ['r101-tm16','v-r101','數位混音器','QSC TouchMix-16',1,'qsc_tm16'],
+  ['r101-amp','v-r101','擴大機','ASTER A-550P',1,'aster_a550p'],
+  ['r101-spk','v-r101','喇叭','（型號未標示）',2,'spk_pas','','數量依常見配置推測，請確認'],
+  ['r101-cable','v-r101','XLR－3.5mm（公）音源線','',1,'prop','🧵'],
+  ['r101-chair','v-r101','藍色有背摺疊椅','',8,'f_chair'],
+  ['r101-table','v-r101','IBM 摺疊桌','180×45',1,'f_table','','',{w:1.8,d:.45,h:.75}],
+  ['r101-barre','v-r101','活動把杆','高 81–95 公分',12,'f_block','➖','',{w:1.2,d:.4,h:.95}],
+  ['r101-ms','v-r101','譜架','',2,'f_stand','','',{w:.5,d:.5,h:1.2}],
+  ['r102-proj','v-r102','投影機','EPSON EB-G7400U',1,'epson_g7400u'],
+  ['r102-mg16','v-r102','16CH 混音器','YAMAHA MG16XU',1,'yamaha_mg16xu'],
+  ['r102-mic','v-r102','無線麥克風','（型號未標示）',3,'mic_wl','','需自備 3 號電池'],
+  ['r102-amp','v-r102','擴大機','LD Systems CURV 500 I AMP',1,'ld_curv_iamp'],
+  ['r102-sub','v-r102','10 吋超低音','LD Systems CURV 500 iSUB（LDCURV555）',1,'ld_curv_sub'],
+  ['r102-sat','v-r102','中高音陣列','LD Systems CURV 500（7 度及 10 度）',2,'ld_curv_sat','','數量依手冊推測，請確認'],
+  ['r102-chair','v-r102','黃色有背會議椅','',100,'f_chair'],
+  ['r102-stool','v-r102','黑色高腳圓凳','',5,'f_chair','','',{w:.4,d:.4,h:.75}],
+  ['r102-bar','v-r102','木吧台椅','',5,'f_chair','','',{w:.45,d:.45,h:.75}],
+  ['r102-wtable','v-r102','正方木頭桌','60×60×73',2,'f_table','','',{w:.6,d:.6,h:.73}],
+  ['r102-micke','v-r102','MICKE 白色工作桌','73×50×75',1,'f_table','','',{w:.73,d:.5,h:.75}],
+  ['r102-long','v-r102','白色長桌','100×60',1,'f_table','','',{w:1,d:.6,h:.75}],
+  ['r102-iron','v-r102','大型鐵製工作桌','240×120',2,'f_table','','',{w:2.4,d:1.2,h:.75}],
+  ['r102-cab250','v-r102','活動高櫃','255×250',2,'f_block','🗄️','',{w:2.55,d:.5,h:2.5}],
+  ['r102-cab125','v-r102','活動高櫃','255×125',2,'f_block','🗄️','',{w:2.55,d:.5,h:1.25}],
+  ['r102-board','v-r102','白板','150×90',1,'f_block','⬜','',{w:1.5,d:.1,h:.9}],
+  ['r102-glass','v-r102','玻璃高桌','',1,'f_table','','',{w:.6,d:.6,h:1.05}],
+  ['r102-bigstool','v-r102','淺灰大圓凳','',1,'f_chair','','',{w:.6,d:.6,h:.45}],
+  ['r102-sofa1','v-r102','灰色方形小沙發','',1,'f_block','🛋️','',{w:.8,d:.8,h:.45}],
+  ['r102-sofa3','v-r102','灰色方形三人沙發','',1,'f_block','🛋️','',{w:1.9,d:.85,h:.45}],
+  ['r102-wstool','v-r102','木圓凳','',2,'f_chair','','',{w:.35,d:.35,h:.45}],
+].map(([id,sec,item,model,qty,type,icon,note,f])=>({id,sec,item,model,qty,type,icon:icon||'',note:note||'',f:f||null}));
+// 園區器材的歸屬場地
+INV.forEach(i=>{ const s=INV_SECS.find(x=>x.id===i.sec); i.owner=s&&s.owner||null; });
 const INVM=new Map(INV.map(i=>[i.id,i]));
 
 /* 線材庫存（線材統計 2025.12.31）：kind → {長度: 數量} */
@@ -1007,7 +1161,7 @@ const KEY='audioRouting.v1';
 let doc=sanitize({name:'未命名專案'});
 let view={x:60,y:60,k:1};
 const settings={wire:'curve',snap:true,labels:true,arrows:true,trace:false,theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
-let sel={n:new Set(),w:new Set(),z:new Set()};
+let sel={n:new Set(),w:new Set(),z:new Set(),f:new Set()};
 let undoS=[],redoS=[],pendingSnap=null;
 let compatCache=new Map(), issues=[], cablePlan={rows:[],summary:[]};
 let drag=null, spaceDown=false, lastMouse={cx:0,cy:0,x:0,y:0};
@@ -1017,6 +1171,7 @@ const getNode=id=>doc.nodes.find(n=>n.id===id);
 const getPort=(n,pid)=>n&&n.ports.find(p=>p.id===pid);
 const getWire=id=>doc.wires.find(w=>w.id===id);
 const getZone=id=>doc.zones.find(z=>z.id===id);
+const getFurn=id=>doc.furn.find(f=>f.id===id);
 const catOf=n=>(TYPES[n.type]||TYPES.custom).cat;
 const nodeColor=n=>n.color||(CATS.find(c=>c.id===catOf(n))||CATS[4]).color;
 const themeName=()=>settings.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
@@ -1028,10 +1183,10 @@ const selNode=()=>sel.n.size===1&&!sel.w.size&&!sel.z.size?getNode([...sel.n][0]
 const selWire=()=>sel.w.size===1?getWire([...sel.w][0]):null;
 const selZone=()=>sel.z.size===1?getZone([...sel.z][0]):null;
 function removeWiresOfPort(nid,pid){ doc.wires=doc.wires.filter(w=>!((w.a.n===nid&&w.a.p===pid)||(w.b.n===nid&&w.b.p===pid))); }
-function clearSel(){ sel.n.clear(); sel.w.clear(); sel.z.clear(); }
+function clearSel(){ sel.n.clear(); sel.w.clear(); sel.z.clear(); sel.f.clear(); }
 function selectOnly(k,id){ clearSel(); sel[k].add(id); }
 function toggleSel(k,id){ sel[k].has(id)?sel[k].delete(id):sel[k].add(id); }
-function fixSel(){ for(const id of [...sel.n]) if(!getNode(id)) sel.n.delete(id); for(const id of [...sel.w]) if(!getWire(id)) sel.w.delete(id); for(const id of [...sel.z]) if(!getZone(id)) sel.z.delete(id); }
+function fixSel(){ for(const id of [...sel.n]) if(!getNode(id)) sel.n.delete(id); for(const id of [...sel.w]) if(!getWire(id)) sel.w.delete(id); for(const id of [...sel.z]) if(!getZone(id)) sel.z.delete(id); for(const id of [...sel.f]) if(!getFurn(id)) sel.f.delete(id); }
 
 function uniqueName(base,except){
   const taken=new Set(doc.nodes.filter(n=>n!==except).map(n=>n.name));
@@ -1057,7 +1212,13 @@ function makeAny(key,x,y){
   }
   return makeNode(key,x,y);
 }
-const invUsed=id=>doc.nodes.reduce((a,n)=>a+(n.inv===id?1:0),0);
+function invUsage(){
+  const m=new Map(), inc=(k,c=1)=>m.set(k,(m.get(k)||0)+c);
+  doc.nodes.forEach(n=>{ if(n.inv) inc(n.inv); });
+  (doc.furn||[]).forEach(f=>{ if(f.inv) inc(f.inv); if(f.k==='stage'&&!f.inv){ const leg=STAGE_LEGS.find(([h])=>Math.abs(h-f.h)<.005); if(leg) inc(leg[1],4); } });
+  return m;
+}
+const invUsed=id=>invUsage().get(id)||0;
 
 /* ── 場地 ── */
 const isVenue=()=>settings.mode==='venue';
@@ -1067,7 +1228,30 @@ function curVenue(){
 }
 const venuePxm=v=>v.id==='custom'?v.pxm:((doc.vcal&&doc.vcal[v.id])||v.pxm);
 function venueSize(v){ if(v.vector) return {w:v.wm,h:v.hm}; const p=venuePxm(v); return {w:v.w/p,h:v.h/p}; }
-const placed=n=>n.vx!=null&&n.vy!=null;
+const placedAny=n=>n.vx!=null&&n.vy!=null&&!!n.vv;
+const placed=n=>placedAny(n)&&n.vv===doc.venue;
+const venueName=id=>id==='custom'?(doc.customVenue?doc.customVenue.name:'自訂平面圖'):((VENUES.find(v=>v.id===id)||{}).name||id);
+const venueShort=id=>venueName(id).replace(/\s+(Art Space|Gray Box|Multi-function|i-Center).*$/,'').replace(/展演空間/,'');
+// 判斷點是否落在家具上（考慮旋轉）
+function furnAt(vv,x,y,kinds){
+  let best=null;
+  for(const f of doc.furn){
+    if(f.vv!==vv||(kinds&&!kinds.includes(f.k))) continue;
+    const a=-(f.rot||0)*Math.PI/180, dx=x-f.x, dy=y-f.y, lx=dx*Math.cos(a)-dy*Math.sin(a), ly=dx*Math.sin(a)+dy*Math.cos(a);
+    const inside=f.k==='stand'?Math.hypot(lx/(f.w/2),ly/(f.d/2))<=1:Math.abs(lx)<=f.w/2&&Math.abs(ly)<=f.d/2;
+    if(inside&&(!best||f.h>best.h)) best=f;
+  }
+  return best;
+}
+const isMicNode=n=>{ const T=TYPES[n.type]||{}; return T.cat==='src'&&/麥克風|mic|發射器/i.test((T.kind||T.name||'')+n.type); };
+// 裝置放在桌上／架上／舞台上時的離地高度
+function supportHeight(n){
+  if(!placedAny(n)) return null;
+  const f=furnAt(n.vv,n.vx,n.vy,['table','stand','stage']); if(!f) return null;
+  if(f.k==='stage') return {h:f.h+defHeight(n),f};
+  if(f.k==='stand') return {h:f.h,f};
+  return {h:f.h+(isMicNode(n)?.3:.05),f};
+}
 function defHeight(n){
   const T=TYPES[n.type]||{}, k=(T.kind||T.name||'')+' '+n.type+' '+n.name;
   if(n.type==='prop') return 0;
@@ -1080,7 +1264,7 @@ function defHeight(n){
   if(/吉他|guitar|鍵盤|keys|踏板|pedal/i.test(k)) return 0.5;
   return 0.8;
 }
-const nodeHt=n=>n.vz!=null?n.vz:defHeight(n);
+const nodeHt=n=>{ if(n.vz!=null) return n.vz; const s=supportHeight(n); return s?s.h:defHeight(n); };
 // 依兩端接頭對應到庫存線材種類
 function stockKind(E){
   let a=E.pa.conn, b=E.pb.conn; const plug=['XLR','TRS','TS'];
@@ -1095,7 +1279,7 @@ function stockKind(E){
 }
 // 估算線長（公尺）：平面距離＋上下高度，再加餘量
 function estLen(E){
-  if(!placed(E.na)||!placed(E.nb)||E.na===E.nb) return null;
+  if(!placedAny(E.na)||!placedAny(E.nb)||E.na===E.nb||E.na.vv!==E.nb.vv) return null;
   const dx=Math.abs(E.na.vx-E.nb.vx), dy=Math.abs(E.na.vy-E.nb.vy), o=doc.vopt||{slack:10,ends:1};
   const flat=settings.vroute==='direct'?Math.hypot(dx,dy):dx+dy;
   const vert=settings.vroute==='direct'?Math.abs(nodeHt(E.na)-nodeHt(E.nb)):nodeHt(E.na)+nodeHt(E.nb);
@@ -1145,19 +1329,22 @@ function redo(){ if(!redoS.length) return; undoS.push(snapshot()); doc=JSON.pars
 let saveT;
 function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(KEY,JSON.stringify({doc,view,settings})); }catch(e){} },400); }
 function sanitize(d){
-  const out={name:String(d.name||'未命名專案'),nodes:[],wires:[],zones:[],venue:String(d.venue||''),vcal:(d.vcal&&typeof d.vcal==='object')?d.vcal:{},
-    vopt:Object.assign({slack:10,ends:1},d.vopt||{}),customVenue:d.customVenue&&d.customVenue.img?d.customVenue:null};
+  const out={name:String(d.name||'未命名專案'),nodes:[],wires:[],zones:[],furn:[],venue:String(d.venue||''),vcal:(d.vcal&&typeof d.vcal==='object')?d.vcal:{},
+    vopt:Object.assign({slack:10,ends:1},d.vopt||{}),customVenue:d.customVenue&&d.customVenue.img?d.customVenue:null,
+    venues:Array.isArray(d.venues)?d.venues.map(String):(d.venue?[String(d.venue)]:[])};
+  if(out.venue&&!out.venues.includes(out.venue)) out.venues.push(out.venue);
   const num=v=>v==null||v===''||!isFinite(+v)?null:+v;
   for(const n of (Array.isArray(d.nodes)?d.nodes:[])){
     if(!n||!n.id) continue;
     const T=TYPES[n.type]?n.type:'custom';
     out.nodes.push({id:String(n.id),type:T,icon:n.icon||TYPES[T].icon,name:String(n.name??''),model:String(n.model??''),loc:String(n.loc??''),ph:n.ph||'',color:n.color||'',
-      w:clamp(+n.w||210,140,480),notes:String(n.notes??''),flip:!!n.flip,x:+n.x||0,y:+n.y||0,inv:INVM.has(n.inv)?n.inv:'',vx:num(n.vx),vy:num(n.vy),vz:num(n.vz),
+      w:clamp(+n.w||210,140,480),notes:String(n.notes??''),flip:!!n.flip,x:+n.x||0,y:+n.y||0,inv:INVM.has(n.inv)?n.inv:'',vx:num(n.vx),vy:num(n.vy),vz:num(n.vz),vv:n.vv?String(n.vv):(num(n.vx)!=null?out.venue:''),
       ports:(Array.isArray(n.ports)?n.ports:[]).filter(p=>p&&p.id).map(p=>({id:String(p.id),dir:['in','out','io'].includes(p.dir)?p.dir:'in',name:String(p.name??''),conn:CONN[p.conn]?p.conn:'XLR',sig:SIG[p.sig]?p.sig:'line',ch:String(p.ch??''),p48:!!p.p48,grp:p.grp||'',sys:p.sys?String(p.sys):''}))});
   }
   const has=(r)=>{ const n=out.nodes.find(x=>x.id===r?.n); return n&&n.ports.some(p=>p.id===r.p); };
   for(const w of (Array.isArray(d.wires)?d.wires:[])) if(w&&has(w.a)&&has(w.b)) out.wires.push({id:String(w.id||uid()),a:{n:w.a.n,p:w.a.p},b:{n:w.b.n,p:w.b.p},label:String(w.label??''),len:String(w.len??''),cable:String(w.cable??''),color:w.color||'',note:String(w.note??'')});
   for(const z of (Array.isArray(d.zones)?d.zones:[])) if(z) out.zones.push({id:String(z.id||uid()),kind:z.kind==='text'?'text':'frame',title:String(z.title??''),x:+z.x||0,y:+z.y||0,w:+z.w||400,h:+z.h||300,color:z.color||'',fs:+z.fs||18,note:String(z.note??'')});
+  for(const f of (Array.isArray(d.furn)?d.furn:[])) if(f&&FURN[f.k]) out.furn.push({id:String(f.id||uid()),k:f.k,vv:String(f.vv||''),x:+f.x||0,y:+f.y||0,w:clamp(+f.w||FURN[f.k].w,.05,30),d:clamp(+f.d||FURN[f.k].d,.05,30),h:clamp(+f.h||0,0,20),rot:+f.rot||0,label:String(f.label??''),inv:INVM.has(f.inv)?f.inv:''});
   return out;
 }
 
@@ -1298,9 +1485,11 @@ function analyze(){
     }
     if(catOf(n)==='src'&&n.type!=='gtr_amp'&&n.ports.some(p=>p.dir==='out')&&!doc.wires.some(w=>w.a.n===n.id||w.b.n===n.id)) issues.push({lv:1,n:n.id,where:n.name,m:'這個音源還沒接線'});
   }
-  const used=new Map();
-  doc.nodes.forEach(n=>{ if(n.inv) used.set(n.inv,(used.get(n.inv)||0)+1); });
-  for(const [id,c] of used){ const it=INVM.get(id); if(it&&c>it.qty){ const first=doc.nodes.find(n=>n.inv===id); issues.push({lv:2,n:first.id,where:`${it.item}・${it.model}`,m:`器材庫存不足：庫存 ${it.qty}，圖上用了 ${c}`}); } }
+  for(const [id,c] of invUsage()){ const it=INVM.get(id); if(it&&c>it.qty){ const first=doc.nodes.find(n=>n.inv===id); issues.push({lv:2,n:first&&first.id,where:`${it.item}${it.model?'・'+it.model:''}`,m:`${it.owner?'場地器材':'器材'}數量不足：共 ${it.qty}，${isVenue()||!first?'配置中':'圖上'}用了 ${c}`}); } }
+  // 園區器材拿到別的場地使用
+  const away=new Map();
+  [...doc.nodes,...doc.furn].forEach(x=>{ const it=x.inv&&INVM.get(x.inv); if(it&&it.owner&&x.vv&&!it.owner.includes(x.vv)){ const k=it.id+'|'+x.vv; const a=away.get(k)||{it,vv:x.vv,c:0,n:x.ports?x.id:null}; a.c++; away.set(k,a); } });
+  for(const a of away.values()) issues.push({lv:2,n:a.n,where:`${a.it.item}・${venueShort(a.vv)}`,m:`「${a.it.item}」是${venueShort(a.it.owner[0])}的場地設備，目前有 ${a.c} 件放在${venueShort(a.vv)}，需要先跟場地借用`});
   cablePlan=planCables();
   cablePlan.summary.filter(s=>s.short).forEach(s=>issues.push({lv:1,where:'線材庫存',m:`${s.name} ${s.len}m 需要 ${s.need} 條，庫存 ${s.stock} 條（缺 ${s.short}）`}));
   const noStock=cablePlan.rows.filter(r=>r.need!=null&&!r.kind);
@@ -1484,9 +1673,77 @@ function vwireLayer(T,o){
   });
   return s;
 }
+/* ── 家具 ── */
+function furnSVG(f,T,o){
+  const isSel=!o.exp&&sel.f.has(f.id), W=f.w*VS, D=f.d*VS, sw=isSel?2.2:1, st=c=>isSel?T.sel:c;
+  const R=`x="${-W/2}" y="${-D/2}" width="${W}" height="${D}"`;
+  let b;
+  if(f.k==='chair') b=`<rect ${R} rx="3" fill="${T.node}" stroke="${st(T.dim)}" stroke-width="${sw}"/><rect x="${-W/2}" y="${-D/2}" width="${W}" height="${D*.24}" rx="2" fill="${T.dim}" fill-opacity=".75"/>`;
+  else if(f.k==='cushion') b=`<ellipse rx="${W/2}" ry="${D/2}" fill="#d97706" fill-opacity=".35" stroke="${st('#d97706')}" stroke-width="${sw}"/>`;
+  else if(f.k==='table') b=`<rect ${R} rx="2" fill="${T.node}" fill-opacity=".92" stroke="${st(T.text)}" stroke-width="${sw}"/>`;
+  else if(f.k==='stand') b=`<ellipse rx="${W/2}" ry="${D/2}" fill="${T.dim}" fill-opacity=".08" stroke="${st(T.text)}" stroke-width="${sw}" stroke-dasharray="4 3"/><circle r="3" fill="${T.text}"/>`;
+  else if(f.k==='stage') b=`<rect ${R} fill="#7c3aed" fill-opacity=".16" stroke="${st('#7c3aed')}" stroke-width="${isSel?2.2:1.4}" stroke-dasharray="7 4"/>`;
+  else b=`<rect ${R} rx="2" fill="${T.dim}" fill-opacity=".28" stroke="${st(T.dim)}" stroke-width="${sw}"/>`;
+  let t='';
+  if(f.k!=='chair'&&f.k!=='cushion'&&Math.max(W,D)>34){
+    const txt=(f.label?f.label+' ':'')+(f.k==='stand'?'':Math.round(f.w*100)+'×'+Math.round(f.d*100)+' ')+'h'+Math.round(f.h*100);
+    t=`<text y="3" text-anchor="middle" font-size="9" fill="${T.text}" fill-opacity=".8" transform="rotate(${-(f.rot||0)})">${esc(ell(txt,Math.max(W,D,50),'9px'))}</text>`;
+  }
+  return `<g class="furn" data-f="${f.id}" transform="translate(${f.x*VS},${f.y*VS}) rotate(${f.rot||0})">${b}${t}</g>`;
+}
+const furnOf=key=>key.startsWith('inv:')?((TYPES[(INVM.get(key.slice(4))||{}).type]||{}).furn||null):((TYPES[key]||{}).furn||null);
+function furnSpec(key){
+  const k=furnOf(key), F=FURN[k];
+  if(key.startsWith('inv:')){ const it=INVM.get(key.slice(4)); return {k,w:it.f?.w??F.w,d:it.f?.d??F.d,h:it.f?.h??F.h,label:it.item,inv:it.id}; }
+  return {k,w:F.w,d:F.d,h:F.h,label:'',inv:''};
+}
+const newFurn=(sp,x,y,rot)=>({id:uid(),k:sp.k,vv:doc.venue,x:snapM(x),y:snapM(y),w:sp.w,d:sp.d,h:sp.h,rot:rot||0,label:sp.label||'',inv:sp.inv||''});
+// 從裝置庫加入：家具走家具流程，其他是裝置
+function addAny(key,x,y,isDrop){
+  if(!furnOf(key)) return addNode(key,x,y);
+  if(!isVenue()) setMode('venue');
+  if(!doc.venue){ toast('家具只會出現在場地配置：請先在上方選擇場地'); return; }
+  const sp=furnSpec(key);
+  if((sp.k==='chair'||sp.k==='cushion')&&!isDrop){
+    settings.seat={...sp,key}; settings.measure=false; calib=null; clearSel(); renderAll(); openSide();
+    toast('座位模式：在平面圖上拖曳框出區域，或在右側輸入排數、列數'); return;
+  }
+  const c=isDrop?{x:x/VS,y:y/VS}:{x:viewCenter().x/VS,y:viewCenter().y/VS};
+  pushUndo(snapshot()); const f=newFurn(sp,c.x,c.y,sp.k==='chair'||sp.k==='cushion'?seatOpt().rot:0); doc.furn.push(f); selectOnly('f',f.id); renderAll();
+}
+/* ── 座位排列 ── */
+function seatOpt(){ return settings.seatOpt||(settings.seatOpt={rows:5,cols:8,sx:null,sy:null,rot:180}); }
+function seatSpacing(){ const st=settings.seat, F=FURN[st.k], o=seatOpt(); return {sx:o.sx||Math.max(F.sx||st.w+.1,st.w+.08), sy:o.sy||Math.max(F.sy||st.d+.4,st.d+.3)}; }
+function placeSeats(pts){
+  if(!pts.length) return;
+  const st=settings.seat, o=seatOpt(); pushUndo(snapshot()); clearSel();
+  pts.forEach(q=>{ const f=newFurn(st,q.x,q.y,o.rot); doc.furn.push(f); sel.f.add(f.id); });
+  renderAll(); toast(`已放置 ${pts.length} 個${st.label||FURN[st.k].name}`);
+}
+function seatGrid(cx,cy,rows,cols){ const {sx,sy}=seatSpacing(), pts=[]; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) pts.push({x:cx+(c-(cols-1)/2)*sx,y:cy+(r-(rows-1)/2)*sy}); return pts; }
+function seatFill(R){ const {sx,sy}=seatSpacing(), st=settings.seat; const cols=Math.max(1,Math.floor((R.w-st.w)/sx)+1), rows=Math.max(1,Math.floor((R.h-st.d)/sy)+1); return seatGrid(R.x+R.w/2,R.y+R.h/2,rows,cols); }
+function seatRC(R,rows,cols){ const pts=[]; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) pts.push({x:R.x+(c+.5)*R.w/cols,y:R.y+(r+.5)*R.h/rows}); return pts; }
+function seatRandom(R,n){
+  const st=settings.seat, minD=Math.max(st.w,st.d)+.15, pts=[];
+  for(let tries=0;pts.length<n&&tries<n*300;tries++){
+    const x=R.x+st.w/2+Math.random()*Math.max(0,R.w-st.w), y=R.y+st.d/2+Math.random()*Math.max(0,R.h-st.d);
+    if(pts.every(q=>Math.hypot(q.x-x,q.y-y)>=minD)) pts.push({x,y});
+  }
+  return pts;
+}
+function seatRectMenu(R,cx,cy){
+  const fill=seatFill(R), o=seatOpt(), {sx,sy}=seatSpacing(), nm=settings.seat.label||FURN[settings.seat.k].name;
+  showMenu(cx,cy,[
+    [`#座位區 ${R.w.toFixed(1)} × ${R.h.toFixed(1)} m · ${nm}`],
+    [`整齊填滿（${fill.length} 個，間距 ${sx}×${sy} m）`,'',()=>placeSeats(fill)],
+    ['隨機散落…','',()=>{ const n=parseInt(prompt('要散落幾個？',Math.max(1,Math.round(fill.length*.6))),10); if(!(n>0)) return; const pts=seatRandom(R,n); placeSeats(pts); if(pts.length<n) toast(`空間不夠，只放得下 ${pts.length} 個`); }],
+    [`依 ${o.rows} 排 × ${o.cols} 列平均分佈`,'',()=>placeSeats(seatRC(R,o.rows,o.cols))],
+  ]);
+}
+
 function renderVenue(T,o){
   const v=curVenue();
-  $('#Lz').innerHTML=venueBgSVG(v,T,false);
+  $('#Lz').innerHTML=venueBgSVG(v,T,false)+doc.furn.filter(f=>f.vv===doc.venue).map(f=>furnSVG(f,T,o)).join('');
   $('#Lw').innerHTML=vwireLayer(T,o);
   $('#Ln').innerHTML=doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('');
 }
@@ -1530,15 +1787,18 @@ function setMode(m){
   if(m==='venue'&&!doc.venue) toast('先在上方選單選擇場地');
 }
 function venueOptions(){
-  const cur=doc.venue||'';
-  let h=`<option value=""${cur?'':' selected'}>— 選擇場地 —</option>`+VENUES.map(v=>`<option value="${v.id}"${v.id===cur?' selected':''}>${esc(v.name)}</option>`).join('');
-  if(doc.customVenue) h+=`<option value="custom"${cur==='custom'?' selected':''}>📄 ${esc(doc.customVenue.name)}</option>`;
+  const cur=doc.venue||'', all=[...VENUES.map(v=>v.id),...(doc.customVenue?['custom']:[])];
+  const o=id=>`<option value="${id}"${id===cur?' selected':''}>${id==='custom'?'📄 ':''}${esc(venueName(id))}</option>`;
+  let h=cur?'':`<option value="" selected>— 選擇場地 —</option>`;
+  if(doc.venues.length) h+=`<optgroup label="本活動的場地">${doc.venues.map(o).join('')}</optgroup>`;
+  const rest=all.filter(id=>!doc.venues.includes(id));
+  if(rest.length) h+=`<optgroup label="${doc.venues.length?'＋ 加入其他場地':'C-LAB 場地'}">${rest.map(o).join('')}</optgroup>`;
   return h+`<option value="__upload">＋ 上傳平面圖…</option>`;
 }
 $('#venueSel').addEventListener('change',e=>{
   const v=e.target.value;
   if(v==='__upload'){ e.target.innerHTML=venueOptions(); $('#planIn').click(); return; }
-  pushUndo(snapshot()); doc.venue=v; renderAll(); fitView();
+  pushUndo(snapshot()); doc.venue=v; if(v&&!doc.venues.includes(v)) doc.venues.push(v); settings.seat=null; clearSel(); renderAll(); renderLib(); fitView();
 });
 $('#planIn').addEventListener('change',e=>{
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
@@ -1549,7 +1809,7 @@ $('#planIn').addEventListener('change',e=>{
     c.getContext('2d').drawImage(img,0,0,c.width,c.height);
     pushUndo(snapshot());
     doc.customVenue={name:f.name.replace(/\.[^.]+$/,''),img:c.toDataURL('image/jpeg',.85),w:c.width,h:c.height,pxm:50,info:'自行上傳的平面圖，請先校正比例'};
-    doc.venue='custom'; renderAll(); fitView();
+    doc.venue='custom'; if(!doc.venues.includes('custom')) doc.venues.push('custom'); renderAll(); fitView();
     calib={pts:[]}; toast('請在圖上點兩個已知距離的點來校正比例');
   }; img.src=r.result; };
   r.readAsDataURL(f);
@@ -1606,7 +1866,7 @@ function freeFlowSpot(){
 }
 function addNode(key,x,y){
   const s=snapshot(); let n;
-  if(isVenue()){ const f=freeFlowSpot(); n=makeAny(key,f.x,f.y); n.vx=snapM(x/VS); n.vy=snapM(y/VS); }
+  if(isVenue()){ const f=freeFlowSpot(); n=makeAny(key,f.x,f.y); n.vx=snapM(x/VS); n.vy=snapM(y/VS); n.vv=doc.venue; }
   else n=makeAny(key,snapV(x),snapV(y));
   doc.nodes.push(n); pushUndo(s); selectOnly('n',n.id); renderAll(); return n;
 }
@@ -1617,19 +1877,22 @@ function venueDown(e,t,pt){
   if(calib){ calibClick(pt); drag={kind:'none'}; return; }
   $('#Lt').innerHTML='';
   if(settings.measure){ drag={kind:'measure',x0:pt.x,y0:pt.y,x1:pt.x,y1:pt.y}; return; }
-  const vh=t.closest('.vh'), ng=t.closest('.node'), wg=t.closest('.wire');
-  const key=ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:'empty';
+  const vh=t.closest('.vh'), ng=t.closest('.node'), wg=t.closest('.wire'), fg=t.closest('.furn');
+  if(settings.seat&&!ng&&!wg&&!fg){ drag={kind:'seatrect',x0:pt.x,y0:pt.y,x1:pt.x,y1:pt.y}; return; }
+  const key=ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:fg?'f'+fg.dataset.f:'empty';
   if(isDbl(key)){
     if(ng){ selectOnly('n',ng.dataset.node); renderAll(); openSide(); focusField('[data-nf="name"]'); }
     else if(wg){ selectOnly('w',wg.dataset.w); renderAll(); openSide(); focusField('[data-wf="label"]'); }
+    else if(fg){ selectOnly('f',fg.dataset.f); renderAll(); openSide(); focusField('[data-ff="label"]'); }
     else openQA(e.clientX,e.clientY,pt,null);
     drag={kind:'none'}; return;
   }
   if(vh&&!e.shiftKey){ const id=vh.closest('.node').dataset.node; drag={kind:'vwire',from:id,sx:e.clientX,sy:e.clientY}; hideTip(); return; }
   if(ng){ startNodeDrag(ng.dataset.node,e,pt); return; }
   if(wg){ const id=wg.dataset.w; if(e.shiftKey) toggleSel('w',id); else selectOnly('w',id); renderAll(); drag={kind:'none'}; return; }
+  if(fg){ startNodeDrag(fg.dataset.f,e,pt,'f'); return; }
   if(e.pointerType==='touch'){ startPan(e); drag.tapClear=true; return; }
-  if(!e.shiftKey&&(sel.n.size||sel.w.size)){ clearSel(); renderAll(); }
+  if(!e.shiftKey&&(sel.n.size||sel.w.size||sel.f.size)){ clearSel(); renderAll(); }
   drag={kind:'marquee',x0:pt.x,y0:pt.y,x1:pt.x,y1:pt.y};
 }
 function moveMeasure(d){
@@ -1721,8 +1984,9 @@ function movePort(n,pid,d){
   [n.ports[i],n.ports[j]]=[n.ports[j],n.ports[i]];
 }
 function delSel(){
-  if(!sel.n.size&&!sel.w.size&&!sel.z.size) return;
+  if(!sel.n.size&&!sel.w.size&&!sel.z.size&&!sel.f.size) return;
   pushUndo(snapshot());
+  doc.furn=doc.furn.filter(f=>!sel.f.has(f.id));
   doc.nodes=doc.nodes.filter(n=>!sel.n.has(n.id));
   doc.wires=doc.wires.filter(w=>!sel.w.has(w.id)&&!sel.n.has(w.a.n)&&!sel.n.has(w.b.n));
   doc.zones=doc.zones.filter(z=>!sel.z.has(z.id));
@@ -1730,16 +1994,16 @@ function delSel(){
 }
 let clip=null, pasteN=0;
 function copySel(silent){
-  const ns=doc.nodes.filter(n=>sel.n.has(n.id)), zs=doc.zones.filter(z=>sel.z.has(z.id));
-  if(!ns.length&&!zs.length) return false;
+  const ns=doc.nodes.filter(n=>sel.n.has(n.id)), zs=doc.zones.filter(z=>sel.z.has(z.id)), fs=doc.furn.filter(f=>sel.f.has(f.id));
+  if(!ns.length&&!zs.length&&!fs.length) return false;
   const ids=new Set(ns.map(n=>n.id));
-  clip=JSON.parse(JSON.stringify({nodes:ns,zones:zs,wires:doc.wires.filter(w=>ids.has(w.a.n)&&ids.has(w.b.n))}));
-  pasteN=0; if(!silent) toast(`已複製 ${ns.length+zs.length} 個物件`); return true;
+  clip=JSON.parse(JSON.stringify({nodes:ns,zones:zs,furn:fs,wires:doc.wires.filter(w=>ids.has(w.a.n)&&ids.has(w.b.n))}));
+  pasteN=0; if(!silent) toast(`已複製 ${ns.length+zs.length+fs.length} 個物件`); return true;
 }
 function paste(at){
   if(!clip) return; const s=snapshot(); pasteN++;
   const c=JSON.parse(JSON.stringify(clip)); let dx=30*pasteN, dy=30*pasteN;
-  if(at){ const xs=[...c.nodes.map(n=>n.x),...c.zones.map(z=>z.x)], ys=[...c.nodes.map(n=>n.y),...c.zones.map(z=>z.y)]; dx=snapV(at.x-Math.min(...xs)); dy=snapV(at.y-Math.min(...ys)); }
+  if(at&&(c.nodes.length||c.zones.length)){ const xs=[...c.nodes.map(n=>n.x),...c.zones.map(z=>z.x)], ys=[...c.nodes.map(n=>n.y),...c.zones.map(z=>z.y)]; dx=snapV(at.x-Math.min(...xs)); dy=snapV(at.y-Math.min(...ys)); }
   const nm=new Map(), pm=new Map(); clearSel();
   for(const n of c.nodes){
     const old=n.id; n.id=uid(); nm.set(old,n.id); n.x+=dx; n.y+=dy; n.name=uniqueName(n.name);
@@ -1749,14 +2013,20 @@ function paste(at){
   }
   for(const w of c.wires){ const a={n:nm.get(w.a.n),p:pm.get(w.a.n+'|'+w.a.p)}, b={n:nm.get(w.b.n),p:pm.get(w.b.n+'|'+w.b.p)}; w.id=uid(); w.a=a; w.b=b; doc.wires.push(w); }
   for(const z of c.zones){ z.id=uid(); z.x+=dx; z.y+=dy; doc.zones.push(z); sel.z.add(z.id); }
+  for(const f of (c.furn||[])){ if(!doc.venue) break; f.id=uid(); f.vv=doc.venue; f.x=snapM(f.x+.6*pasteN); f.y=snapM(f.y+.6*pasteN); doc.furn.push(f); sel.f.add(f.id); }
   pushUndo(s); renderAll();
 }
 function dupSel(){ if(copySel(true)) paste(); }
-function selectAll(){ clearSel(); doc.nodes.forEach(n=>sel.n.add(n.id)); doc.zones.forEach(z=>sel.z.add(z.id)); renderAll(); }
+function selectAll(){ clearSel(); if(isVenue()){ doc.nodes.filter(placed).forEach(n=>sel.n.add(n.id)); doc.furn.filter(f=>f.vv===doc.venue).forEach(f=>sel.f.add(f.id)); } else { doc.nodes.forEach(n=>sel.n.add(n.id)); doc.zones.forEach(z=>sel.z.add(z.id)); } renderAll(); }
+function rotSel(deg){ if(!sel.f.size) return; edit(()=>doc.furn.forEach(f=>{ if(sel.f.has(f.id)) f.rot=((f.rot||0)+deg+360)%360; })); }
 let lastNudge=0;
 function nudge(dx,dy){
-  if(!sel.n.size&&!sel.z.size) return;
+  if(!sel.n.size&&!sel.z.size&&!sel.f.size) return;
   if(Date.now()-lastNudge>800) pushUndo(snapshot()); lastNudge=Date.now();
+  if(isVenue()){ const m=.05;
+    doc.nodes.forEach(n=>{ if(sel.n.has(n.id)&&placed(n)){ n.vx=snapM(n.vx+dx*m); n.vy=snapM(n.vy+dy*m); } });
+    doc.furn.forEach(f=>{ if(sel.f.has(f.id)){ f.x=Math.round((f.x+dx*m)*100)/100; f.y=Math.round((f.y+dy*m)*100)/100; } });
+    renderCanvas(); return; }
   doc.nodes.forEach(n=>{ if(sel.n.has(n.id)){ n.x+=dx; n.y+=dy; } });
   doc.zones.forEach(z=>{ if(sel.z.has(z.id)){ z.x+=dx; z.y+=dy; } });
   renderCanvas();
@@ -1831,6 +2101,8 @@ cv.addEventListener('pointermove',e=>{
   if(!drag){ hoverTip(e); return; }
   const d=drag;
   if(d.kind==='measure'){ d.x1=pt.x; d.y1=pt.y; moveMeasure(d); return; }
+  if(d.kind==='seatrect'){ d.x1=pt.x; d.y1=pt.y; const T=theme(), x=Math.min(d.x0,d.x1), y=Math.min(d.y0,d.y1), w=Math.abs(d.x1-d.x0), h=Math.abs(d.y1-d.y0);
+    $('#Lt').innerHTML=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#d97706" fill-opacity=".12" stroke="#d97706" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/><text x="${x+w/2}" y="${y-6}" text-anchor="middle" font-size="12" font-weight="700" fill="#d97706">${(w/VS).toFixed(1)} × ${(h/VS).toFixed(1)} m</text>`; return; }
   if(d.kind==='vwire'){
     const a=getNode(d.from), T=theme(), el=document.elementFromPoint(e.clientX,e.clientY), tg=el&&el.closest&&el.closest('.vnode');
     const tn=tg&&tg.dataset.node!==d.from?getNode(tg.dataset.node):null;
@@ -1844,6 +2116,7 @@ cv.addEventListener('pointermove',e=>{
     if(!d.moved&&Math.abs(dx)+Math.abs(dy)<3/view.k) return; d.moved=true;
     for(const it of d.items){
       if(it.v){ it.o.vx=snapM(it.x+dx/VS); it.o.vy=snapM(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.vx*VS},${it.o.vy*VS})`); }
+      else if(it.ff){ it.o.x=snapM(it.x+dx/VS); it.o.y=snapM(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x*VS},${it.o.y*VS}) rotate(${it.o.rot||0})`); }
       else { it.o.x=snapV(it.x+dx); it.o.y=snapV(it.y+dy); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x},${it.o.y})`); }
     }
     renderWires();
@@ -1868,10 +2141,19 @@ function endDrag(e){
     else if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6){ selectOnly('n',d.from); renderAll(); }
   }
   else if(d.kind==='measure'){ /* 量測線保留在畫面上，直到下次點擊 */ }
+  else if(d.kind==='seatrect'){
+    $('#Lt').innerHTML='';
+    const R={x:Math.min(d.x0,d.x1)/VS,y:Math.min(d.y0,d.y1)/VS,w:Math.abs(d.x1-d.x0)/VS,h:Math.abs(d.y1-d.y0)/VS};
+    if(R.w<.4||R.h<.4) toast('區域太小：請拖曳框出放座位的範圍');
+    else seatRectMenu(R,e.clientX,e.clientY);
+  }
   else if(d.kind==='marquee'&&isVenue()){
     $('#Lt').innerHTML='';
     const x1=Math.min(d.x0,d.x1), x2=Math.max(d.x0,d.x1), y1=Math.min(d.y0,d.y1), y2=Math.max(d.y0,d.y1);
-    if(x2-x1>3/view.k||y2-y1>3/view.k){ doc.nodes.forEach(n=>{ if(placed(n)&&n.vx*VS>=x1&&n.vx*VS<=x2&&n.vy*VS>=y1&&n.vy*VS<=y2) sel.n.add(n.id); }); renderAll(); }
+    if(x2-x1>3/view.k||y2-y1>3/view.k){
+      doc.nodes.forEach(n=>{ if(placed(n)&&n.vx*VS>=x1&&n.vx*VS<=x2&&n.vy*VS>=y1&&n.vy*VS<=y2) sel.n.add(n.id); });
+      doc.furn.forEach(f=>{ if(f.vv===doc.venue&&f.x*VS>=x1&&f.x*VS<=x2&&f.y*VS>=y1&&f.y*VS<=y2) sel.f.add(f.id); });
+      renderAll(); }
   }
   else if(d.kind==='marquee'){
     $('#Lt').innerHTML='';
@@ -1888,19 +2170,20 @@ cv.addEventListener('pointerup',endDrag);
 cv.addEventListener('pointercancel',endDrag);
 cv.addEventListener('pointerleave',()=>{ if(!drag) hideTip(); });
 
-function startNodeDrag(id,e,pt){
-  if(e.shiftKey){ toggleSel('n',id); renderAll(); drag={kind:'none'}; return; }
-  const was=sel.n.has(id);
-  if(!was) selectOnly('n',id);
+function startNodeDrag(id,e,pt,kind='n'){
+  if(e.shiftKey){ toggleSel(kind,id); renderAll(); drag={kind:'none'}; return; }
+  const was=sel[kind].has(id);
+  if(!was) selectOnly(kind,id);
   renderAll();
   const items=[];
   if(isVenue()){
     for(const nid of sel.n){ const n=getNode(nid); if(n&&placed(n)) items.push({o:n,x:n.vx,y:n.vy,v:true,el:cv.querySelector(`.node[data-node="${nid}"]`)}); }
+    for(const fid of sel.f){ const f=getFurn(fid); if(f) items.push({o:f,x:f.x,y:f.y,ff:true,el:cv.querySelector(`.furn[data-f="${fid}"]`)}); }
   } else {
     for(const nid of sel.n){ const n=getNode(nid); if(n) items.push({o:n,x:n.x,y:n.y,el:cv.querySelector(`.node[data-node="${nid}"]`)}); }
     for(const zid of sel.z){ const z=getZone(zid); if(z) items.push({o:z,x:z.x,y:z.y,el:cv.querySelector(`.zone[data-z="${zid}"]`)}); }
   }
-  drag={kind:'nodes',x0:pt.x,y0:pt.y,items,before:snapshot(),moved:false,clickId:was?id:null};
+  drag={kind:'nodes',x0:pt.x,y0:pt.y,items,before:snapshot(),moved:false,clickId:was&&kind==='n'?id:null};
 }
 function startZoneDrag(id,e,pt){
   if(e.shiftKey){ toggleSel('z',id); renderAll(); drag={kind:'none'}; return; }
@@ -1985,16 +2268,20 @@ cv.addEventListener('drop',e=>{
   const f=e.dataTransfer.files&&e.dataTransfer.files[0];
   if(f&&/\.json$/i.test(f.name)){ readJSONFile(f); return; }
   const d=e.dataTransfer.getData('text/plain')||'', pt=evWorld(e);
-  if(d.startsWith('arkey:')) addNode(d.slice(6),isVenue()?pt.x:pt.x-30,isVenue()?pt.y:pt.y-20);
-  else if(d.startsWith('arnode:')&&isVenue()){ const n=getNode(d.slice(7)); if(n){ pushUndo(snapshot()); n.vx=snapM(pt.x/VS); n.vy=snapM(pt.y/VS); selectOnly('n',n.id); renderAll(); } }
+  if(d.startsWith('arkey:')) addAny(d.slice(6),isVenue()?pt.x:pt.x-30,isVenue()?pt.y:pt.y-20,true);
+  else if(d.startsWith('arnode:')&&isVenue()){ const n=getNode(d.slice(7)); if(n){ pushUndo(snapshot()); n.vx=snapM(pt.x/VS); n.vy=snapM(pt.y/VS); n.vv=doc.venue; selectOnly('n',n.id); renderAll(); } }
 });
 cv.addEventListener('contextmenu',e=>{
   e.preventDefault(); hideTip();
   const t=e.target, pt=evWorld(e), ng=t.closest('.node'), wg=t.closest('.wire'), zg=t.closest('.zone');
   let items;
-  if(isVenue()&&ng){
+  const fg=t.closest('.furn');
+  if(isVenue()&&fg&&!ng){
+    const id=fg.dataset.f; if(!sel.f.has(id)){ selectOnly('f',id); renderAll(); }
+    items=[['編輯','',()=>{ openSide(); focusField('[data-ff="label"]'); }],['再製','Ctrl+D',dupSel],['旋轉 90°','R',()=>rotSel(90)],['-'],['刪除','Del',delSel,'danger']];
+  } else if(isVenue()&&ng){
     const id=ng.dataset.node; if(!sel.n.has(id)){ selectOnly('n',id); renderAll(); }
-    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],['複製一台並放在旁邊','Ctrl+D',dupSel],['從場地移除（保留在流程圖）','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)){ n.vx=null; n.vy=null; } }))],['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['-'],['刪除裝置','Del',delSel,'danger']];
+    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],['複製一台並放在旁邊','Ctrl+D',dupSel],['從場地移除（保留在流程圖）','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)){ n.vx=null; n.vy=null; n.vv=''; } }))],['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['-'],['刪除裝置','Del',delSel,'danger']];
   } else if(isVenue()&&!wg){
     items=[['在這裡新增裝置…','雙擊',()=>openQA(e.clientX,e.clientY,pt,null)],['顯示全部','F',fitView]];
   } else if(ng){
@@ -2082,8 +2369,8 @@ function closeQA(){ $('#qa').hidden=true; qa=null; }
 function renderQA(){
   if(!qa) return; const q=$('#qa-in').value.trim().toLowerCase();
   const all=[
-    ...INV.filter(i=>i.type!=='prop').map(i=>{ const t=TYPES[i.type]; return {k:'inv:'+i.id,t,icon:i.icon||t.icon,name:i.model||i.item,sub:'C-LAB '+i.item,s:i.item+' '+i.model+' '+(t.kw||'')}; }),
-    ...Object.entries(TYPES).map(([k,t])=>({k,t,icon:t.icon,name:t.name,sub:t.brand?t.kind:'通用',s:t.name+' '+(t.kw||'')+' '+k})),
+    ...INV.filter(i=>i.type!=='prop'&&(isVenue()||!TYPES[i.type].furn)).map(i=>{ const t=TYPES[i.type], sec=INV_SECS.find(x=>x.id===i.sec); return {k:'inv:'+i.id,t,icon:i.icon||t.icon,name:i.model||i.item,sub:(sec&&sec.campus?'園區 '+venueShort(sec.owner[0])+' ':'TSL ')+i.item,s:i.item+' '+i.model+' '+(t.kw||'')}; }),
+    ...Object.entries(TYPES).filter(([k,t])=>isVenue()||!t.furn).map(([k,t])=>({k,t,icon:t.icon,name:t.name,sub:t.brand?t.kind:t.furn?'家具':'通用',s:t.name+' '+(t.kw||'')+' '+k})),
   ];
   let list=all.filter(it=>!q||it.s.toLowerCase().includes(q)).map(it=>({...it,lv:-1}));
   if(qa.pending){
@@ -2098,7 +2385,8 @@ function renderQA(){
 }
 function chooseQA(k){
   if(!qa) return; const {wx,wy,pending}=qa; closeQA();
-  if(isVenue()){ addNode(k,wx,wy); return; }
+  if(isVenue()){ addAny(k,wx,wy,true); return; }
+  if(furnOf(k)){ addAny(k,wx,wy,false); return; }
   const s=snapshot(); const n=makeAny(k,wx,wy);
   if(pending){
     const b=bestPort(n,pending);
@@ -2131,16 +2419,17 @@ const swatches=(kind,cur)=>`<div class="sws">${SW.map(c=>`<button class="sw${(cu
 const opts=(list,cur)=>list.map(([v,l])=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(l)}</option>`).join('');
 const connOpts=cur=>opts(Object.entries(CONN).map(([k,v])=>[k,v.l]),cur);
 const sigOpts=cur=>opts(Object.entries(SIG).map(([k,v])=>[k,v.l]),cur);
-const typeOpts=cur=>CATS.map(c=>`<optgroup label="${c.name}">${Object.entries(TYPES).filter(([,t])=>t.cat===c.id).map(([k,t])=>`<option value="${k}"${k===cur?' selected':''}>${t.icon} ${esc(t.name)}</option>`).join('')}</optgroup>`).join('');
+const typeOpts=cur=>CATS.filter(c=>c.id!=='furn').map(c=>`<optgroup label="${c.name}">${Object.entries(TYPES).filter(([,t])=>t.cat===c.id).map(([k,t])=>`<option value="${k}"${k===cur?' selected':''}>${t.icon} ${esc(t.name)}</option>`).join('')}</optgroup>`).join('');
 function focusField(sel_){ setTimeout(()=>{ const el=$('#side '+sel_); if(el){ el.focus(); if(el.select) el.select(); } },0); }
 function openSide(){ if(innerWidth<900) $('#side').classList.add('open'); }
 
 function renderPanel(){
-  const nN=sel.n.size,nW=sel.w.size,nZ=sel.z.size; let h;
-  if(nN===1&&!nW&&!nZ) h=panelNode(getNode([...sel.n][0]));
-  else if(nW===1&&!nN&&!nZ) h=panelWire(getWire([...sel.w][0]));
-  else if(nZ===1&&!nN&&!nW) h=panelZone(getZone([...sel.z][0]));
-  else if(nN+nW+nZ>1) h=panelMulti();
+  const nN=sel.n.size,nW=sel.w.size,nZ=sel.z.size,nF=sel.f.size; let h;
+  if(nN===1&&!nW&&!nZ&&!nF) h=panelNode(getNode([...sel.n][0]));
+  else if(nW===1&&!nN&&!nZ&&!nF) h=panelWire(getWire([...sel.w][0]));
+  else if(nZ===1&&!nN&&!nW&&!nF) h=panelZone(getZone([...sel.z][0]));
+  else if(nF===1&&!nN&&!nW&&!nZ) h=panelFurn(getFurn([...sel.f][0]));
+  else if(nN+nW+nZ+nF>1) h=panelMulti();
   else h=panelProject();
   $('#side-body').innerHTML=h;
   const locs=new Set(['舞台','FOH','控制室','錄音間','機櫃','後台','Monitor 位','包廂']); doc.nodes.forEach(n=>n.loc&&locs.add(n.loc));
@@ -2173,13 +2462,14 @@ function panelNode(n){
   h+=fld('寬度',`<input type="range" min="150" max="420" step="10" data-nf="w" value="${n.w}">`);
   h+=`<label class="chk"><input type="checkbox" data-nf="flip"${n.flip?' checked':''}> 左右翻轉（輸入在右、輸出在左）</label>`;
   h+=fld('備註',`<textarea data-nf="notes" rows="2" placeholder="設定、場地備註…">${esc(n.notes)}</textarea>`);
-  if(n.inv){ const it=INVM.get(n.inv), u=invUsed(n.inv); if(it) h+=`<div class="msg ${u>it.qty?'lv2':'lv1'}">C-LAB 器材：${esc(INV_SECS.find(s=>s.id===it.sec)?.name||'')}・${esc(it.item)}　庫存 ${it.qty}，圖上已用 ${u}${u>it.qty?'（不足）':''}</div>`; }
+  if(n.inv){ const it=INVM.get(n.inv), u=invUsed(n.inv); if(it) h+=`<div class="msg ${u>it.qty?'lv2':'lv1'}">${it.owner?'園區器材':'TSL 器材'}：${esc(INV_SECS.find(s=>s.id===it.sec)?.name||'')}・${esc(it.item)}　共 ${it.qty}，已用 ${u}${u>it.qty?'（不足）':''}${it.owner&&n.vv&&!it.owner.includes(n.vv)?`<br>⚠ 這是${esc(venueShort(it.owner[0]))}的設備，目前放在${esc(venueShort(n.vv))}`:''}</div>`; }
   if(doc.venue||isVenue()){
     h+=secH('場地擺放');
-    h+=placed(n)?`<div class="kv"><b>位置</b><span>x ${n.vx} m · y ${n.vy} m</span></div>`:`<div class="hint">還沒放到場地平面圖上。</div>`;
-    h+=fld('高度 (m)',`<input type="number" min="0" max="20" step="0.1" data-nf="vz" value="${n.vz??''}" placeholder="${defHeight(n)}（預設）">`);
+    const sh=supportHeight(n);
+    h+=placedAny(n)?`<div class="kv"><b>場地</b><span>${esc(venueName(n.vv))}</span><b>位置</b><span>x ${n.vx} m · y ${n.vy} m</span>${sh?`<b>放在</b><span>${esc(sh.f.label||FURN[sh.f.k].name)}（高 ${sh.f.h} m）上</span>`:''}</div>`:`<div class="hint">還沒放到場地平面圖上。</div>`;
+    h+=fld('高度 (m)',`<input type="number" min="0" max="20" step="0.1" data-nf="vz" value="${n.vz??''}" placeholder="${Math.round(nodeHt({...n,vz:null})*100)/100}（自動）">`);
     h+=`<div class="hint">裝置離地高度，會加進線長估算（例如喇叭架 1.8 m、吊掛 4 m、地板 0）。</div>`;
-    h+=`<div class="btns">${placed(n)?'<button class="btn" data-act="unplace">從場地移除</button>':`<button class="btn" data-act="place" data-n="${n.id}">放到場地中央</button>`}</div>`;
+    h+=`<div class="btns">${placedAny(n)?'<button class="btn" data-act="unplace">從場地移除</button>':(isVenue()&&doc.venue?`<button class="btn" data-act="place" data-n="${n.id}">放到目前場地中央</button>`:'')}</div>`;
   }
   h+=secH('I/O 數量');
   h+=ioCount(n,'in','輸入 In')+ioCount(n,'out','輸出 Out')+(hasIoGrp?ioCount(n,'io','雙向 I/O'):'');
@@ -2229,9 +2519,35 @@ function panelZone(z){
   h+=`<div class="btns">${z.kind==='frame'?'<button class="btn" data-act="zinside">選取框內裝置</button>':''}<button class="btn danger" data-act="del">刪除</button></div>`;
   return h;
 }
+function panelFurn(f){
+  const F=FURN[f.k], it=f.inv&&INVM.get(f.inv), cm=v=>Math.round(v*100);
+  let h=`<div class="ph-head"><div class="big-ico">${it&&it.icon||F.icon}</div><div><div class="ph-title">${esc(f.label||F.name)}</div><div class="ph-sub">${esc(F.name)} · ${esc(venueShort(f.vv))}</div></div></div>`;
+  h+=secH('家具');
+  h+=fld('名稱',`<input data-ff="label" value="${esc(f.label)}" placeholder="${esc(F.name)}">`);
+  h+=fld('種類',`<select data-ff="k">${opts(Object.entries(FURN).map(([k,x])=>[k,x.name]),f.k)}</select>`);
+  h+=fld(f.k==='stand'?'底座寬 cm':'寬 cm',`<input type="number" min="5" step="5" data-ff="w" value="${cm(f.w)}">`);
+  h+=fld(f.k==='stand'?'底座深 cm':'深 cm',`<input type="number" min="5" step="5" data-ff="d" value="${cm(f.d)}">`);
+  if(f.k==='stage') h+=fld('高度',`<select data-ff="hsel">${STAGE_LEGS.map(([v])=>`<option value="${cm(v)}"${Math.abs(v-f.h)<.005?' selected':''}>${cm(v)} cm 板腳</option>`).join('')}<option value=""${STAGE_LEGS.some(([v])=>Math.abs(v-f.h)<.005)?'':' selected'}>其他高度…</option></select>`);
+  h+=fld(f.k==='stand'?'架高 cm':'高 cm',`<input type="number" min="0" step="1" data-ff="h" value="${cm(f.h)}">`);
+  h+=fld('旋轉',`<div style="display:flex;gap:5px"><input type="number" step="15" data-ff="rot" value="${f.rot||0}"><button class="btn" data-act="frot">↻ 90°</button></div>`);
+  if(f.k==='table'||f.k==='stand'||f.k==='stage'){
+    const on=doc.nodes.filter(n=>{ const sh=n.vz==null&&supportHeight(n); return sh&&sh.f===f; });
+    h+=`<div class="hint">${f.k==='stage'?'放在舞台上的裝置，高度＝舞台高＋裝置本身高度。':f.k==='stand'?'放在架上的裝置，高度＝架高。':'放在這張桌上的裝置，高度＝桌高（麥克風再加 30 cm）。'}線長估算會自動套用${on.length?`；目前上面有 ${on.map(n=>esc(n.name)).join('、')}`:''}。</div>`;
+  }
+  if(f.k==='stage'&&!f.inv) h+=`<div class="hint">每座平台以 4 支板腳計入「舞台板腳」庫存。</div>`;
+  if(it){ const u=invUsed(it.id); h+=`<div class="msg ${u>it.qty?'lv2':'lv1'}">${it.owner?'園區器材（'+esc(venueShort(it.owner[0]))+'）':'TSL 器材'}：${esc(it.item)}${it.model?'・'+esc(it.model):''}　共 ${it.qty}，已用 ${u}</div>`; }
+  h+=`<div class="btns"><button class="btn" data-act="dup">再製</button><button class="btn danger" data-act="del">刪除</button></div>`;
+  return h;
+}
 function panelMulti(){
-  let h=`<div class="ph-head"><div class="big-ico">⧉</div><div><div class="ph-title">已選取 ${sel.n.size+sel.w.size+sel.z.size} 個物件</div><div class="ph-sub">裝置 ${sel.n.size} · 連線 ${sel.w.size} · 區域 ${sel.z.size}</div></div></div>`;
-  if(sel.n.size>1){
+  let h=`<div class="ph-head"><div class="big-ico">⧉</div><div><div class="ph-title">已選取 ${sel.n.size+sel.w.size+sel.z.size+sel.f.size} 個物件</div><div class="ph-sub">裝置 ${sel.n.size} · 連線 ${sel.w.size}${sel.z.size?' · 區域 '+sel.z.size:''}${sel.f.size?' · 家具 '+sel.f.size:''}</div></div></div>`;
+  if(sel.f.size){
+    const fs=doc.furn.filter(f=>sel.f.has(f.id)), cnt=new Map(); fs.forEach(f=>{ const k=f.label||FURN[f.k].name; cnt.set(k,(cnt.get(k)||0)+1); });
+    h+=secH('家具');
+    h+=`<div class="kv">${[...cnt].map(([k,c])=>`<b>${esc(k)}</b><span>${c}</span>`).join('')}</div>`;
+    h+=`<div class="btns"><button class="btn" data-act="frot">↻ 全部旋轉 90°</button><button class="btn" data-act="fface" data-r="180">面向上</button><button class="btn" data-act="fface" data-r="0">面向下</button><button class="btn" data-act="fface" data-r="90">面向左</button><button class="btn" data-act="fface" data-r="270">面向右</button></div>`;
+  }
+  if(sel.n.size>1&&!isVenue()){
     h+=secH('對齊');
     h+=`<div class="align-grid"><button class="btn" data-act="align" data-m="l">靠左</button><button class="btn" data-act="align" data-m="cx">置中</button><button class="btn" data-act="align" data-m="r">靠右</button><button class="btn" data-act="align" data-m="dh">水平均分</button><button class="btn" data-act="align" data-m="t">靠上</button><button class="btn" data-act="align" data-m="cy">垂直置中</button><button class="btn" data-act="align" data-m="b">靠下</button><button class="btn" data-act="align" data-m="dv">垂直均分</button></div>`;
     h+=`<div class="btns"><button class="btn" data-act="align" data-m="w">統一寬度</button></div>`;
@@ -2243,12 +2559,31 @@ function panelMulti(){
   h+=`<div class="btns">${sel.n.size?'<button class="btn" data-act="dup">再製</button><button class="btn" data-act="wrap">用區域框框住</button>':''}<button class="btn danger" data-act="del">刪除</button></div>`;
   return h;
 }
+function seatPanel(){
+  const st=settings.seat, o=seatOpt(), sp=seatSpacing();
+  let h=`<div class="ioc" style="border-color:#d97706"><div class="ioc-top"><span class="ioc-l">🪑 座位模式：${esc(st.label||FURN[st.k].name)}</span><button class="btn" data-act="seatoff">結束</button></div>`;
+  h+=`<div class="hint" style="margin-top:0">在平面圖上<b>拖曳框出區域</b> → 選「整齊填滿」「隨機散落」或「依排列平均分佈」。也可以直接放一組到畫面中央：</div>`;
+  h+=fld('排數',`<input type="number" min="1" max="60" data-so="rows" value="${o.rows}">`);
+  h+=fld('每排',`<input type="number" min="1" max="60" data-so="cols" value="${o.cols}">`);
+  h+=fld('左右間距',`<input type="number" min="0.2" step="0.05" data-so="sx" value="${o.sx??''}" placeholder="${sp.sx} m（自動）">`);
+  h+=fld('前後間距',`<input type="number" min="0.2" step="0.05" data-so="sy" value="${o.sy??''}" placeholder="${sp.sy} m（自動）">`);
+  h+=fld('面向',`<select data-so="rot">${opts([['180','面向上方'],['0','面向下方'],['90','面向左方'],['270','面向右方']],String(o.rot))}</select>`);
+  h+=`<div class="btns"><button class="btn pri" data-act="seatgrid">放置 ${o.rows} × ${o.cols} 到畫面中央</button></div></div>`;
+  return h;
+}
+function venueStats(id){ return {n:doc.nodes.filter(n=>placedAny(n)&&n.vv===id).length,f:doc.furn.filter(f=>f.vv===id).length}; }
 function panelVenue(){
   const v=curVenue(), o=doc.vopt||{slack:10,ends:1};
-  let h=`<div class="ph-head"><div class="big-ico">🗺</div><div><div class="ph-title">${esc(v?v.name:'尚未選擇場地')}</div><div class="ph-sub">場地配置</div></div></div>`;
+  let h=`<div class="ph-head"><div class="big-ico">🗺</div><div><div class="ph-title">${esc(v?v.name:'尚未選擇場地')}</div><div class="ph-sub">場地配置${doc.venues.length>1?` · 本活動共 ${doc.venues.length} 個場地`:''}</div></div></div>`;
+  if(settings.seat&&v) h+=seatPanel();
   if(!v){ h+=`<div class="hint">從上方工具列的選單選擇 C-LAB 場地，或選「＋ 上傳平面圖…」使用自己的圖。</div>`+`<div class="btns">${VENUES.slice(0,6).map(x=>`<button class="btn" data-act="pickvenue" data-v="${x.id}">${esc(x.name.split(' ')[0])}</button>`).join('')}</div>`; return h; }
   h+=`<div class="kv"><b>資訊</b><span>${esc(v.info||'')}</span>${v.vector?'':`<b>比例</b><span>${Math.round(venuePxm(v)*100)/100} px/m${(doc.vcal&&doc.vcal[v.id])?'（已校正）':''}</span>`}</div>`;
   if(!v.vector) h+=`<div class="btns"><button class="btn" data-act="calib">⚖ 校正比例</button>${doc.vcal&&doc.vcal[v.id]?'<button class="btn" data-act="uncalib">還原原始比例</button>':''}</div>`;
+  const cs=INV_SECS.find(x=>x.campus&&x.owner.includes(v.id));
+  if(cs) h+=`<div class="btns"><button class="btn" data-act="campuslib">📦 本場地現有設備（${INV.filter(i=>i.sec===cs.id).length} 項）</button></div>`;
+  h+=secH(`本活動場地（${doc.venues.length}）`);
+  h+=doc.venues.map(id=>{ const st=venueStats(id); return `<div class="unp" style="cursor:default"><b>${id===doc.venue?'📍':'🗺'}</b><span>${esc(venueShort(id))} <small class="dim">裝置 ${st.n} · 家具 ${st.f}</small></span>${id===doc.venue?'':`<button class="btn" data-act="goto-venue" data-v="${id}">切換</button>`}<button class="btn" data-act="rm-venue" data-v="${id}" title="從本活動移除這個場地">✕</button></div>`; }).join('');
+  h+=`<div class="hint">用上方選單可以加入更多場地。器材、家具與線材的數量會把所有場地加總，再對照庫存。</div>`;
   h+=secH('線長估算');
   h+=fld('走線',`<select data-vo="route">${opts([['manhattan','沿地面直角走線（建議）'],['direct','直線（吊掛／空中）']],settings.vroute)}</select>`);
   h+=fld('餘量 %',`<input type="number" min="0" max="100" step="5" data-vo="slack" value="${o.slack}">`);
@@ -2257,7 +2592,7 @@ function panelVenue(){
   const sh=cablePlan.summary.filter(s=>s.short), tot=cablePlan.rows.filter(r=>r.need!=null).length;
   h+=`<div class="btns"><button class="btn" data-act="openrep" data-tab="cables">📋 線材需求與庫存（${tot} 條）</button></div>`;
   if(sh.length) h+=sh.slice(0,6).map(s=>`<div class="msg lv2">${esc(s.name)} ${s.len}m：需要 ${s.need}，庫存 ${s.stock}</div>`).join('');
-  const un=doc.nodes.filter(n=>!placed(n));
+  const un=doc.nodes.filter(n=>!placedAny(n));
   h+=secH(`尚未擺放（${un.length}）`);
   h+=un.length?`<div class="hint">拖曳到平面圖上，或按「放置」放到畫面中央。</div>`+un.map(n=>`<div class="unp" draggable="true" data-un="${n.id}"><b>${esc(n.icon)}</b><span>${esc(n.name)}</span><button class="btn" data-act="place" data-n="${n.id}">放置</button></div>`).join('')+(un.length>1?`<div class="btns"><button class="btn" data-act="placeall">全部排到平面圖旁邊</button></div>`:''):'<div class="hint">所有裝置都已擺放。</div>';
   return h;
@@ -2298,6 +2633,17 @@ function applyField(el){
   } else if(el.dataset.wf){
     const w=selWire(); if(!w) return; takeSnap(); w[el.dataset.wf]=v;
     if(el.dataset.wf==='label'){ const t=$('#side .ph-title'); if(t) t.textContent=v||'連線'; }
+  } else if(el.dataset.ff){
+    const f=sel.f.size===1&&getFurn([...sel.f][0]); if(!f) return; takeSnap(); const k=el.dataset.ff;
+    if(k==='w'||k==='d'||k==='h'){ const x=parseFloat(v); if(isFinite(x)&&x>=0) f[k]=Math.max(k==='h'?0:.05,x/100); }
+    else if(k==='hsel'){ if(v) f.h=+v/100; }
+    else if(k==='rot') f.rot=((+v||0)%360+360)%360;
+    else f[k]=v;
+    if(k==='label'){ const t=$('#side .ph-title'); if(t) t.textContent=v||FURN[f.k].name; }
+  } else if(el.dataset.so){
+    const o=seatOpt(), k=el.dataset.so; takeSnap();
+    if(k==='sx'||k==='sy') o[k]=v===''?null:Math.max(.2,+v||.2); else if(k==='rot') o.rot=+v; else o[k]=clamp(Math.round(+v||1),1,60);
+    save();
   } else if(el.dataset.vo){
     takeSnap(); const f=el.dataset.vo;
     if(f==='route') settings.vroute=v; else doc.vopt[f]=Math.max(0,+v||0);
@@ -2344,13 +2690,23 @@ side.addEventListener('click',e=>{
     case 'zinside': { const z=selZone(); clearSel(); doc.nodes.forEach(x=>{ const cx=x.x+x.w/2, cy=x.y+lay(x).h/2; if(cx>z.x&&cx<z.x+z.w&&cy>z.y&&cy<z.y+z.h) sel.n.add(x.id); }); renderAll(); break; }
     case 'openrep': openReports(b.dataset.tab); break;
     case 'help': $('#help').hidden=false; break;
-    case 'pickvenue': pushUndo(snapshot()); doc.venue=b.dataset.v; renderAll(); fitView(); break;
+    case 'pickvenue': pushUndo(snapshot()); doc.venue=b.dataset.v; if(!doc.venues.includes(doc.venue)) doc.venues.push(doc.venue); renderAll(); renderLib(); fitView(); break;
     case 'calib': cmd('calib'); break;
     case 'uncalib': edit(()=>{ delete doc.vcal[curVenue().id]; }); break;
-    case 'place': { const x=getNode(b.dataset.n), c=viewCenter(); edit(()=>{ x.vx=snapM(c.x/VS); x.vy=snapM(c.y/VS); }); if(!isVenue()) toast('已放到場地中央，切到「場地配置」可以調整位置'); break; }
-    case 'placeall': { const v=curVenue(), W=v?venueSize(v).w:12, un=doc.nodes.filter(x=>!placed(x)); edit(()=>un.forEach((x,i)=>{ x.vx=snapM(W+1.5+(i%3)*2); x.vy=snapM(1+Math.floor(i/3)*1.6); })); toast('已排在平面圖右側，再逐一拖到實際位置'); break; }
-    case 'unplace': edit(()=>{ n.vx=null; n.vy=null; }); break;
+    case 'place': { if(!doc.venue){ toast('請先選擇場地'); break; } const x=getNode(b.dataset.n), c=viewCenter(); edit(()=>{ x.vx=snapM(c.x/VS); x.vy=snapM(c.y/VS); x.vv=doc.venue; }); break; }
+    case 'placeall': { if(!doc.venue){ toast('請先選擇場地'); break; } const v=curVenue(), W=v?venueSize(v).w:12, un=doc.nodes.filter(x=>!placedAny(x)); edit(()=>un.forEach((x,i)=>{ x.vx=snapM(W+1.5+(i%3)*2); x.vy=snapM(1+Math.floor(i/3)*1.6); x.vv=doc.venue; })); toast('已排在平面圖右側，再逐一拖到實際位置'); break; }
+    case 'unplace': edit(()=>{ n.vx=null; n.vy=null; n.vv=''; }); break;
     case 'applylen': edit(()=>{ selWire().len=b.dataset.v; }); break;
+    case 'seatoff': settings.seat=null; $('#Lt').innerHTML=''; renderAll(); break;
+    case 'seatgrid': { const o=seatOpt(), c=viewCenter(); placeSeats(seatGrid(c.x/VS,c.y/VS,o.rows,o.cols)); break; }
+    case 'frot': rotSel(90); break;
+    case 'fface': edit(()=>doc.furn.forEach(f=>{ if(sel.f.has(f.id)) f.rot=+b.dataset.r; })); break;
+    case 'campuslib': settings.libTab='campus'; $('#lib-q').value=''; renderLib(); $('#lib').classList.add('open'); break;
+    case 'goto-venue': doc.venue=b.dataset.v; settings.seat=null; clearSel(); renderAll(); renderLib(); fitView(); break;
+    case 'rm-venue': { const id=b.dataset.v, st=venueStats(id);
+      if((st.n||st.f)&&!confirm(`移除「${venueShort(id)}」？上面的 ${st.n} 台裝置會變成未擺放，${st.f} 件家具會刪除（可以復原）。`)) break;
+      edit(()=>{ doc.venues=doc.venues.filter(x=>x!==id); doc.nodes.forEach(n=>{ if(n.vv===id){ n.vx=null; n.vy=null; n.vv=''; } }); doc.furn=doc.furn.filter(f=>f.vv!==id); if(doc.venue===id) doc.venue=doc.venues[0]||''; });
+      fitView(); break; }
   }
 });
 side.addEventListener('dragstart',e=>{ const u=e.target.closest('.unp'); if(!u) return; e.dataTransfer.setData('text/plain','arnode:'+u.dataset.un); e.dataTransfer.effectAllowed='move'; });
@@ -2362,6 +2718,7 @@ function renderToolbar(){
   $$('[data-ws]').forEach(b=>b.classList.toggle('on',b.dataset.ws===settings.wire));
   $$('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===settings.mode));
   $$('[data-vr]').forEach(b=>b.classList.toggle('on',b.dataset.vr===settings.vroute));
+  $$('[data-cmd="seat"]').forEach(b=>b.classList.toggle('on',!!settings.seat));
   if(document.activeElement!==$('#venueSel')) $('#venueSel').innerHTML=venueOptions();
   $$('[data-tog]').forEach(b=>b.classList.toggle('on',!!settings[b.dataset.tog]));
   $('[data-cmd="undo"]').disabled=!undoS.length; $('[data-cmd="redo"]').disabled=!redoS.length;
@@ -2370,7 +2727,7 @@ function renderToolbar(){
 function renderStatus(){
   const warn=issues.filter(i=>i.lv===2).length, err=issues.filter(i=>i.lv===3).length;
   const chk=err||warn?`<button class="st-btn" data-st="issues">${err?`<span class="c-err">● ${err} 個錯誤</span> `:''}${warn?`<span class="c-warn">● ${warn} 個注意</span>`:''}</button>`:`<span class="c-ok">✓ 連線檢查正常</span>`;
-  const v=isVenue()?`<span>已擺放 ${doc.nodes.filter(placed).length}/${doc.nodes.length}</span>`:`<span>裝置 ${doc.nodes.length}</span>`;
+  const v=isVenue()?`<span>本場地 ${doc.nodes.filter(placed).length} 台 · 已擺放 ${doc.nodes.filter(placedAny).length}/${doc.nodes.length}</span>`:`<span>裝置 ${doc.nodes.length}</span>`;
   const hint=isVenue()?'<span id="mread" class="hide-m"></span><span class="hide-m">拖曳裝置外圈到另一台裝置即可拉線 · 滾輪縮放 · 空白鍵＋拖曳平移</span>':'<span class="hide-m">拖曳接口拉線 · 雙擊空白處新增 · 滾輪縮放 · 空白鍵＋拖曳平移</span>';
   $('#status').innerHTML=`${v}<span>連線 ${doc.wires.length}</span>${chk}<span class="grow"></span>${hint}`;
 }
@@ -2393,6 +2750,7 @@ function cmd(c){
     case 'zoomout': { const r=stageRect(); zoomAt(r.width/2,r.height/2,1/1.2); break; }
     case 'zoom100': { const r=stageRect(); zoomAt(r.width/2,r.height/2,1/view.k); break; }
     case 'fit': fitView(); break;
+    case 'seat': if(settings.seat){ settings.seat=null; $('#Lt').innerHTML=''; renderAll(); } else addAny('f_chair',0,0,false); break;
     case 'calib': if(!curVenue()){ toast('請先選擇場地'); break; } if(curVenue().vector){ toast('FVL DOME 是依尺寸繪製的，不需要校正'); break; } settings.measure=false; calib={pts:[]}; $('#Lt').innerHTML=''; renderToolbar(); toast('在平面圖上點兩個已知距離的點（例如圖上標示的尺寸線兩端）'); break;
   }
 }
@@ -2431,8 +2789,10 @@ function invRow(i){
   const t=TYPES[i.type]||TYPES.custom, u=invUsed(i.id);
   const st=`<span class="stock${u>i.qty?' over':u?' used':''}" title="已用 / 庫存">${u?u+'/':'×'}${i.qty}</span>`;
   const br=t.brand&&t.brand!=='—'?t.brand:'';
-  const title=(br?(i.model||'').replace(new RegExp('^'+br.replace(/[.*+?^${}()|[\]\\&]/g,'\\$&')+'\\s*','i'),''):i.model)||i.item;
-  const sub=[br,i.model&&i.item!==i.model?i.item:'',i.type==='prop'?'':ioSummary(i.type),i.note].filter(Boolean).join(' · ');
+  // 有品牌：標題用型號（去掉品牌字首）；家具、道具等：標題用品項名稱，尺寸／型號放副標
+  const title=br?((i.model||'').replace(new RegExp('^'+br.replace(/[.*+?^${}()|[\]\\&]/g,'\\$&')+'\\s*','i'),'')||i.item):i.item;
+  const fk=t.furn, sz=fk&&i.f?(fk==='stand'?'h'+Math.round(i.f.h*100):Math.round(i.f.w*100)+'×'+Math.round(i.f.d*100)+(fk==='table'||fk==='stage'?' h'+Math.round(i.f.h*100):'')):'';
+  const sub=[br,br?(i.model&&i.item!==i.model?i.item:''):i.model,fk?(FURN[fk].name.replace(/（.*）/,'')+(sz?' '+sz:'')):i.type==='prop'?'':ioSummary(i.type),i.note].filter(Boolean).join(' · ');
   return libItem('inv:'+i.id,i.icon||t.icon,title,sub,st);
 }
 function renderLib(){
@@ -2443,22 +2803,22 @@ function renderLib(){
   const genMatch=([k,t])=>!t.brand&&m(t.name+' '+(t.kw||'')+' '+k);
   const modMatch=([k,t])=>t.brand&&m(t.name+' '+(t.kw||'')+' '+k);
   let h='';
-  const invHTML=()=>INV_SECS.map(s=>{ const list=INV.filter(i=>i.sec===s.id&&invMatch(i)); if(!list.length) return ''; return `<details${s.open||q?' open':''}><summary>${esc(s.name)}<span class="cnt">${list.length}</span></summary>${list.map(invRow).join('')}</details>`; }).join('');
+  const invHTML=campus=>INV_SECS.filter(s=>!!s.campus===campus).map(s=>{ const list=INV.filter(i=>i.sec===s.id&&invMatch(i)); if(!list.length) return ''; const cur=campus&&doc.venue&&s.owner.includes(doc.venue); return `<details${s.open||q||cur?' open':''}><summary>${cur?'📍 ':''}${esc(s.name)}<span class="cnt">${list.length}</span></summary>${list.map(invRow).join('')}</details>`; }).join('');
   const modHTML=()=>{ const by=new Map(); Object.entries(TYPES).filter(modMatch).forEach(([k,t])=>{ const b=t.brand==='—'?'其他':t.brand; if(!by.has(b)) by.set(b,[]); by.get(b).push([k,t]); });
     return [...by.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([b,list])=>`<details${q||by.size<4?' open':''}><summary>${esc(b)}<span class="cnt">${list.length}</span></summary>${list.map(([k,t])=>libItem(k,t.icon,t.model,t.kind+' · '+ioSummary(k))).join('')}</details>`).join(''); };
   const genHTML=()=>CATS.map(c=>{ const list=Object.entries(TYPES).filter(([k,t])=>t.cat===c.id).filter(genMatch); if(!list.length) return ''; return `<div class="lib-cat"><i style="background:${c.color}"></i>${c.name}</div>`+list.map(([k,t])=>libItem(k,t.icon,t.name,ioSummary(k))).join(''); }).join('');
-  if(q){ const a=invHTML(), b=modHTML(), c=genHTML(); h=(a?'<div class="lib-sub">C-LAB 器材</div>'+a:'')+(b?'<div class="lib-sub">品牌型號</div>'+b:'')+(c?'<div class="lib-sub">通用</div>'+c:''); }
-  else h=tab==='inv'?invHTML():tab==='model'?modHTML():genHTML();
+  if(q){ const a=invHTML(false), a2=invHTML(true), b=modHTML(), c=genHTML(); h=(a?'<div class="lib-sub">TSL 器材</div>'+a:'')+(a2?'<div class="lib-sub">園區器材</div>'+a2:'')+(b?'<div class="lib-sub">品牌型號</div>'+b:'')+(c?'<div class="lib-sub">通用</div>'+c:''); }
+  else h=tab==='inv'?invHTML(false):tab==='campus'?invHTML(true):tab==='model'?modHTML():genHTML();
   $('#lib-list').innerHTML=h||'<div class="dim" style="padding:14px 8px">找不到符合的裝置，可以用「通用 → 自訂裝置」。</div>';
-  $('#lib-foot').textContent=tab==='inv'&&!q?'數字為「已用／庫存」，超過庫存會變紅。點一下加入，或拖曳到想放的位置。':isVenue()?'拖曳到平面圖上的位置；拖曳裝置外圈可以拉線。':'點一下加入畫布中央，或直接拖曳到想放的位置。';
+  $('#lib-foot').textContent=tab==='campus'&&!q?'各場地現有設備（📍 為目前場地）。數字為「已用／數量」；拿到別的場地使用會提醒。':tab==='inv'&&!q?'數字為「已用／庫存」，超過庫存會變紅。點一下加入，或拖曳到想放的位置。':isVenue()?'拖曳到平面圖上的位置；拖曳裝置外圈可以拉線。':'點一下加入畫布中央，或直接拖曳到想放的位置。';
 }
 $('#lib-q').addEventListener('input',renderLib);
 $('.lib-tabs').addEventListener('click',e=>{ const b=e.target.closest('[data-lt]'); if(!b) return; settings.libTab=b.dataset.lt; $('#lib-q').value=''; renderLib(); save(); });
 $('#lib-list').addEventListener('click',e=>{
   const it=e.target.closest('.lib-item'); if(!it) return;
   const c=viewCenter(), k=libAddN++%6;
-  if(isVenue()) addNode(it.dataset.key,c.x+(k-2.5)*24,c.y+(k-2.5)*24);
-  else addNode(it.dataset.key,c.x-105+k*28,c.y-60+k*28);
+  if(isVenue()) addAny(it.dataset.key,c.x+(k-2.5)*24,c.y+(k-2.5)*24,false);
+  else addAny(it.dataset.key,c.x-105+k*28,c.y-60+k*28,false);
   if(innerWidth<900) $('#lib').classList.remove('open');
 });
 $('#lib-list').addEventListener('dragstart',e=>{ const it=e.target.closest('.lib-item'); if(!it) return; e.dataTransfer.setData('text/plain','arkey:'+it.dataset.key); e.dataTransfer.effectAllowed='copy'; });
@@ -2468,7 +2828,7 @@ $('#lib-list').addEventListener('dragstart',e=>{ const it=e.target.closest('.lib
    ========================================================= */
 window.addEventListener('keydown',e=>{
   const inField=e.target.matches&&e.target.matches('input,textarea,select,[contenteditable]');
-  if(e.key==='Escape'){ closeFloating(); $$('.modal-wrap').forEach(m=>m.hidden=true); if(!inField&&(sel.n.size||sel.w.size||sel.z.size)){ clearSel(); renderAll(); } return; }
+  if(e.key==='Escape'){ closeFloating(); $$('.modal-wrap').forEach(m=>m.hidden=true); if(settings.seat){ settings.seat=null; $('#Lt').innerHTML=''; renderAll(); toast('已結束座位模式'); return; } if(!inField&&(sel.n.size||sel.w.size||sel.z.size||sel.f.size)){ clearSel(); renderAll(); } return; }
   if(inField) return;
   if(!$('#rep').hidden||!$('#help').hidden) return;
   const mod=e.ctrlKey||e.metaKey, k=e.key.toLowerCase();
@@ -2483,6 +2843,7 @@ window.addEventListener('keydown',e=>{
   if(mod) return;
   if(k==='delete'||k==='backspace'){ e.preventDefault(); delSel(); return; }
   if(k==='f'){ fitView(); return; }
+  if(k==='r'&&isVenue()&&sel.f.size){ rotSel(e.shiftKey?15:90); return; }
   if(k==='t'){ settings.trace=!settings.trace; if(settings.trace&&!sel.n.size) toast('選取一台裝置來追蹤它的訊號路徑'); renderAll(); return; }
   if(k==='a'){ e.preventDefault(); const r=stageRect(); const inside=lastMouse.cx>r.left&&lastMouse.cx<r.right&&lastMouse.cy>r.top&&lastMouse.cy<r.bottom; const c=inside?lastMouse:{cx:r.left+r.width/2,cy:r.top+r.height/2,...viewCenter()}; openQA(c.cx,c.cy,{x:c.x,y:c.y},null); return; }
   const st=e.shiftKey?10:1;
@@ -2541,7 +2902,7 @@ function repPlan(){
   if(!rows.length) return `<div class="msg lv1">在「🗺 場地配置」把裝置擺到平面圖上，或在連線上填長度，這裡就會列出需要的線材，並和庫存比對。</div>`;
   const noKind=rows.filter(r=>!r.kind);
   return `<div class="rep-h">依場地估算的線材需求 vs. 庫存</div><table class="tbl"><thead><tr><th>線材</th><th>長度</th><th>需要</th><th>庫存</th><th>狀態</th></tr></thead><tbody>${P.summary.map(s=>`<tr><td>${esc(s.name)}</td><td class="num">${s.len} m</td><td class="num"><b>${s.need}</b></td><td class="num">${s.stock}</td><td>${s.short?`<span class="lv l2">缺 ${s.short}</span>`:'<span class="lv l0">✓</span>'}</td></tr>`).join('')}</tbody></table>
-  <div class="rep-h">每條線的估算</div><table class="tbl"><thead><tr><th>編號</th><th>來源 → 目的</th><th>估算</th><th>指定</th><th>建議線材</th><th></th></tr></thead><tbody>${rows.sort((a,b)=>b.need-a.need).map(r=>`<tr class="click" data-w="${r.w.id}"><td><b>${esc(r.w.label)}</b></td><td>${esc(r.E.na.name)}・${esc(r.E.pa.name)} → ${esc(r.E.nb.name)}・${esc(r.E.pb.name)}</td><td class="num">${fmtM(r.est)}</td><td class="num">${r.manual?esc(r.w.len)+' m':''}</td><td>${r.kind?esc(CABLE_STOCK.find(s=>s.k===r.kind).name)+' '+pieceTxt(r):`<span class="dim">${esc(cableName(r.w,r.E))}（無庫存資料）</span>`}</td><td>${r.short?'<span class="lv l2">不足</span>':r.pieces.length>1?'<span class="lv l1">串接</span>':''}</td></tr>`).join('')}</tbody></table>${noKind.length?`<div class="dim">有 ${noKind.length} 條連線的線材不在庫存清單裡，需另外準備。</div>`:''}`;
+  <div class="rep-h">每條線的估算</div><table class="tbl"><thead><tr><th>編號</th><th>場地</th><th>來源 → 目的</th><th>估算</th><th>指定</th><th>建議線材</th><th></th></tr></thead><tbody>${rows.sort((a,b)=>b.need-a.need).map(r=>`<tr class="click" data-w="${r.w.id}"><td><b>${esc(r.w.label)}</b></td><td class="dim">${r.E.na.vv&&r.E.na.vv===r.E.nb.vv?esc(venueShort(r.E.na.vv)):r.E.na.vv||r.E.nb.vv?'跨場地':''}</td><td>${esc(r.E.na.name)}・${esc(r.E.pa.name)} → ${esc(r.E.nb.name)}・${esc(r.E.pb.name)}</td><td class="num">${fmtM(r.est)}</td><td class="num">${r.manual?esc(r.w.len)+' m':''}</td><td>${r.kind?esc(CABLE_STOCK.find(s=>s.k===r.kind).name)+' '+pieceTxt(r):`<span class="dim">${esc(cableName(r.w,r.E))}（無庫存資料）</span>`}</td><td>${r.short?'<span class="lv l2">不足</span>':r.pieces.length>1?'<span class="lv l1">串接</span>':''}</td></tr>`).join('')}</tbody></table>${noKind.length?`<div class="dim">有 ${noKind.length} 條連線的線材不在庫存清單裡，需另外準備。</div>`:''}`;
 }
 function repCables(){
   const {g,tot,wl}=cableStats(); if(!tot.size) return '<div class="rep-empty">還沒有實體連線</div>'+repStock();
@@ -2553,14 +2914,25 @@ function repCablesBase(g,tot,wl){
   <div class="rep-h">小計</div><table class="tbl"><thead><tr><th>線材</th><th>條數</th><th>總長度</th><th>未填長度</th><th>建議備品（+15%）</th></tr></thead><tbody>${[...tot.entries()].sort().map(([c,t])=>`<tr><td>${esc(c)}</td><td class="num"><b>${t.n}</b></td><td class="num">${t.m?Math.round(t.m*10)/10+' m':''}</td><td class="num">${t.u||''}</td><td class="num">${Math.max(1,Math.ceil(t.n*.15))}</td></tr>`).join('')}</tbody></table>
   ${wl?`<div class="dim">另有 ${wl} 條無線／藍牙／插卡連線不列入線材。</div>`:''}`;
 }
-function repGear(){
-  if(!doc.nodes.length) return '<div class="rep-empty">還沒有裝置</div>';
+function repFurn(){
+  if(!doc.furn.length) return '';
   const g=new Map();
-  for(const n of doc.nodes){ const k=n.inv?'inv|'+n.inv:n.type+'|'+n.model; const it=g.get(k)||{n,c:0,names:[],locs:new Set()}; it.c++; it.names.push(n.name); if(n.loc) it.locs.add(n.loc); g.set(k,it); }
+  for(const f of doc.furn){ const k=f.inv?'inv|'+f.inv:[f.k,f.label,f.w,f.d,f.h].join('|'); const it=g.get(k)||{f,c:0,vs:new Set()}; it.c++; it.vs.add(f.vv); g.set(k,it); }
+  const legs=new Map(); doc.furn.forEach(f=>{ if(f.k==='stage'&&!f.inv){ const L=STAGE_LEGS.find(([h])=>Math.abs(h-f.h)<.005); if(L) legs.set(L[1],(legs.get(L[1])||0)+4); } });
+  const row=it=>{ const f=it.f, iv=f.inv&&INVM.get(f.inv), F=FURN[f.k], used=iv?invUsed(iv.id):0;
+    return `<tr><td>${iv&&iv.icon||F.icon}</td><td>${esc(f.label||F.name)}</td><td>${f.k==='stand'?'h'+Math.round(f.h*100):Math.round(f.w*100)+'×'+Math.round(f.d*100)+(f.k==='chair'||f.k==='cushion'?'':' h'+Math.round(f.h*100))}</td><td class="num"><b>${it.c}</b></td><td class="num">${iv?iv.qty:'—'}</td><td>${iv?(used>iv.qty?`<span class="lv l2">缺 ${used-iv.qty}</span>`:'<span class="lv l0">✓</span>'):''}</td><td>${[...it.vs].map(v=>esc(venueShort(v))).join('、')}${iv&&iv.owner&&[...it.vs].some(v=>!iv.owner.includes(v))?` <span class="dim">（屬於${esc(venueShort(iv.owner[0]))}）</span>`:''}</td></tr>`; };
+  return `<div class="rep-h">家具・座位</div><table class="tbl"><thead><tr><th></th><th>品項</th><th>尺寸 cm</th><th>使用</th><th>庫存</th><th></th><th>場地</th></tr></thead><tbody>${[...g.values()].map(row).join('')}${[...legs].map(([id,c])=>{ const iv=INVM.get(id); return `<tr><td>🦵</td><td>舞台板腳 ${esc(iv.model)}</td><td></td><td class="num"><b>${c}</b></td><td class="num">${iv.qty}</td><td>${invUsed(id)>iv.qty?`<span class="lv l2">缺 ${invUsed(id)-iv.qty}</span>`:'<span class="lv l0">✓</span>'}</td><td class="dim">舞台平台 ×${c/4}</td></tr>`; }).join('')}</tbody></table>`;
+}
+function repGear(){
+  if(!doc.nodes.length&&!doc.furn.length) return '<div class="rep-empty">還沒有裝置</div>';
+  if(!doc.nodes.length) return repFurn();
+  const g=new Map();
+  for(const n of doc.nodes){ const k=n.inv?'inv|'+n.inv:n.type+'|'+n.model; const it=g.get(k)||{n,c:0,names:[],locs:new Set(),vs:new Set()}; it.c++; it.names.push(n.name); if(n.loc) it.locs.add(n.loc); if(placedAny(n)) it.vs.add(n.vv); g.set(k,it); }
   const order=c=>CATS.findIndex(x=>x.id===c);
   const list=[...g.values()].sort((a,b)=>order(catOf(a.n))-order(catOf(b.n)));
   const stock=it=>{ const iv=it.n.inv&&INVM.get(it.n.inv); if(!iv) return '<td class="dim">—</td><td></td>'; return `<td class="num">${iv.qty}</td><td>${it.c>iv.qty?`<span class="lv l2">缺 ${it.c-iv.qty}</span>`:'<span class="lv l0">✓</span>'}</td>`; };
-  return `<table class="tbl"><thead><tr><th></th><th>類型</th><th>型號</th><th>使用</th><th>庫存</th><th></th><th>名稱</th><th>位置</th></tr></thead><tbody>${list.map(it=>`<tr><td>${it.n.icon}</td><td>${esc(it.n.inv?INVM.get(it.n.inv).item:(TYPES[it.n.type]||TYPES.custom).name)}</td><td>${esc(it.n.model)}</td><td class="num"><b>${it.c}</b></td>${stock(it)}<td>${it.names.map(esc).join('、')}</td><td>${[...it.locs].map(esc).join('、')}</td></tr>`).join('')}</tbody></table><div class="dim">共 ${doc.nodes.length} 台裝置；「庫存」欄只計從 C-LAB 器材清單加入的裝置。</div>`;
+  const own=it=>{ const iv=it.n.inv&&INVM.get(it.n.inv); return iv&&iv.owner?` <span class="dim">（${esc(venueShort(iv.owner[0]))}設備）</span>`:''; };
+  return `<div class="rep-h">裝置</div><table class="tbl"><thead><tr><th></th><th>類型</th><th>型號</th><th>使用</th><th>庫存</th><th></th><th>名稱</th><th>場地</th><th>位置</th></tr></thead><tbody>${list.map(it=>`<tr><td>${it.n.icon}</td><td>${esc(it.n.inv?INVM.get(it.n.inv).item:(TYPES[it.n.type]||TYPES.custom).name)}${own(it)}</td><td>${esc(it.n.model)}</td><td class="num"><b>${it.c}</b></td>${stock(it)}<td>${it.names.map(esc).join('、')}</td><td>${[...it.vs].map(v=>esc(venueShort(v))).join('、')}</td><td>${[...it.locs].map(esc).join('、')}</td></tr>`).join('')}</tbody></table><div class="dim">共 ${doc.nodes.length} 台裝置；「庫存」欄只計從 TSL／園區器材加入的品項。</div>`+repFurn();
 }
 function repIssues(){
   if(!issues.length) return '<div class="rep-empty">✓ 沒有發現問題</div>';
@@ -2651,7 +3023,7 @@ async function exportVenueSVG(th){
   const W=Math.ceil(b.w+pad*2), H=Math.ceil(b.h+pad*2+top);
   const o={tr:null,conn:connSet(),cand:null,exp:true};
   const href=await venueHref(v);
-  const inner=venueBgSVG(v,T,true,href)+vwireLayer(T,o)+doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('');
+  const inner=venueBgSVG(v,T,true,href)+doc.furn.filter(f=>f.vv===doc.venue).map(f=>furnSVG(f,T,o)).join('')+vwireLayer(T,o)+doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('');
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><rect width="${W}" height="${H}" fill="${T.bg}"/><g transform="translate(${pad-b.x},${pad+top-b.y})">${inner}</g></svg>`;
   return {svg,W,H};
 }
@@ -2684,17 +3056,23 @@ async function printAll(){
   analyze();
   let img='';
   try{ img=(await renderToCanvas('light',2,exportFlowSVG)).toDataURL('image/png'); }catch(e){}
-  let vimg='';
-  if(curVenue()&&doc.nodes.some(placed)){ try{ vimg=(await renderToCanvas('light',2,exportVenueSVG)).toDataURL('image/png'); }catch(e){} }
+  const vimgs=[], keep=doc.venue;
+  for(const id of doc.venues){
+    const st=venueStats(id); if(!st.n&&!st.f) continue;
+    doc.venue=id; cablePlan=planCables();
+    try{ vimgs.push([id,(await renderToCanvas('light',2,exportVenueSVG)).toDataURL('image/png')]); }catch(e){}
+  }
+  doc.venue=keep; analyze();
   const pa=$('#print-area');
-  let h=`<h1>${esc(doc.name)}</h1><div class="pdate">${new Date().toLocaleString('zh-TW')} · ${doc.nodes.length} 台裝置 · ${doc.wires.length} 條連線${curVenue()?' · 場地：'+esc(curVenue().name):''}</div>`;
+  let h=`<h1>${esc(doc.name)}</h1><div class="pdate">${new Date().toLocaleString('zh-TW')} · ${doc.nodes.length} 台裝置 · ${doc.wires.length} 條連線${doc.venues.length?' · 場地：'+doc.venues.map(v=>esc(venueShort(v))).join('、'):''}</div>`;
   if(img) h+=`<img src="${img}">`;
-  if(vimg) h+=`<h2 class="pb">場地配置</h2><img src="${vimg}">`+repPlan();
+  vimgs.forEach(([id,src])=>{ h+=`<h2 class="pb">場地配置：${esc(venueName(id))}</h2><img src="${src}">`; });
+  if(vimgs.length) h+=repPlan();
   if(doc.wires.length) h+=`<h2 class="pb">連線表</h2>`+repPatch(true);
   const devs=doc.nodes.filter(n=>n.ports.filter(p=>p.dir==='in').length>=4||(n.ports.filter(p=>p.dir==='in').length&&doc.wires.some(w=>w.b.n===n.id)&&['mix','rec'].includes(catOf(n))));
   devs.forEach(n=>{ h+=`<h2>${esc(n.icon+' '+n.name)}${n.model?'（'+esc(n.model)+'）':''} 輸入／輸出表</h2>`+ioTables(n); });
   if(doc.wires.length) h+=`<h2>線材清單</h2>`+repCables();
-  if(doc.nodes.length) h+=`<h2>器材清單</h2>`+repGear();
+  if(doc.nodes.length||doc.furn.length) h+=`<h2>器材清單</h2>`+repGear();
   if(issues.length) h+=`<h2>檢查結果</h2>`+repIssues();
   pa.innerHTML=h;
   await Promise.all([...pa.querySelectorAll('img')].map(im=>im.complete?0:new Promise(r=>{ im.onload=im.onerror=r; })));
