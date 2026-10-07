@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>圖片拼貼編輯器</title>
+<meta name="description" content="在畫布上拼貼圖片、調整大小、裁切、濾鏡、加註文字與便利貼、畫線條箭頭與馬賽克，內建常用社群與列印尺寸。全部在瀏覽器本地處理，圖片不會上傳。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@400;700&family=LXGW+WenKai+TC:wght@400;700&family=Bebas+Neue&family=Pacifico&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --ink:#1f2328; --muted:#6b7280; --line:#e3e5e8; --soft:#f1f3f6;
+  --accent:#2563eb; --accent-ink:#fff; --stage:#d9dce1; --danger:#dc2626; --ok:#16a34a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181c; --panel:#1f2227; --ink:#e7e9ec; --muted:#9aa1ab; --line:#30343a; --soft:#272a30;
+    --accent:#4f8bff; --accent-ink:#fff; --stage:#0f1114; --danger:#f05252; --ok:#34d399;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181c; --panel:#1f2227; --ink:#e7e9ec; --muted:#9aa1ab; --line:#30343a; --soft:#272a30;
+  --accent:#4f8bff; --accent-ink:#fff; --stage:#0f1114; --danger:#f05252; --ok:#34d399;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:13px/1.45 system-ui,"Microsoft JhengHei","PingFang TC",sans-serif;display:flex;flex-direction:column;overflow:hidden}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- 頂部 ---------- */
+header{display:flex;gap:6px;align-items:center;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin;flex:none}
+header h1{font-size:15px;margin:0 8px 0 2px;font-weight:700;white-space:nowrap}
+.sep{width:1px;height:22px;background:var(--line);margin:0 4px;flex:none}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:5px 10px;border-radius:8px;cursor:pointer;font:inherit;white-space:nowrap;flex:none}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--danger)}
+.btn.icon{padding:5px 7px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel))}
+#zoomSel{width:76px}
+select,input[type=text],input[type=number]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 6px;min-width:0}
+input[type=number]{width:100%}
+input[type=range]{accent-color:var(--accent);min-width:0}
+input[type=color]{width:34px;height:28px;padding:2px;border:1px solid var(--line);border-radius:6px;background:var(--panel);cursor:pointer;flex:none}
+input[type=checkbox]{accent-color:var(--accent)}
+
+/* ---------- 主體 ---------- */
+.body{flex:1;display:flex;min-height:0}
+nav.rail{width:52px;flex:none;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;overflow-y:auto;scrollbar-width:none}
+.tool{width:40px;height:38px;display:grid;place-items:center;border:1px solid transparent;border-radius:9px;background:none;color:var(--ink);cursor:pointer;flex:none}
+.tool:hover{background:var(--soft)}
+.tool.on{background:color-mix(in srgb,var(--accent) 16%,var(--panel));border-color:var(--accent);color:var(--accent)}
+.tool svg.i{width:20px;height:20px}
+.rail .gap{height:1px;width:28px;background:var(--line);margin:5px 0;flex:none}
+
+#stage{flex:1;overflow:auto;background:var(--stage);position:relative;min-width:0}
+#board{display:grid;place-items:center;min-width:100%;min-height:100%;width:max-content;height:max-content;padding:40px}
+#board .canvas-container{box-shadow:0 2px 14px rgba(0,0,0,.28);background:repeating-conic-gradient(#cfd3d9 0 25%,#fff 0 50%) 0 0/20px 20px}
+#empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+#empty .card{pointer-events:auto;background:color-mix(in srgb,var(--panel) 92%,transparent);border:2px dashed var(--line);border-radius:16px;padding:22px 28px;text-align:center;max-width:360px;margin:16px;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+#empty strong{display:block;font-size:16px;margin-bottom:4px}
+#empty p{margin:0 0 14px;color:var(--muted)}
+#empty .row2{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#stage.dragover::after{content:"放開以加入圖片";position:absolute;inset:10px;border:3px dashed var(--accent);border-radius:14px;display:grid;place-items:center;font-size:18px;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);pointer-events:none}
+
+/* ---------- 右側面板 ---------- */
+aside#panel{width:290px;flex:none;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line);flex:none}
+.tabs button{flex:1;padding:9px 0;border:none;background:none;color:var(--muted);font:inherit;cursor:pointer;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.pane{flex:1;overflow-y:auto;padding:4px 12px 24px}
+.sec{border-bottom:1px solid var(--line);padding:10px 0}
+.sec:last-child{border-bottom:none}
+.sec h3{font-size:12px;margin:0 0 8px;color:var(--muted);font-weight:600;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;min-height:28px}
+.row>label:first-child,.row>.lb{width:64px;flex:none;color:var(--muted)}
+.row input[type=range]{flex:1}
+.row output{width:38px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);flex:none}
+.row select{flex:1}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.geo{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
+.geo label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.geo label span{width:14px;flex:none;text-align:center}
+.mini{display:inline-flex;align-items:center;justify-content:center;gap:4px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:7px;padding:5px 4px;cursor:pointer;font:inherit;font-size:12px;min-width:0}
+.mini:hover{border-color:var(--accent)}
+.mini.on,.tog input:checked+span{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel));color:var(--accent)}
+.mini.danger{color:var(--danger)}
+.mini svg.i{width:16px;height:16px}
+.tog{display:contents}
+.tog input{position:absolute;opacity:0;pointer-events:none}
+.tog span{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:7px;padding:4px 0;cursor:pointer;font-weight:600;min-width:0}
+.swatches{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 2px 72px}
+.swatches button{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
+.hint{color:var(--muted);font-size:12px;margin:6px 0}
+.chk{display:flex;align-items:center;gap:6px;cursor:pointer}
+kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--soft)}
+
+/* 圖層 */
+#layerList{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+#layerList li{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+#layerList li:hover{background:var(--soft)}
+#layerList li.sel{background:color-mix(in srgb,var(--accent) 14%,var(--panel));border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+#layerList li.off .nm{opacity:.45;text-decoration:line-through}
+#layerList li.drop-above{box-shadow:inset 0 2px 0 var(--accent)}
+#layerList li.drop-below{box-shadow:inset 0 -2px 0 var(--accent)}
+#layerList .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#layerList .nm input{width:100%}
+#layerList .ib{border:none;background:none;color:var(--muted);cursor:pointer;padding:2px;border-radius:5px;display:grid;place-items:center}
+#layerList .ib:hover{color:var(--ink);background:var(--line)}
+#layerList .ib.act{color:var(--accent)}
+#layerList .ty{color:var(--muted);display:grid}
+#layerList .ty svg.i{width:15px;height:15px}
+
+/* ---------- 狀態列 ---------- */
+footer{display:flex;gap:14px;align-items:center;padding:4px 12px;background:var(--panel);border-top:1px solid var(--line);color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;flex:none}
+footer .grow{flex:1;overflow:hidden;text-overflow:ellipsis}
+footer button{border:none;background:none;color:var(--muted);font:inherit;cursor:pointer;padding:0}
+footer button:hover{color:var(--accent)}
+
+/* ---------- 對話框 ---------- */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:0;max-width:min(860px,calc(100vw - 24px));width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,12,16,.5)}
+dialog form{padding:18px 20px;max-height:calc(100vh - 60px);overflow:auto}
+dialog h2{font-size:17px;margin:0 0 12px}
+dialog h4{font-size:12px;color:var(--muted);margin:14px 0 6px;font-weight:600}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.preset{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;background:var(--panel);color:var(--ink);font:inherit;text-align:left}
+.preset:hover{border-color:var(--accent)}
+.preset.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
+.preset .shape{width:30px;height:30px;display:grid;place-items:center;flex:none}
+.preset .shape i{display:block;border:1.5px solid currentColor;border-radius:2px;opacity:.6}
+.preset b{display:block;font-weight:500;font-size:12px;line-height:1.3}
+.preset small{color:var(--muted);font-size:11px}
+.dlg-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.dlg-foot .wh{display:flex;align-items:center;gap:6px}
+.dlg-foot .wh input{width:84px}
+.frow{display:flex;align-items:center;gap:10px;margin:10px 0}
+.frow>label:first-child{width:56px;color:var(--muted);flex:none}
+.frow select,.frow input[type=text]{flex:1}
+.frow input[type=range]{flex:1}
+#dlgExport{max-width:420px}
+#dlgHelp{max-width:560px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+.muted{color:var(--muted)}
+
+#toast{position:fixed;left:50%;bottom:46px;transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1;transform:translateX(-50%)}
+#btnPanel{display:none}
+
+@media (max-width:820px){
+  aside#panel{position:fixed;left:0;right:0;bottom:0;height:56vh;width:auto;z-index:20;border-left:none;border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .2s}
+  aside#panel.open{transform:none}
+  #btnPanel{display:inline-flex;order:-1}
+  header h1{display:none}
+  .hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>圖片拼貼編輯器</h1>
+  <button class="btn" id="btnNew" title="新畫布 / 選擇尺寸"><svg class="i"><use href="#i-file"/></svg>新畫布</button>
+  <button class="btn primary" id="btnAddImg" title="加入圖片（也可拖曳或 Ctrl+V 貼上）"><svg class="i"><use href="#i-image"/></svg>加入圖片</button>
+  <span class="sep"></span>
+  <button class="btn icon" id="btnUndo" title="復原 (Ctrl+Z)"><svg class="i"><use href="#i-undo"/></svg></button>
+  <button class="btn icon" id="btnRedo" title="重做 (Ctrl+Y)"><svg class="i"><use href="#i-redo"/></svg></button>
+  <span class="sep"></span>
+  <button class="btn icon" id="btnZoomOut" title="縮小 (Ctrl+-)"><svg class="i"><use href="#i-minus"/></svg></button>
+  <select id="zoomSel" title="縮放">
+    <option value="fit">符合</option><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="custom" hidden></option>
+  </select>
+  <button class="btn icon" id="btnZoomIn" title="放大 (Ctrl+=)"><svg class="i"><use href="#i-plus"/></svg></button>
+  <span class="spacer"></span>
+  <button class="btn hide-sm" id="btnOpen" title="開啟專案檔 (.json)"><svg class="i"><use href="#i-folder"/></svg>開啟專案</button>
+  <button class="btn hide-sm" id="btnSave" title="儲存專案檔，之後可繼續編輯 (Ctrl+S)"><svg class="i"><use href="#i-save"/></svg>儲存專案</button>
+  <button class="btn primary" id="btnExport" title="匯出圖片 (Ctrl+E)"><svg class="i"><use href="#i-download"/></svg>匯出圖片</button>
+  <button class="btn icon" id="btnPanel" title="屬性面板"><svg class="i"><use href="#i-sliders"/></svg></button>
+</header>
+
+<div class="body">
+  <nav class="rail" id="rail">
+    <button class="tool" data-tool="select" title="選取 / 移動 (V)"><svg class="i"><use href="#i-pointer"/></svg></button>
+    <button class="tool" data-tool="hand" title="平移畫面 (H，或按住空白鍵)"><svg class="i"><use href="#i-hand"/></svg></button>
+    <span class="gap"></span>
+    <button class="tool" data-tool="pen" title="畫筆 (P)"><svg class="i"><use href="#i-pen"/></svg></button>
+    <button class="tool" data-tool="marker" title="螢光筆 (I)"><svg class="i"><use href="#i-highlight"/></svg></button>
+    <button class="tool" data-tool="line" title="直線 (L)，按住 Shift 鎖定角度"><svg class="i"><use href="#i-line"/></svg></button>
+    <button class="tool" data-tool="arrow" title="箭頭 (A)，按住 Shift 鎖定角度"><svg class="i"><use href="#i-arrow"/></svg></button>
+    <button class="tool" data-tool="rect" title="矩形 (R)，按住 Shift 畫正方形"><svg class="i"><use href="#i-rect"/></svg></button>
+    <button class="tool" data-tool="ellipse" title="橢圓 (O)，按住 Shift 畫正圓"><svg class="i"><use href="#i-ellipse"/></svg></button>
+    <span class="gap"></span>
+    <button class="tool" data-tool="text" title="文字 (T)"><svg class="i"><use href="#i-text"/></svg></button>
+    <button class="tool" data-tool="note" title="便利貼筆記 (N)"><svg class="i"><use href="#i-note"/></svg></button>
+    <button class="tool" data-tool="badge" title="編號標記 (M)"><svg class="i"><use href="#i-badge"/></svg></button>
+    <button class="tool" data-tool="mosaic" title="馬賽克 / 模糊遮蔽 (X)"><svg class="i"><use href="#i-mosaic"/></svg></button>
+    <span class="gap"></span>
+    <button class="tool" id="railCrop" title="裁切選取的圖片 (C，或雙擊圖片)"><svg class="i"><use href="#i-crop"/></svg></button>
+    <button class="tool" id="railHelp" title="快捷鍵說明 (?)"><svg class="i"><use href="#i-help"/></svg></button>
+  </nav>
+
+  <section id="stage">
+    <div id="board"><canvas id="c"></canvas></div>
+    <div id="empty">
+      <div class="card">
+        <strong>拖曳圖片到這裡開始拼貼</strong>
+        <p>也可以直接 <kbd>Ctrl</kbd>+<kbd>V</kbd> 貼上截圖，或從左側工具列加文字、線條、筆記。</p>
+        <div class="row2">
+          <button class="btn primary" data-act="addImg"><svg class="i"><use href="#i-image"/></svg>選擇圖片</button>
+          <button class="btn" data-act="newCanvas"><svg class="i"><use href="#i-file"/></svg>換畫布尺寸</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside id="panel">
+    <div class="tabs">
+      <button data-tab="props" class="on">屬性</button>
+      <button data-tab="layers">圖層</button>
+      <button data-tab="canvas">畫布</button>
+    </div>
+
+    <!-- 屬性 -->
+    <div class="pane" id="pane-props">
+
+      <div class="sec" id="secNone">
+        <h3>尚未選取物件</h3>
+        <p class="hint">點選畫布上的物件即可編輯屬性；按住 <kbd>Shift</kbd> 可多選。雙擊圖片可裁切，雙擊文字可編輯。</p>
+        <div class="grid2">
+          <button class="mini" data-act="addImg"><svg class="i"><use href="#i-image"/></svg>加入圖片</button>
+          <button class="mini" data-act="selectAll">全選 (Ctrl+A)</button>
+        </div>
+      </div>
+
+      <!-- 工具設定 -->
+      <div class="sec" id="secTool">
+        <h3 id="toolTitle">工具設定</h3>
+        <div class="row" data-tools="pen marker line arrow rect ellipse badge"><label>顏色</label><input type="color" data-t="stroke"><div class="spacer"></div></div>
+        <div class="swatches" data-tools="pen marker line arrow rect ellipse badge" data-sw="t:stroke"></div>
+        <div class="row" data-tools="pen marker line arrow rect ellipse"><label>粗細</label><input type="range" data-t="width" min="1" max="60"><output></output></div>
+        <div class="row" data-tools="line arrow rect ellipse"><label>線型</label><select data-t="dash"><option value="">實線</option><option value="dash">虛線</option><option value="dot">點線</option></select></div>
+        <div class="row" data-tools="rect ellipse"><label>填色</label><label class="chk"><input type="checkbox" data-t="fillOn">填滿</label><input type="color" data-t="fill"></div>
+        <div class="row" data-tools="text"><label>文字顏色</label><input type="color" data-t="text"><div class="spacer"></div></div>
+        <div class="swatches" data-tools="text" data-sw="t:text"></div>
+        <div class="row" data-tools="text note"><label>字型</label><select data-t="font" class="fontSel"></select></div>
+        <div class="row" data-tools="note"><label>便利貼</label><input type="color" data-t="note"><div class="spacer"></div></div>
+        <div class="swatches" data-tools="note" data-sw="t:note" data-palette="note"></div>
+        <div class="row" data-tools="mosaic"><label>效果</label><select data-t="mosaicMode"><option value="pixel">馬賽克</option><option value="blur">模糊</option></select></div>
+        <div class="row" data-tools="mosaic"><label>強度</label><input type="range" data-t="mosaic" min="4" max="60"><output></output></div>
+        <p class="hint" id="toolHint"></p>
+      </div>
+
+      <!-- 裁切 -->
+      <div class="sec" id="secCrop">
+        <h3>裁切圖片</h3>
+        <p class="hint">拖曳藍框調整要保留的範圍，按 <kbd>Enter</kbd> 套用、<kbd>Esc</kbd> 取消。</p>
+        <div class="grid3" id="cropRatios">
+          <button class="mini on" data-ratio="free">自由</button>
+          <button class="mini" data-ratio="orig">原比例</button>
+          <button class="mini" data-ratio="1">1:1</button>
+          <button class="mini" data-ratio="1.3333">4:3</button>
+          <button class="mini" data-ratio="0.75">3:4</button>
+          <button class="mini" data-ratio="1.7778">16:9</button>
+          <button class="mini" data-ratio="0.5625">9:16</button>
+          <button class="mini" data-ratio="0.8">4:5</button>
+          <button class="mini" data-ratio="canvas">畫布比例</button>
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <button class="btn" data-act="cropCancel">取消</button>
+          <button class="btn primary" data-act="cropApply">套用裁切</button>
+        </div>
+      </div>
+
+      <!-- 共通 -->
+      <div class="sec" id="secCommon">
+        <h3><span id="selTitle">物件</span>
+          <span style="display:flex;gap:4px">
+            <button class="mini" data-act="dup" title="複製一份 (Ctrl+D)"><svg class="i"><use href="#i-copy"/></svg></button>
+            <button class="mini" data-act="lock" title="鎖定（鎖定後請從圖層面板解鎖）"><svg class="i"><use href="#i-lock"/></svg></button>
+            <button class="mini danger" data-act="del" title="刪除 (Delete)"><svg class="i"><use href="#i-trash"/></svg></button>
+          </span>
+        </h3>
+        <div class="geo" id="geoBox">
+          <label><span>X</span><input type="number" data-k="x"></label>
+          <label><span>Y</span><input type="number" data-k="y"></label>
+          <label><span>寬</span><input type="number" data-k="w" min="1"></label>
+          <label><span>高</span><input type="number" data-k="h" min="1"></label>
+          <label><span>∠</span><input type="number" data-k="angle" step="1"></label>
+          <label class="chk" title="調整寬高時維持比例"><input type="checkbox" id="keepRatio" checked>鎖定比例</label>
+        </div>
+        <div class="row"><label>不透明度</label><input type="range" data-k="opacity" min="0" max="100"><output></output></div>
+        <div class="row"><label>混合模式</label><select data-k="blend">
+          <option value="source-over">正常</option><option value="multiply">色彩增值</option><option value="screen">濾色</option><option value="overlay">覆蓋</option><option value="darken">變暗</option><option value="lighten">變亮</option><option value="color-dodge">加亮顏色</option><option value="color-burn">加深顏色</option><option value="soft-light">柔光</option><option value="hard-light">實光</option><option value="difference">差異化</option><option value="luminosity">明度</option>
+        </select></div>
+        <div class="row"><label>陰影</label><label class="chk"><input type="checkbox" data-k="shadowOn">開啟</label><input type="color" data-k="shadowColor"><div class="spacer"></div></div>
+        <div class="row" data-shadow><label>模糊</label><input type="range" data-k="shadowBlur" min="0" max="80"><output></output></div>
+        <div class="row" data-shadow><label>距離</label><input type="range" data-k="shadowOff" min="-60" max="60"><output></output></div>
+
+        <h3 style="margin-top:12px">排列與對齊</h3>
+        <div class="grid4">
+          <button class="mini" data-act="front" title="移到最上層 (Ctrl+])"><svg class="i"><use href="#i-top"/></svg></button>
+          <button class="mini" data-act="forward" title="上移一層 (])"><svg class="i"><use href="#i-up"/></svg></button>
+          <button class="mini" data-act="backward" title="下移一層 ([)"><svg class="i"><use href="#i-down"/></svg></button>
+          <button class="mini" data-act="back" title="移到最下層 (Ctrl+[)"><svg class="i"><use href="#i-bottom"/></svg></button>
+          <button class="mini" data-act="al-l" title="靠左對齊"><svg class="i"><use href="#i-al-l"/></svg></button>
+          <button class="mini" data-act="al-c" title="水平置中"><svg class="i"><use href="#i-al-c"/></svg></button>
+          <button class="mini" data-act="al-r" title="靠右對齊"><svg class="i"><use href="#i-al-r"/></svg></button>
+          <button class="mini" data-act="al-t" title="靠上對齊"><svg class="i"><use href="#i-al-t"/></svg></button>
+          <button class="mini" data-act="al-m" title="垂直置中"><svg class="i"><use href="#i-al-m"/></svg></button>
+          <button class="mini" data-act="al-b" title="靠下對齊"><svg class="i"><use href="#i-al-b"/></svg></button>
+          <button class="mini" data-act="flipX" title="水平翻轉"><svg class="i"><use href="#i-flipx"/></svg></button>
+          <button class="mini" data-act="flipY" title="垂直翻轉"><svg class="i"><use href="#i-flipy"/></svg></button>
+        </div>
+        <p class="hint" id="alignHint">單一物件會對齊畫布；多選時對齊彼此。</p>
+        <div class="grid2" id="multiBtns">
+          <button class="mini" data-act="distH">水平平均分布</button>
+          <button class="mini" data-act="distV">垂直平均分布</button>
+          <button class="mini" data-act="group">群組 (Ctrl+G)</button>
+          <button class="mini" data-act="ungroup">取消群組</button>
+        </div>
+      </div>
+
+      <!-- 圖片 -->
+      <div class="sec" id="secImage">
+        <h3>圖片</h3>
+        <div class="grid2">
+          <button class="mini" data-act="crop"><svg class="i"><use href="#i-crop"/></svg>裁切</button>
+          <button class="mini" data-act="resetImg">還原原圖</button>
+          <button class="mini" data-act="fitCanvas">符合畫布</button>
+          <button class="mini" data-act="fillCanvas">填滿畫布</button>
+          <button class="mini" data-act="asBg" style="grid-column:span 2">設為背景（填滿並鎖定在最下層）</button>
+        </div>
+        <div class="row"><label>圓角</label><input type="range" data-k="roundPct" min="0" max="50"><output></output></div>
+        <div class="row"><label>邊框</label><input type="range" data-k="imgStrokeW" min="0" max="60"><output></output><input type="color" data-k="imgStroke"></div>
+
+        <h3 style="margin-top:12px">調整 <button class="mini" data-act="resetAdj">重設</button></h3>
+        <div class="row"><label>亮度</label><input type="range" data-k="a_brightness" min="-100" max="100"><output></output></div>
+        <div class="row"><label>對比</label><input type="range" data-k="a_contrast" min="-100" max="100"><output></output></div>
+        <div class="row"><label>飽和度</label><input type="range" data-k="a_saturation" min="-100" max="100"><output></output></div>
+        <div class="row"><label>鮮豔度</label><input type="range" data-k="a_vibrance" min="-100" max="100"><output></output></div>
+        <div class="row"><label>色相</label><input type="range" data-k="a_hue" min="-180" max="180"><output></output></div>
+        <div class="row"><label>銳利化</label><input type="range" data-k="a_sharpen" min="0" max="100"><output></output></div>
+        <div class="row"><label>模糊</label><input type="range" data-k="a_blur" min="0" max="100"><output></output></div>
+        <div class="row"><label>雜訊</label><input type="range" data-k="a_noise" min="0" max="300"><output></output></div>
+        <div class="row"><label>像素化</label><input type="range" data-k="a_pixelate" min="0" max="40"><output></output></div>
+        <div class="row"><label>濾鏡風格</label><select data-k="a_preset">
+          <option value="">無</option><option value="Grayscale">黑白灰階</option><option value="BlackWhite">高反差黑白</option><option value="Sepia">懷舊褐色</option><option value="Vintage">復古</option><option value="Brownie">咖啡</option><option value="Kodachrome">柯達</option><option value="Technicolor">特藝彩色</option><option value="Polaroid">拍立得</option><option value="Invert">負片</option>
+        </select></div>
+        <div class="row"><label>去除顏色</label><label class="chk"><input type="checkbox" data-k="a_removeOn">開啟</label><input type="color" data-k="a_removeColor"><div class="spacer"></div></div>
+        <div class="row" data-remove><label>容許度</label><input type="range" data-k="a_removeDist" min="1" max="100"><output></output></div>
+        <p class="hint" data-remove>用來去除純色背景（例如白底），把該顏色變成透明。</p>
+      </div>
+
+      <!-- 文字 -->
+      <div class="sec" id="secText">
+        <h3>文字</h3>
+        <div class="row"><label>字型</label><select data-k="fontFamily" class="fontSel"></select></div>
+        <div class="row"><label>大小</label><input type="number" data-k="fontSize" min="4" max="1000" style="width:70px"><input type="color" data-k="textFill" title="文字顏色"><div class="spacer"></div></div>
+        <div class="swatches" data-sw="k:textFill"></div>
+        <div class="grid4" style="margin:8px 0">
+          <label class="tog" title="粗體"><input type="checkbox" data-k="bold"><span>B</span></label>
+          <label class="tog" title="斜體"><input type="checkbox" data-k="italic"><span style="font-style:italic">I</span></label>
+          <label class="tog" title="底線"><input type="checkbox" data-k="underline"><span style="text-decoration:underline">U</span></label>
+          <label class="tog" title="刪除線"><input type="checkbox" data-k="linethrough"><span style="text-decoration:line-through">S</span></label>
+        </div>
+        <div class="row"><label>對齊</label><select data-k="textAlign"><option value="left">靠左</option><option value="center">置中</option><option value="right">靠右</option><option value="justify">左右對齊</option></select></div>
+        <div class="row"><label>行高</label><input type="range" data-k="lineHeight" min="80" max="300" step="5"><output></output></div>
+        <div class="row"><label>字距</label><input type="range" data-k="charSpacing" min="-100" max="800" step="10"><output></output></div>
+        <div class="row"><label>外框</label><input type="range" data-k="textStrokeW" min="0" max="30"><output></output><input type="color" data-k="textStroke"></div>
+        <div class="row"><label>底色</label><label class="chk"><input type="checkbox" data-k="textBgOn">開啟</label><input type="color" data-k="textBg"><div class="spacer"></div></div>
+        <div class="swatches" data-sw="k:textBg" data-palette="note"></div>
+      </div>
+
+      <!-- 形狀 / 線條 -->
+      <div class="sec" id="secShape">
+        <h3>線條與形狀</h3>
+        <div class="row"><label>線條顏色</label><input type="color" data-k="stroke"><div class="spacer"></div></div>
+        <div class="swatches" data-sw="k:stroke"></div>
+        <div class="row"><label>粗細</label><input type="range" data-k="strokeWidth" min="0" max="60"><output></output></div>
+        <div class="row"><label>線型</label><select data-k="dash"><option value="">實線</option><option value="dash">虛線</option><option value="dot">點線</option></select></div>
+        <div class="row" data-fillrow><label>填色</label><label class="chk"><input type="checkbox" data-k="fillOn">填滿</label><input type="color" data-k="fill"><div class="spacer"></div></div>
+        <div class="row" data-rxrow><label>圓角</label><input type="range" data-k="rx" min="0" max="200"><output></output></div>
+      </div>
+
+      <!-- 編號 -->
+      <div class="sec" id="secBadge">
+        <h3>編號標記</h3>
+        <div class="row"><label>編號</label><input type="text" data-k="badgeNum" style="width:70px"><input type="color" data-k="badgeColor"><div class="spacer"></div></div>
+        <div class="swatches" data-sw="k:badgeColor"></div>
+      </div>
+    </div>
+
+    <!-- 圖層 -->
+    <div class="pane" id="pane-layers" hidden>
+      <p class="hint">最上面的項目顯示在最前方。拖曳可調整順序，雙擊名稱可重新命名。</p>
+      <ul id="layerList"></ul>
+    </div>
+
+    <!-- 畫布 -->
+    <div class="pane" id="pane-canvas" hidden>
+      <div class="sec">
+        <h3>畫布尺寸</h3>
+        <div class="row"><select id="cvPreset"></select></div>
+        <div class="row"><label>寬 × 高</label><input type="number" id="cvW" min="16" max="10000"><span>×</span><input type="number" id="cvH" min="16" max="10000"></div>
+        <label class="chk" style="margin:6px 0"><input type="checkbox" id="cvScale">內容跟著等比縮放</label>
+        <div class="grid2" style="margin-top:8px">
+          <button class="mini" id="cvSwap">⇄ 直橫互換</button>
+          <button class="mini" id="cvApply" style="color:var(--accent);font-weight:600">套用尺寸</button>
+        </div>
+      </div>
+      <div class="sec">
+        <h3>背景</h3>
+        <div class="row"><label>背景色</label><input type="color" id="bgColor"><label class="chk"><input type="checkbox" id="bgTransparent">透明</label></div>
+        <div class="swatches" id="bgSwatches"></div>
+      </div>
+      <div class="sec">
+        <h3>自動拼貼排版</h3>
+        <p class="hint">把選取的圖片（沒選取則全部圖片）依圖層順序排成格狀。</p>
+        <div class="row"><label>欄數</label><select id="lyCols"><option value="0">自動</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+        <div class="row"><label>排列方式</label><select id="lyMode"><option value="cover">填滿格子（裁切）</option><option value="contain">完整顯示</option></select></div>
+        <div class="row"><label>間距</label><input type="range" id="lyGap" min="0" max="120" value="16"><output></output></div>
+        <div class="row"><label>外邊距</label><input type="range" id="lyMargin" min="0" max="200" value="16"><output></output></div>
+        <div class="row"><label>圓角</label><input type="range" id="lyRound" min="0" max="50" value="0"><output></output></div>
+        <button class="btn primary" id="lyGo" style="width:100%;justify-content:center;margin-top:6px">套用排版</button>
+      </div>
+      <div class="sec">
+        <h3>其他</h3>
+        <label class="chk" style="margin:4px 0"><input type="checkbox" id="snapChk" checked>拖曳時自動吸附對齊（按住 Alt 暫時關閉）</label>
+        <div class="grid2" style="margin-top:10px">
+          <button class="mini" data-act="help">快捷鍵說明</button>
+          <button class="mini danger" id="btnClear">清空畫布</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span id="stSize"></span>
+  <span id="stZoom"></span>
+  <span class="grow" id="stSel"></span>
+  <button id="stHelp">快捷鍵 ?</button>
+  <span>圖片只在你的瀏覽器處理，不會上傳</span>
+</footer>
+
+<input type="file" id="fileImg" accept="image/*" multiple hidden>
+<input type="file" id="fileProj" accept=".json,application/json" hidden>
+<div id="toast"></div>
+
+<!-- 新畫布 -->
+<dialog id="dlgNew">
+  <form method="dialog">
+    <h2>選擇畫布尺寸</h2>
+    <div id="presetGroups"></div>
+    <div class="dlg-foot">
+      <span class="wh">自訂 <input type="number" id="nwW" min="16" max="10000"> × <input type="number" id="nwH" min="16" max="10000"> px</span>
+      <label class="chk"><input type="checkbox" id="nwKeep">保留目前內容</label>
+      <span class="spacer"></span>
+      <button class="btn" value="cancel">取消</button>
+      <button class="btn primary" type="button" id="nwGo">建立畫布</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 匯出 -->
+<dialog id="dlgExport">
+  <form method="dialog">
+    <h2>匯出圖片</h2>
+    <div class="frow"><label>格式</label><select id="exFmt"><option value="image/png">PNG（畫質最好，可透明）</option><option value="image/jpeg">JPG（檔案較小）</option><option value="image/webp">WebP</option></select></div>
+    <div class="frow" id="exQRow"><label>品質</label><input type="range" id="exQ" min="50" max="100" value="92"><output id="exQv">92</output></div>
+    <div class="frow"><label>倍率</label><select id="exScale"><option value="0.5">0.5×</option><option value="1" selected>1×（原尺寸）</option><option value="2">2×</option><option value="3">3×</option></select></div>
+    <div class="frow"><label>範圍</label><select id="exRange"><option value="all">整張畫布</option><option value="sel">只匯出選取的物件</option></select></div>
+    <div class="frow"><label>檔名</label><input type="text" id="exName" value="collage"></div>
+    <p class="muted" id="exInfo"></p>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button class="btn" value="cancel">取消</button>
+      <button class="btn" type="button" id="exCopy">複製到剪貼簿</button>
+      <button class="btn primary" type="button" id="exGo">下載</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 說明 -->
+<dialog id="dlgHelp">
+  <form method="dialog">
+    <h2>快捷鍵</h2>
+    <div class="keys">
+      <kbd>V</kbd><span>選取 / 移動</span>
+      <kbd>H</kbd> <span>平移畫面（或按住空白鍵拖曳）</span>
+      <kbd>P</kbd><span>畫筆</span>
+      <kbd>I</kbd><span>螢光筆</span>
+      <kbd>L</kbd> / <kbd>A</kbd><span>直線 / 箭頭（Shift 鎖定 45°）</span>
+      <kbd>R</kbd> / <kbd>O</kbd><span>矩形 / 橢圓（Shift 正方形、正圓）</span>
+      <kbd>T</kbd> / <kbd>N</kbd><span>文字 / 便利貼</span>
+      <kbd>M</kbd><span>編號標記（每次點擊自動 +1）</span>
+      <kbd>X</kbd><span>馬賽克 / 模糊遮蔽</span>
+      <kbd>C</kbd><span>裁切選取的圖片（或雙擊圖片）</span>
+      <kbd>Ctrl+V</kbd><span>貼上圖片、截圖或複製的物件</span>
+      <kbd>Ctrl+C / X / D</kbd><span>複製 / 剪下 / 原地再製</span>
+      <kbd>Delete</kbd><span>刪除選取</span>
+      <kbd>Ctrl+Z / Y</kbd><span>復原 / 重做</span>
+      <kbd>Ctrl+A</kbd><span>全選</span>
+      <kbd>Ctrl+G</kbd><span>群組（Ctrl+Shift+G 取消群組）</span>
+      <kbd>[ / ]</kbd><span>下移 / 上移一層（加 Ctrl 到最底 / 最上）</span>
+      <kbd>方向鍵</kbd><span>微調位置（Shift 每次 10px）</span>
+      <kbd>Ctrl+滾輪</kbd><span>縮放畫面</span>
+      <kbd>Ctrl+0 / 1</kbd><span>符合視窗 / 100%</span>
+      <kbd>Ctrl+S / E</kbd><span>儲存專案 / 匯出圖片</span>
+      <kbd>Esc</kbd><span>取消選取、離開工具</span>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button class="btn primary" value="ok">知道了</button></div>
+  </form>
+</dialog>
+
+<!-- 圖示 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pointer" viewBox="0 0 24 24"><path d="M5 3l14 7-6.2 1.8L10 18z"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></symbol>
+    <symbol id="i-highlight" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></symbol>
+    <symbol id="i-line" viewBox="0 0 24 24"><path d="M5 19 19 5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M9 5h10v10"/></symbol>
+    <symbol id="i-rect" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/></symbol>
+    <symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="7"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5z"/><path d="M15 3v6h6M7 13h7M7 17h4"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10.5 9.5 12.5 8v8"/></symbol>
+    <symbol id="i-mosaic" viewBox="0 0 24 24"><path d="M3 3h6v6H3zM15 3h6v6h-6zM9 9h6v6H9zM3 15h6v6H3zM15 15h6v6h-6z"/></symbol>
+    <symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15h6"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.6 3.9A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.9-1"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M9.9 4.2A9 9 0 0 1 12 4c6.5 0 10 8 10 8a17 17 0 0 1-2.2 3.2M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M2 2l20 20M14.1 14.1a3 3 0 1 1-4.2-4.2"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7zM2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
+    <symbol id="i-top" viewBox="0 0 24 24"><path d="M5 3h14M12 21V8M6 13l6-6 6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+    <symbol id="i-bottom" viewBox="0 0 24 24"><path d="M5 21h14M12 3v13M6 11l6 6 6-6"/></symbol>
+    <symbol id="i-al-l" viewBox="0 0 24 24"><path d="M4 3v18M8 7h12v4H8zM8 14h7v4H8z"/></symbol>
+    <symbol id="i-al-c" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14v4H5zM8 14h8v4H8z"/></symbol>
+    <symbol id="i-al-r" viewBox="0 0 24 24"><path d="M20 3v18M4 7h12v4H4zM9 14h7v4H9z"/></symbol>
+    <symbol id="i-al-t" viewBox="0 0 24 24"><path d="M3 4h18M7 8h4v12H7zM14 8h4v7h-4z"/></symbol>
+    <symbol id="i-al-m" viewBox="0 0 24 24"><path d="M3 12h18M7 5h4v14H7zM14 8h4v8h-4z"/></symbol>
+    <symbol id="i-al-b" viewBox="0 0 24 24"><path d="M3 20h18M7 4h4v12H7zM14 9h4v7h-4z"/></symbol>
+    <symbol id="i-flipx" viewBox="0 0 24 24"><path d="M12 3v18M9 6 3 18h6zM15 6l6 12h-6z"/></symbol>
+    <symbol id="i-flipy" viewBox="0 0 24 24"><path d="M3 12h18M6 9 18 3v6zM6 15l12 6v-6z"/></symbol>
+    <symbol id="i-group" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><rect x="7" y="7" width="6" height="6"/><rect x="11" y="11" width="6" height="6"/></symbol>
+  </defs>
+</svg>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+if (!window.fabric) {
+  document.body.innerHTML = '<p style="padding:24px">無法載入繪圖元件（fabric.js），請檢查網路連線後重新整理。</p>';
+  return;
+}
+
+// ============================================================
+// 基本設定
+// ============================================================
+const MAX_IMG = 4096;          // 匯入圖片長邊上限（也是濾鏡材質上限）
+fabric.textureSize = MAX_IMG;
+fabric.Object.prototype.set({
+  transparentCorners: false, cornerColor: '#ffffff', cornerStrokeColor: '#2563eb',
+  borderColor: '#2563eb', cornerSize: 11, cornerStyle: 'circle', borderScaleFactor: 1.5
+});
+fabric.Object.prototype.controls.mtr.offsetY = -30;
+
+// 序列化時要一起保存的自訂欄位
+const PROPS = ['name', 'locked', 'selectable', 'evented', 'kind', 'adj', 'roundPct', 'dash'];
+
+// 便利貼：有內距的 Textbox
+fabric.Note = fabric.util.createClass(fabric.Textbox, {
+  type: 'note',
+  notePad: 18,
+  objectCaching: false,
+  initialize(text, options) {
+    this.callSuper('initialize', text, options);
+    this.padding = this.notePad;
+  },
+  _renderBackground(ctx) {
+    if (!this.backgroundColor) return;
+    const p = this.notePad, w = this.width, h = this.height;
+    ctx.fillStyle = this.backgroundColor;
+    ctx.fillRect(-w / 2 - p, -h / 2 - p, w + p * 2, h + p * 2);
+    this._removeShadow(ctx);
+  }
+});
+fabric.Note.fromObject = (object, callback) => {
+  const styles = fabric.util.stylesFromArray(object.styles, object.text);
+  return fabric.Object._fromObject('Note', Object.assign({}, object, { styles }), callback, 'text');
+};
+
+const FONTS = [
+  ['Noto Sans TC', '思源黑體'], ['Noto Serif TC', '思源宋體'], ['LXGW WenKai TC', '霞鶩文楷'],
+  ['Microsoft JhengHei', '微軟正黑體'], ['PMingLiU', '新細明體'], ['DFKai-SB', '標楷體'], ['PingFang TC', '蘋方（Mac）'],
+  ['Arial', 'Arial'], ['Georgia', 'Georgia'], ['Impact', 'Impact'], ['Courier New', 'Courier New'],
+  ['Bebas Neue', 'Bebas Neue'], ['Pacifico', 'Pacifico'], ['Caveat', 'Caveat（手寫）']
+];
+
+const PRESETS = [
+  { g: '社群媒體', items: [
+    ['IG 貼文 正方形', 1080, 1080], ['IG 貼文 直式 4:5', 1080, 1350], ['IG / FB 限時動態', 1080, 1920],
+    ['FB 貼文 / 連結圖', 1200, 630], ['FB 粉專封面', 1640, 624], ['YouTube 縮圖', 1280, 720],
+    ['YouTube 頻道橫幅', 2560, 1440], ['X (Twitter) 貼文', 1600, 900], ['Pinterest 直式', 1000, 1500],
+    ['LinkedIn 貼文', 1200, 627]
+  ]},
+  { g: '螢幕 / 簡報', items: [
+    ['HD 720p', 1280, 720], ['Full HD 1080p', 1920, 1080], ['2K QHD', 2560, 1440], ['4K UHD', 3840, 2160],
+    ['簡報 4:3', 1600, 1200], ['手機桌布', 1170, 2532], ['網頁橫幅', 1920, 600], ['部落格首圖', 1200, 800]
+  ]},
+  { g: '列印（300 dpi）', items: [
+    ['A4 直式', 2480, 3508], ['A4 橫式', 3508, 2480], ['A3 直式', 3508, 4961], ['A5 直式', 1748, 2480],
+    ['Letter 直式', 2550, 3300], ['4×6 相片 橫式', 1800, 1200], ['明信片 15×10cm', 1772, 1181], ['名片 9×5.4cm', 1063, 638]
+  ]},
+  { g: '其他', items: [['正方形 800', 800, 800], ['正方形 2000', 2000, 2000], ['3:2 橫式', 1800, 1200], ['2:3 直式', 1200, 1800]] }
+];
+
+const PALETTE = ['#111827', '#ffffff', '#ef4444', '#f97316', '#facc15', '#22c55e', '#06b6d4', '#2563eb', '#8b5cf6', '#ec4899'];
+const NOTE_PALETTE = ['#fef08a', '#fed7aa', '#fecaca', '#fbcfe8', '#ddd6fe', '#bfdbfe', '#bbf7d0', '#ffffff', '#111827'];
+
+const ADJ0 = { brightness: 0, contrast: 0, saturation: 0, vibrance: 0, hue: 0, sharpen: 0, blur: 0, noise: 0, pixelate: 0, preset: '', removeOn: false, removeColor: '#ffffff', removeDist: 15 };
+
+// ============================================================
+// 狀態
+// ============================================================
+let W = 1080, H = 1080, zoom = 1, tool = 'select';
+let crop = null, guides = [], snapOn = true, spaceDown = false, panning = null, draft = null;
+let dirty = false, internalClip = null, clipStamp = '';
+const style = { stroke: '#ef4444', width: 6, dash: '', fillOn: false, fill: '#fde047', text: '#111827', font: 'Noto Sans TC', note: '#fef08a', mosaicMode: 'pixel', mosaic: 16 };
+try { Object.assign(style, JSON.parse(localStorage.getItem('collage-style') || '{}')); } catch {}
+const saveStyle = () => { try { localStorage.setItem('collage-style', JSON.stringify(style)); } catch {} };
+
+const stage = $('#stage');
+const canvas = new fabric.Canvas('c', {
+  preserveObjectStacking: true, backgroundColor: '#ffffff', stopContextMenu: true,
+  selectionColor: 'rgba(37,99,235,.08)', selectionBorderColor: '#2563eb', selectionLineWidth: 1,
+  targetFindTolerance: 4
+});
+window.collageCanvas = canvas;   // 方便在主控台除錯
+
+// ============================================================
+// 小工具
+// ============================================================
+let toastTimer;
+function toast(msg, ms = 2400) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+const isText = o => o && ['i-text', 'textbox', 'note', 'text'].includes(o.type);
+const isImage = o => o && o.type === 'image';
+const isShape = o => o && (['rect', 'ellipse', 'circle', 'triangle', 'line', 'polygon', 'polyline'].includes(o.type) || o.type === 'path');
+const canFill = o => o && ['rect', 'ellipse', 'circle', 'triangle', 'polygon'].includes(o.type);
+const userObjects = () => canvas.getObjects().filter(o => !o.isCropRect);
+function natural(img) {
+  const el = img._originalElement || img._element;
+  return { w: el.naturalWidth || el.width, h: el.naturalHeight || el.height };
+}
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
+}
+function toHex(c, fallback = '#000000') {
+  if (!c || typeof c !== 'string') return fallback;
+  if (/^#[0-9a-f]{6}$/i.test(c)) return c.toLowerCase();
+  try { return '#' + new fabric.Color(c).toHex().toLowerCase(); } catch { return fallback; }
+}
+function downloadBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 15000);
+}
+const canvasToBlob = (c, type, q) => new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('無法產生圖檔')), type, q));
+function dashArray(kind, w) {
+  w = Math.max(1, w || 1);
+  return kind === 'dash' ? [w * 3, w * 2] : kind === 'dot' ? [0.01, w * 2] : null;
+}
+function unionBounds(objs) {
+  let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+  objs.forEach(o => { const bb = o.getBoundingRect(true, true); l = Math.min(l, bb.left); t = Math.min(t, bb.top); r = Math.max(r, bb.left + bb.width); b = Math.max(b, bb.top + bb.height); });
+  return { left: l, top: t, width: r - l, height: b - t };
+}
+function reselect(objs) {
+  objs = objs.filter(o => canvas.contains(o) && o.selectable !== false);
+  if (!objs.length) { canvas.discardActiveObject(); }
+  else if (objs.length === 1) canvas.setActiveObject(objs[0]);
+  else canvas.setActiveObject(new fabric.ActiveSelection(objs, { canvas }));
+  canvas.requestRenderAll();
+}
+const LABELS = { image: '圖片', 'i-text': '文字', textbox: '文字', text: '文字', note: '便利貼', rect: '矩形', ellipse: '橢圓', circle: '圓形', line: '直線', path: '筆跡', group: '群組', triangle: '三角形' };
+function labelOf(o) {
+  if (o.kind === 'arrow') return '箭頭';
+  if (o.kind === 'badge') return '編號';
+  if (o.kind === 'marker') return '螢光筆';
+  if (o.kind === 'mosaic') return '馬賽克';
+  return LABELS[o.type] || '物件';
+}
+function autoName(o) {
+  const base = labelOf(o);
+  const n = userObjects().filter(x => (x.name || '').startsWith(base)).length + 1;
+  return `${base} ${n}`;
+}
+const ICON_OF = o => o.kind === 'arrow' ? 'arrow' : o.kind === 'badge' ? 'badge' : o.kind === 'marker' ? 'highlight' : o.kind === 'mosaic' ? 'mosaic'
+  : ({ image: 'image', 'i-text': 'text', textbox: 'text', text: 'text', note: 'note', rect: 'rect', ellipse: 'ellipse', circle: 'ellipse', line: 'line', path: 'pen', group: 'group' })[o.type] || 'layers';
+const svgUse = id => `<svg class="i"><use href="#i-${id}"/></svg>`;
+
+// ============================================================
+// 復原 / 重做
+// ============================================================
+const hist = { stack: [], idx: -1, busy: false };
+function snapshot() { return JSON.stringify({ w: W, h: H, canvas: canvas.toJSON(PROPS) }); }
+function commit() {
+  if (hist.busy || crop || draft) return;
+  clearTimeout(commitTimer);
+  const s = snapshot();
+  if (s === hist.stack[hist.idx]) return;
+  hist.stack.splice(hist.idx + 1);
+  hist.stack.push(s);
+  if (hist.stack.length > 80) hist.stack.shift();
+  hist.idx = hist.stack.length - 1;
+  if (hist.idx > 0) dirty = true;
+  updateUndoUI();
+  refreshLayers();
+  updateEmpty();
+}
+let commitTimer;
+function commitSoon() { clearTimeout(commitTimer); commitTimer = setTimeout(commit, 400); }
+function updateUndoUI() {
+  $('#btnUndo').disabled = hist.idx <= 0;
+  $('#btnRedo').disabled = hist.idx >= hist.stack.length - 1;
+}
+function restore(s) {
+  hist.busy = true;
+  const d = JSON.parse(s);
+  canvas.discardActiveObject();
+  if (d.w !== W || d.h !== H) { W = d.w; H = d.h; applyZoom(zoom); }
+  canvas.loadFromJSON(d.canvas, () => {
+    hist.busy = false;
+    afterLoad();
+  });
+}
+function undo() { if (crop) return exitCrop(false); if (hist.idx > 0) { hist.idx--; restore(hist.stack[hist.idx]); updateUndoUI(); } }
+function redo() { if (crop) return; if (hist.idx < hist.stack.length - 1) { hist.idx++; restore(hist.stack[hist.idx]); updateUndoUI(); } }
+function afterLoad() {
+  forEachDeep(userObjects(), o => { if (isText(o)) ensureFont(o); });
+  canvas.renderAll();
+  syncCanvasTab();
+  refreshLayers();
+  updatePanel();
+  updateEmpty();
+  updateStatus();
+}
+function forEachDeep(objs, fn) { objs.forEach(o => { fn(o); if (o.type === 'group') forEachDeep(o.getObjects(), fn); }); }
+
+// ============================================================
+// 畫布尺寸 / 縮放
+// ============================================================
+function applyZoom(z) {
+  const maxEl = 9000;
+  z = Math.max(0.02, Math.min(z, 8, maxEl / Math.max(W, H)));
+  zoom = z;
+  canvas.setDimensions({ width: Math.round(W * z), height: Math.round(H * z) });
+  canvas.setViewportTransform([z, 0, 0, z, 0, 0]);
+  const opt = [...$('#zoomSel').options].find(o => Math.abs(+o.value - z) < 0.001);
+  if (opt) $('#zoomSel').value = opt.value;
+  else { const c = $('#zoomSel').querySelector('[value=custom]'); c.textContent = Math.round(z * 100) + '%'; $('#zoomSel').value = 'custom'; }
+  updateStatus();
+}
+function fitZoom() {
+  const r = stage.getBoundingClientRect();
+  const z = Math.min((r.width - 80) / W, (r.height - 80) / H, 1);
+  applyZoom(z > 0 ? z : 0.1);
+  $('#zoomSel').value = 'fit';
+}
+function zoomAround(newZ, clientX, clientY) {
+  const el = canvas.upperCanvasEl;
+  const r1 = el.getBoundingClientRect();
+  if (clientX == null) { const s = stage.getBoundingClientRect(); clientX = s.left + s.width / 2; clientY = s.top + s.height / 2; }
+  const px = (clientX - r1.left) / zoom, py = (clientY - r1.top) / zoom;
+  applyZoom(newZ);
+  const r2 = el.getBoundingClientRect();
+  stage.scrollLeft += r2.left + px * zoom - clientX;
+  stage.scrollTop += r2.top + py * zoom - clientY;
+}
+function resizeCanvas(w, h, { scaleContent = false, recenter = true } = {}) {
+  w = Math.round(Math.max(16, Math.min(10000, w))); h = Math.round(Math.max(16, Math.min(10000, h)));
+  if (w === W && h === H) return;
+  canvas.discardActiveObject();
+  const s = scaleContent ? Math.min(w / W, h / H) : 1;
+  const dx = recenter ? (w - W * s) / 2 : 0, dy = recenter ? (h - H * s) / 2 : 0;
+  userObjects().forEach(o => {
+    o.set({ left: o.left * s + dx, top: o.top * s + dy, scaleX: o.scaleX * s, scaleY: o.scaleY * s });
+    o.setCoords();
+  });
+  W = w; H = h;
+  fitZoom();
+  syncCanvasTab();
+  commit();
+}
+function updateStatus() {
+  $('#stSize').textContent = `${W} × ${H} px`;
+  $('#stZoom').textContent = `縮放 ${Math.round(zoom * 100)}%`;
+  const objs = canvas.getActiveObjects();
+  $('#stSel').textContent = crop ? '裁切中：Enter 套用、Esc 取消'
+    : objs.length > 1 ? `已選取 ${objs.length} 個物件`
+    : objs.length === 1 ? `已選取：${objs[0].name || labelOf(objs[0])}` : '';
+}
+function updateEmpty() { $('#empty').hidden = userObjects().length > 0; }
+
+// ============================================================
+// 圖片匯入
+// ============================================================
+async function blobToSizedURL(blob) {
+  let bmp = null;
+  try { bmp = await createImageBitmap(blob); } catch {}
+  if (!bmp) return URL.createObjectURL(blob);     // 例如 SVG，交給 <img> 讀
+  const s = Math.min(1, MAX_IMG / Math.max(bmp.width, bmp.height));
+  if (s === 1 && blob.type && blob.type !== 'image/heic') { bmp.close(); return URL.createObjectURL(blob); }
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bmp.width * s)); c.height = Math.max(1, Math.round(bmp.height * s));
+  const ctx = c.getContext('2d'); ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bmp, 0, 0, c.width, c.height); bmp.close();
+  const out = await canvasToBlob(c, blob.type === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.95);
+  return URL.createObjectURL(out);
+}
+function loadImage(url, cross) {
+  return new Promise(res => fabric.Image.fromURL(url, (img, err) => res(err || !img || !img.width ? null : img), cross ? { crossOrigin: 'anonymous' } : undefined));
+}
+async function addImageBlob(blob, at, idx = 0) {
+  const url = await blobToSizedURL(blob);
+  const img = await loadImage(url);
+  if (!img) { toast('無法讀取這個圖片格式（HEIC 請先轉成 JPG/PNG）'); return null; }
+  placeImage(img, at, idx);
+  return img;
+}
+function placeImage(img, at, idx = 0) {
+  const s = Math.min(1, 0.8 * W / img.width, 0.8 * H / img.height);
+  img.scale(s);
+  img.set({ adj: { ...ADJ0 }, roundPct: 0, strokeUniform: true });
+  const off = idx * Math.round(Math.min(W, H) * 0.03);
+  const c = at ? new fabric.Point(at.x + off, at.y + off) : new fabric.Point(W / 2 + off, H / 2 + off);
+  img.setPositionByOrigin(c, 'center', 'center');
+  addObj(img);
+}
+async function addImageFiles(files, at) {
+  const list = [...files].filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(f.name));
+  if (!list.length) return;
+  if (tool !== 'select') setTool('select');
+  const added = [];
+  for (let i = 0; i < list.length; i++) { const img = await addImageBlob(list[i], at, i); if (img) added.push(img); }
+  if (added.length > 1) reselect(added);
+}
+async function addImageFromWebURL(url, at) {
+  try {
+    const r = await fetch(url, { mode: 'cors' });
+    if (!r.ok) throw 0;
+    const b = await r.blob();
+    if (!b.type.startsWith('image/')) throw 0;
+    await addImageBlob(b, at);
+  } catch {
+    toast('這個網站不允許直接拖入圖片，請先把圖片下載或複製後再貼上', 3500);
+  }
+}
+
+// ============================================================
+// 物件新增
+// ============================================================
+function addObj(o, { select = true } = {}) {
+  if (!o.name) o.name = autoName(o);
+  canvas.add(o);
+  if (select && o.selectable !== false) canvas.setActiveObject(o);
+  canvas.requestRenderAll();
+  commit();
+}
+const baseSize = () => Math.max(W, H);
+
+function arrowPath(x1, y1, x2, y2, w) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  const L = Math.max(20, w * 5), s = Math.PI / 7;
+  const len = Math.hypot(x2 - x1, y2 - y1);
+  const back = Math.min(L * Math.cos(s) * 0.9, len);
+  const bx = x2 - back * Math.cos(a), by = y2 - back * Math.sin(a);
+  const p1x = x2 - L * Math.cos(a - s), p1y = y2 - L * Math.sin(a - s);
+  const p2x = x2 - L * Math.cos(a + s), p2y = y2 - L * Math.sin(a + s);
+  return `M ${x1} ${y1} L ${bx} ${by} M ${p1x} ${p1y} L ${x2} ${y2} L ${p2x} ${p2y} Z`;
+}
+function makeArrow(x1, y1, x2, y2) {
+  return new fabric.Path(arrowPath(x1, y1, x2, y2, style.width), {
+    stroke: style.stroke, fill: style.stroke, strokeWidth: style.width, strokeLineCap: 'round', strokeLineJoin: 'round',
+    strokeUniform: true, kind: 'arrow', dash: style.dash, strokeDashArray: dashArray(style.dash, style.width), objectCaching: false
+  });
+}
+function shapeCommon() {
+  return { stroke: style.stroke, strokeWidth: style.width, strokeUniform: true, dash: style.dash, strokeDashArray: dashArray(style.dash, style.width),
+    strokeLineCap: style.dash === 'dot' ? 'round' : 'butt', fill: style.fillOn ? style.fill : 'rgba(0,0,0,0)' };
+}
+function startDraft(p) {
+  let obj;
+  if (tool === 'rect') obj = new fabric.Rect({ left: p.x, top: p.y, width: 1, height: 1, rx: 0, ry: 0, ...shapeCommon() });
+  else if (tool === 'ellipse') obj = new fabric.Ellipse({ left: p.x, top: p.y, rx: 1, ry: 1, ...shapeCommon() });
+  else if (tool === 'line') obj = new fabric.Line([p.x, p.y, p.x, p.y], { ...shapeCommon(), fill: null, strokeLineCap: 'round' });
+  else if (tool === 'arrow') obj = makeArrow(p.x, p.y, p.x + 1, p.y);
+  else if (tool === 'mosaic') obj = new fabric.Rect({ left: p.x, top: p.y, width: 1, height: 1, fill: 'rgba(37,99,235,.12)', stroke: '#2563eb', strokeWidth: 1.5 / zoom, strokeDashArray: [6 / zoom, 4 / zoom] });
+  obj.set({ selectable: false, evented: false });
+  draft = { x0: p.x, y0: p.y, obj, tool };
+  canvas.add(obj);
+}
+function moveDraft(p, shift) {
+  const d = draft; let { x0, y0 } = d; let x = p.x, y = p.y;
+  if (d.tool === 'line' || d.tool === 'arrow') {
+    if (shift) {
+      const a = Math.round(Math.atan2(y - y0, x - x0) / (Math.PI / 4)) * (Math.PI / 4), len = Math.hypot(x - x0, y - y0);
+      x = x0 + len * Math.cos(a); y = y0 + len * Math.sin(a);
+    }
+    if (d.tool === 'line') d.obj.set({ x2: x, y2: y });
+    else {
+      canvas.remove(d.obj);
+      d.obj = makeArrow(x0, y0, x, y); d.obj.set({ selectable: false, evented: false });
+      canvas.add(d.obj);
+    }
+  } else {
+    let w = x - x0, h = y - y0;
+    if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w || 1) * m; h = Math.sign(h || 1) * m; }
+    const left = Math.min(x0, x0 + w), top = Math.min(y0, y0 + h);
+    if (d.tool === 'ellipse') d.obj.set({ left, top, rx: Math.abs(w) / 2, ry: Math.abs(h) / 2 });
+    else d.obj.set({ left, top, width: Math.abs(w), height: Math.abs(h) });
+  }
+  d.obj.setCoords();
+  canvas.requestRenderAll();
+}
+async function endDraft() {
+  const d = draft; draft = null;
+  const o = d.obj;
+  const b = o.getBoundingRect(true, true);
+  if (Math.max(b.width, b.height) < 4) { canvas.remove(o); canvas.requestRenderAll(); return; }
+  if (d.tool === 'mosaic') {
+    canvas.remove(o);
+    await makeMosaic(o.left, o.top, o.width, o.height);
+    return;
+  }
+  o.set({ selectable: true, evented: true });
+  o.setCoords();
+  o.name = autoName(o);
+  setTool('select');
+  canvas.setActiveObject(o);
+  canvas.requestRenderAll();
+  commit();
+}
+
+async function makeMosaic(x, y, w, h) {
+  // 先把底下的畫面拍下來，再做像素化 / 模糊，以圖片物件蓋上去
+  const prevSel = canvas.getActiveObjects(); canvas.discardActiveObject();
+  const src = canvas.toCanvasElement(1 / zoom, { left: x * zoom, top: y * zoom, width: w * zoom, height: h * zoom });
+  const k = Math.min(1, MAX_IMG / Math.max(src.width, src.height));
+  const ow = Math.max(1, Math.round(src.width * k)), oh = Math.max(1, Math.round(src.height * k));
+  const bs = Math.max(2, style.mosaic * k);
+  const small = document.createElement('canvas');
+  small.width = Math.max(1, Math.round(ow / bs)); small.height = Math.max(1, Math.round(oh / bs));
+  const out = document.createElement('canvas'); out.width = ow; out.height = oh;
+  const octx = out.getContext('2d');
+  if (style.mosaicMode === 'pixel') {
+    small.getContext('2d').drawImage(src, 0, 0, small.width, small.height);
+    octx.imageSmoothingEnabled = false;
+    octx.drawImage(small, 0, 0, ow, oh);
+  } else {
+    // 多次縮小放大做出柔和模糊，邊緣不會變透明
+    const sctx = small.getContext('2d'); sctx.imageSmoothingQuality = 'high';
+    sctx.drawImage(src, 0, 0, small.width, small.height);
+    const mid = document.createElement('canvas'); mid.width = small.width * 2; mid.height = small.height * 2;
+    const mctx = mid.getContext('2d'); mctx.imageSmoothingQuality = 'high';
+    mctx.drawImage(small, 0, 0, mid.width, mid.height);
+    octx.imageSmoothingQuality = 'high';
+    octx.drawImage(mid, 0, 0, ow, oh);
+  }
+  const url = URL.createObjectURL(await canvasToBlob(out, 'image/png'));
+  const img = await loadImage(url);
+  if (!img) return;
+  img.set({ left: x, top: y, scaleX: w / ow, scaleY: h / oh, kind: 'mosaic', adj: { ...ADJ0 }, roundPct: 0 });
+  img.name = autoName(img);
+  canvas.add(img);
+  reselect(prevSel);
+  canvas.requestRenderAll();
+  commit();
+}
+
+function createText(p) {
+  const t = new fabric.IText('輸入文字', {
+    left: p.x, top: p.y, fontFamily: style.font, fontSize: Math.round(baseSize() / 22), fill: style.text,
+    fontWeight: 'bold', lineHeight: 1.2, strokeUniform: true, paintFirst: 'stroke'
+  });
+  t.set({ top: p.y - t.height / 2 });
+  setTool('select');
+  addObj(t);
+  ensureFont(t);
+  t.enterEditing(); t.selectAll();
+}
+function createNote(p) {
+  const fs = Math.round(baseSize() / 38);
+  const n = new fabric.Note('寫點筆記…', {
+    left: p.x, top: p.y, width: Math.round(baseSize() * 0.2), fontSize: fs, fontFamily: style.font, fill: '#1f2937',
+    backgroundColor: style.note, lineHeight: 1.3, notePad: Math.round(fs * 0.7), splitByGrapheme: true,
+    shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.22)', blur: Math.round(fs * 0.6), offsetX: 2, offsetY: Math.round(fs * 0.2) })
+  });
+  n.padding = n.notePad;
+  setTool('select');
+  addObj(n);
+  ensureFont(n);
+  n.enterEditing(); n.selectAll();
+}
+function createBadge(p) {
+  const nums = userObjects().filter(o => o.kind === 'badge').map(o => parseInt(o.item(1).text, 10)).filter(n => !isNaN(n));
+  const n = nums.length ? Math.max(...nums) + 1 : 1;
+  const r = Math.round(baseSize() / 45);
+  const circle = new fabric.Circle({ radius: r, fill: style.stroke, stroke: '#ffffff', strokeWidth: Math.max(2, r * 0.14), originX: 'center', originY: 'center', left: 0, top: 0 });
+  const txt = new fabric.Text(String(n), { fontSize: r * 1.15, fill: '#ffffff', fontWeight: 'bold', fontFamily: 'Arial', originX: 'center', originY: 'center', left: 0, top: r * 0.04 });
+  const g = new fabric.Group([circle, txt], { kind: 'badge', shadow: new fabric.Shadow({ color: 'rgba(0,0,0,.3)', blur: r * 0.4, offsetY: r * 0.1 }) });
+  g.setPositionByOrigin(p, 'center', 'center');
+  addObj(g, { select: false });
+}
+
+// ============================================================
+// 字型
+// ============================================================
+const fontTimers = new WeakMap();
+async function ensureFont(o) {
+  const fam = o.fontFamily;
+  try {
+    await document.fonts.load(`${o.fontStyle || 'normal'} ${o.fontWeight || 'normal'} 40px "${fam}"`, (o.text || '') + 'A中');
+  } catch {}
+  fabric.util.clearFabricFontCache(fam);
+  if (o.initDimensions) { o.initDimensions(); o.setCoords(); o.dirty = true; }
+  canvas.requestRenderAll();
+}
+function ensureFontSoon(o) { clearTimeout(fontTimers.get(o)); fontTimers.set(o, setTimeout(() => ensureFont(o), 250)); }
+
+// ============================================================
+// 裁切
+// ============================================================
+function enterCrop(img) {
+  if (!isImage(img) || img.locked) return;
+  if (crop) exitCrop(false);
+  setTool('select');
+  canvas.discardActiveObject();
+  const nat = natural(img);
+  const saved = { cropX: img.cropX, cropY: img.cropY, width: img.width, height: img.height, left: img.left, top: img.top, clipPath: img.clipPath };
+  const visCenter = img.getCenterPoint();
+  const M = img.calcTransformMatrix();
+  const fullCenter = fabric.util.transformPoint(new fabric.Point(nat.w / 2 - img.cropX - img.width / 2, nat.h / 2 - img.cropY - img.height / 2), M);
+  const rect = new fabric.Rect({
+    width: img.width * img.scaleX, height: img.height * img.scaleY, angle: img.angle,
+    fill: 'rgba(0,0,0,0)', strokeWidth: 0, lockRotation: true, isCropRect: true,
+    borderColor: '#2563eb', cornerColor: '#2563eb', cornerStrokeColor: '#ffffff', cornerStyle: 'rect', cornerSize: 12,
+    borderScaleFactor: 2, excludeFromExport: true
+  });
+  rect.setControlsVisibility({ mtr: false });
+  rect.setPositionByOrigin(visCenter, 'center', 'center');
+  img.set({ cropX: 0, cropY: 0, width: nat.w, height: nat.h, clipPath: null });
+  img.setPositionByOrigin(fullCenter, 'center', 'center');
+  img.setCoords();
+  const evented = new Map();
+  userObjects().forEach(o => { evented.set(o, [o.evented, o.selectable]); o.set({ evented: false, selectable: false }); });
+  crop = { img, rect, saved, evented, prevUniform: canvas.uniformScaling };
+  canvas.add(rect); rect.setCoords();
+  canvas.setActiveObject(rect);
+  setCropRatio('free');
+  canvas.requestRenderAll();
+  updatePanel(); updateStatus();
+}
+function setCropRatio(r) {
+  if (!crop) return;
+  $$('#cropRatios .mini').forEach(b => b.classList.toggle('on', b.dataset.ratio === r));
+  const { rect, img } = crop;
+  const free = r === 'free';
+  canvas.uniformScaling = !free;
+  rect.setControlsVisibility({ mt: free, mb: free, ml: free, mr: free, mtr: false });
+  if (free) { canvas.requestRenderAll(); return; }
+  const nat = natural(img);
+  const ratio = r === 'orig' ? nat.w / nat.h : r === 'canvas' ? W / H : parseFloat(r);
+  const iw = nat.w * img.scaleX, ih = nat.h * img.scaleY;
+  let w = iw, h = iw / ratio;
+  if (h > ih) { h = ih; w = ih * ratio; }
+  rect.set({ width: w, height: h, scaleX: 1, scaleY: 1 });
+  rect.setPositionByOrigin(img.getCenterPoint(), 'center', 'center');
+  rect.setCoords();
+  canvas.setActiveObject(rect);
+  canvas.requestRenderAll();
+}
+function exitCrop(apply) {
+  if (!crop) return;
+  const { img, rect, saved, evented, prevUniform } = crop;
+  let ok = false;
+  if (apply) {
+    const nat = natural(img);
+    const M = img.calcTransformMatrix();
+    const lc = fabric.util.transformPoint(rect.getCenterPoint(), fabric.util.invertTransform(M));
+    let cw = rect.width * rect.scaleX / img.scaleX, ch = rect.height * rect.scaleY / img.scaleY;
+    let x0 = lc.x + nat.w / 2 - cw / 2, y0 = lc.y + nat.h / 2 - ch / 2;
+    const x1 = Math.min(nat.w, x0 + cw), y1 = Math.min(nat.h, y0 + ch);
+    x0 = Math.max(0, x0); y0 = Math.max(0, y0);
+    cw = x1 - x0; ch = y1 - y0;
+    if (cw >= 2 && ch >= 2) {
+      const nc = fabric.util.transformPoint(new fabric.Point(x0 + cw / 2 - nat.w / 2, y0 + ch / 2 - nat.h / 2), M);
+      img.set({ cropX: x0, cropY: y0, width: cw, height: ch });
+      img.setPositionByOrigin(nc, 'center', 'center');
+      ok = true;
+    }
+  }
+  if (!ok) img.set(saved);
+  evented.forEach(([ev, sel], o) => o.set({ evented: ev, selectable: sel }));
+  canvas.remove(rect);
+  canvas.uniformScaling = prevUniform;
+  crop = null;
+  applyRound(img);
+  img.setCoords();
+  canvas.setActiveObject(img);
+  canvas.requestRenderAll();
+  if (ok) commit();
+  updatePanel(); updateStatus();
+}
+
+// ============================================================
+// 圖片：圓角、濾鏡、填滿
+// ============================================================
+function applyRound(img) {
+  const pct = img.roundPct || 0;
+  if (!pct) { img.clipPath = null; }
+  else {
+    const r = Math.min(img.width, img.height) * pct / 100;
+    img.clipPath = new fabric.Rect({ width: img.width, height: img.height, rx: r, ry: r, originX: 'center', originY: 'center', left: 0, top: 0 });
+  }
+  img.dirty = true;
+}
+const F = fabric.Image.filters;
+function buildFilters(a) {
+  const f = [];
+  if (a.removeOn) f.push(new F.RemoveColor({ color: a.removeColor, distance: a.removeDist / 100 }));
+  if (a.preset && F[a.preset]) f.push(new F[a.preset]());
+  if (a.brightness) f.push(new F.Brightness({ brightness: a.brightness / 100 * 0.6 }));
+  if (a.contrast) f.push(new F.Contrast({ contrast: a.contrast / 100 * 0.8 }));
+  if (a.saturation) f.push(new F.Saturation({ saturation: a.saturation / 100 }));
+  if (a.vibrance) f.push(new F.Vibrance({ vibrance: a.vibrance / 100 }));
+  if (a.hue) f.push(new F.HueRotation({ rotation: a.hue / 180 }));
+  if (a.sharpen) { const k = a.sharpen / 100 * 1.2; f.push(new F.Convolute({ matrix: [0, -k, 0, -k, 1 + 4 * k, -k, 0, -k, 0] })); }
+  if (a.blur) f.push(new F.Blur({ blur: a.blur / 100 * 0.5 }));
+  if (a.noise) f.push(new F.Noise({ noise: a.noise }));
+  if (a.pixelate > 1) f.push(new F.Pixelate({ blocksize: a.pixelate }));
+  return f;
+}
+const pendingFilter = new Set();
+let filterRAF = 0;
+function applyAdj(img) {
+  img.filters = buildFilters(img.adj || ADJ0);
+  pendingFilter.add(img);
+  if (!filterRAF) filterRAF = requestAnimationFrame(() => {
+    filterRAF = 0;
+    pendingFilter.forEach(i => { try { i.applyFilters(); } catch (e) { console.warn(e); } });
+    pendingFilter.clear();
+    canvas.requestRenderAll();
+  });
+}
+function coverInto(img, x, y, w, h) {
+  const nat = natural(img);
+  const r = w / h;
+  let cw = nat.w, ch = nat.h;
+  if (cw / ch > r) cw = ch * r; else ch = cw / r;
+  img.set({ cropX: (nat.w - cw) / 2, cropY: (nat.h - ch) / 2, width: cw, height: ch, angle: 0, scaleX: w / cw, scaleY: h / ch });
+  img.setPositionByOrigin(new fabric.Point(x + w / 2, y + h / 2), 'center', 'center');
+  applyRound(img); img.setCoords();
+}
+function containInto(img, x, y, w, h) {
+  const s = Math.min(w / img.width, h / img.height);
+  img.set({ angle: 0, scaleX: s, scaleY: s });
+  img.setPositionByOrigin(new fabric.Point(x + w / 2, y + h / 2), 'center', 'center');
+  img.setCoords();
+}
+
+function layoutGrid() {
+  let imgs = canvas.getActiveObjects().filter(isImage);
+  if (imgs.length < 1) imgs = userObjects().filter(o => isImage(o) && !o.locked && o.kind !== 'mosaic');
+  if (!imgs.length) return toast('畫布上還沒有圖片');
+  const order = userObjects();
+  imgs.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  canvas.discardActiveObject();
+  const n = imgs.length;
+  const gap = +$('#lyGap').value, m = +$('#lyMargin').value, mode = $('#lyMode').value, round = +$('#lyRound').value;
+  let cols = +$('#lyCols').value || Math.max(1, Math.min(n, Math.round(Math.sqrt(n * W / H))));
+  cols = Math.min(cols, n);
+  const rows = Math.ceil(n / cols);
+  const cellH = (H - 2 * m - (rows - 1) * gap) / rows;
+  imgs.forEach((img, i) => {
+    const r = Math.floor(i / cols), c = i % cols;
+    const inRow = r === rows - 1 ? n - r * cols : cols;     // 最後一列不足時拉寬
+    const cellW = (W - 2 * m - (inRow - 1) * gap) / inRow;
+    const x = m + c * (cellW + gap), y = m + r * (cellH + gap);
+    img.roundPct = round;
+    if (mode === 'cover') coverInto(img, x, y, cellW, cellH);
+    else { applyRound(img); containInto(img, x, y, cellW, cellH); }
+  });
+  reselect(imgs);
+  commit();
+}
+
+// ============================================================
+// 工具切換
+// ============================================================
+const TOOL_NAMES = { select: '選取', hand: '平移', pen: '畫筆', marker: '螢光筆', line: '直線', arrow: '箭頭', rect: '矩形', ellipse: '橢圓', text: '文字', note: '便利貼', badge: '編號標記', mosaic: '馬賽克 / 模糊' };
+const TOOL_HINTS = {
+  pen: '在畫布上按住拖曳即可手繪。', marker: '半透明的螢光筆，適合標重點。',
+  line: '拖曳畫線，按住 Shift 鎖定 45°。', arrow: '從起點拖到箭頭指向的位置，按住 Shift 鎖定 45°。',
+  rect: '拖曳畫出矩形，按住 Shift 畫正方形。', ellipse: '拖曳畫出橢圓，按住 Shift 畫正圓。',
+  text: '在畫布上點一下輸入文字。', note: '在畫布上點一下貼上便利貼，可直接打字。',
+  badge: '每點一下放一個編號，數字自動遞增。', mosaic: '拖曳框出要遮住的範圍（例如個資、人臉）。',
+  hand: '拖曳移動畫面；Ctrl+滾輪縮放。'
+};
+function setTool(t) {
+  if (crop) exitCrop(false);
+  if (canvas.getActiveObject()?.isEditing) canvas.getActiveObject().exitEditing();
+  tool = t;
+  if (t !== 'select') canvas.discardActiveObject();
+  $$('.tool[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t));
+  if (t === 'pen' || t === 'marker') setupBrush();
+  applyToolMode();
+  canvas.requestRenderAll();
+  updatePanel();
+}
+function applyToolMode() {
+  const sel = tool === 'select' && !spaceDown;
+  canvas.isDrawingMode = !spaceDown && (tool === 'pen' || tool === 'marker');
+  canvas.selection = sel;
+  canvas.skipTargetFind = !sel;
+  const cur = spaceDown || tool === 'hand' ? 'grab' : sel ? 'default' : (tool === 'text' || tool === 'note') ? 'text' : 'crosshair';
+  canvas.defaultCursor = cur;
+  canvas.hoverCursor = sel ? 'move' : cur;
+  canvas.upperCanvasEl.style.cursor = cur;
+}
+function setupBrush() {
+  const b = new fabric.PencilBrush(canvas);
+  if (tool === 'marker') { b.color = hexA(style.stroke, 0.38); b.width = Math.max(style.width * 3, 14); b.strokeLineCap = 'square'; }
+  else { b.color = style.stroke; b.width = style.width; }
+  b.decimate = 1.5;
+  canvas.freeDrawingBrush = b;
+}
+
+// ============================================================
+// 畫布事件
+// ============================================================
+const cxy = e => (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+canvas.on('mouse:down', o => {
+  if (tool === 'hand' || spaceDown) {
+    const p = cxy(o.e);
+    panning = { x: p.clientX, y: p.clientY, sl: stage.scrollLeft, st: stage.scrollTop };
+    canvas.upperCanvasEl.style.cursor = 'grabbing';
+    return;
+  }
+  if (crop) return;
+  const p = canvas.getPointer(o.e);
+  if (tool === 'text') return createText(p);
+  if (tool === 'note') return createNote(p);
+  if (tool === 'badge') return createBadge(p);
+  if (['line', 'arrow', 'rect', 'ellipse', 'mosaic'].includes(tool)) startDraft(p);
+});
+canvas.on('mouse:move', o => {
+  if (panning) {
+    const p = cxy(o.e);
+    stage.scrollLeft = panning.sl - (p.clientX - panning.x);
+    stage.scrollTop = panning.st - (p.clientY - panning.y);
+    return;
+  }
+  if (draft) moveDraft(canvas.getPointer(o.e), o.e.shiftKey);
+});
+canvas.on('mouse:up', () => {
+  if (panning) { panning = null; applyToolMode(); return; }
+  if (draft) endDraft();
+  if (guides.length) { guides = []; canvas.requestRenderAll(); }
+});
+canvas.on('mouse:dblclick', o => { if (tool === 'select' && isImage(o.target) && !crop) enterCrop(o.target); });
+
+canvas.on('path:created', e => {
+  const p = e.path;
+  if (tool === 'marker') p.set({ kind: 'marker', globalCompositeOperation: 'multiply' });
+  p.set({ strokeUniform: true });
+  p.name = autoName(p);
+  commit();
+});
+canvas.on('object:modified', () => { commit(); updatePanel(); });
+canvas.on('text:changed', e => { ensureFontSoon(e.target); commitSoon(); });
+canvas.on('text:editing:exited', e => {
+  const t = e.target;
+  if (!t.text.trim()) { canvas.remove(t); }
+  commit();
+});
+['selection:created', 'selection:updated', 'selection:cleared'].forEach(ev => canvas.on(ev, () => { updatePanel(); refreshLayersSoon(); updateStatus(); }));
+let geoRAF = 0;
+['object:moving', 'object:scaling', 'object:rotating', 'object:resizing'].forEach(ev => canvas.on(ev, () => {
+  if (!geoRAF) geoRAF = requestAnimationFrame(() => { geoRAF = 0; fillGeo(); });
+}));
+
+// 吸附對齊
+canvas.on('object:moving', e => {
+  const o = e.target;
+  if (!snapOn || e.e.altKey || o.isCropRect) { guides = []; return; }
+  const th = 7 / zoom;
+  const b = o.getBoundingRect(true, true);
+  const xs = [0, W / 2, W], ys = [0, H / 2, H];
+  const inSel = o.type === 'activeSelection' ? new Set(o.getObjects()) : new Set([o]);
+  userObjects().forEach(t => {
+    if (inSel.has(t) || !t.visible) return;
+    const r = t.getBoundingRect(true, true);
+    xs.push(r.left, r.left + r.width / 2, r.left + r.width);
+    ys.push(r.top, r.top + r.height / 2, r.top + r.height);
+  });
+  const mine = (a, len) => [a, a + len / 2, a + len];
+  const best = (vals, targets) => {
+    let bd = th + 1, hit = null;
+    vals.forEach(v => targets.forEach(t => { const d = t - v; if (Math.abs(d) < Math.abs(bd)) { bd = d; hit = t; } }));
+    return Math.abs(bd) <= th ? { d: bd, at: hit } : null;
+  };
+  guides = [];
+  const sx = best(mine(b.left, b.width), xs), sy = best(mine(b.top, b.height), ys);
+  if (sx) { o.left += sx.d; guides.push({ x: sx.at }); }
+  if (sy) { o.top += sy.d; guides.push({ y: sy.at }); }
+  o.setCoords();
+});
+canvas.on('after:render', opt => {
+  const ctx = opt.ctx;
+  if (ctx !== canvas.contextContainer || (!guides.length && !crop)) return;
+  ctx.save();
+  const v = canvas.viewportTransform;
+  ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
+  if (crop) {
+    const r = crop.rect, M = r.calcTransformMatrix(), w = r.width / 2, h = r.height / 2;
+    const pts = [[-w, -h], [w, -h], [w, h], [-w, h]].map(([x, y]) => fabric.util.transformPoint(new fabric.Point(x, y), M));
+    ctx.beginPath();
+    ctx.rect(-W * 4, -H * 4, W * 9, H * 9);
+    ctx.moveTo(pts[0].x, pts[0].y); pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath();
+    ctx.fillStyle = 'rgba(15,17,20,.6)';
+    ctx.fill('evenodd');
+    // 三分線
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1 / zoom;
+    ctx.beginPath();
+    for (const t of [1 / 3, 2 / 3]) {
+      const a = fabric.util.transformPoint(new fabric.Point(-w + 2 * w * t, -h), M), b = fabric.util.transformPoint(new fabric.Point(-w + 2 * w * t, h), M);
+      const c = fabric.util.transformPoint(new fabric.Point(-w, -h + 2 * h * t), M), d = fabric.util.transformPoint(new fabric.Point(w, -h + 2 * h * t), M);
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y);
+    }
+    ctx.stroke();
+  }
+  if (guides.length) {
+    ctx.strokeStyle = '#ec4899'; ctx.lineWidth = 1 / zoom; ctx.setLineDash([4 / zoom, 3 / zoom]);
+    ctx.beginPath();
+    guides.forEach(g => { if (g.x != null) { ctx.moveTo(g.x, -H); ctx.lineTo(g.x, H * 2); } else { ctx.moveTo(-W, g.y); ctx.lineTo(W * 2, g.y); } });
+    ctx.stroke();
+  }
+  ctx.restore();
+});
+
+// 縮放：Ctrl + 滾輪
+stage.addEventListener('wheel', e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault();
+  zoomAround(zoom * Math.exp(-e.deltaY * 0.0018), e.clientX, e.clientY);
+}, { passive: false });
+
+// 拖放
+stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('dragover'); });
+stage.addEventListener('dragleave', e => { if (!stage.contains(e.relatedTarget)) stage.classList.remove('dragover'); });
+stage.addEventListener('drop', e => {
+  e.preventDefault(); stage.classList.remove('dragover');
+  const r = canvas.upperCanvasEl.getBoundingClientRect();
+  const at = { x: (e.clientX - r.left) / zoom, y: (e.clientY - r.top) / zoom };
+  const files = e.dataTransfer.files;
+  if (files && files.length) {
+    if (files.length === 1 && /\.json$/i.test(files[0].name)) return openProjectFile(files[0]);
+    return addImageFiles(files, at);
+  }
+  const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+  if (/^https?:\/\//i.test(url)) addImageFromWebURL(url.split('\n')[0].trim(), at);
+});
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+
+// ============================================================
+// 編輯動作
+// ============================================================
+function removeSelected() {
+  const objs = canvas.getActiveObjects();
+  if (!objs.length) return;
+  canvas.discardActiveObject();
+  objs.forEach(o => canvas.remove(o));
+  canvas.requestRenderAll();
+  commit();
+}
+function cloneObj(o) { return new Promise(res => o.clone(c => res(c), PROPS)); }
+async function duplicate(offset = 20) {
+  const objs = canvas.getActiveObjects();
+  if (!objs.length) return;
+  canvas.discardActiveObject();
+  const copies = [];
+  for (const o of objs) {
+    const c = await cloneObj(o);
+    c.set({ left: c.left + offset, top: c.top + offset });
+    c.name = (o.name || labelOf(o)) + ' 副本';
+    canvas.add(c); copies.push(c);
+  }
+  reselect(copies);
+  commit();
+}
+async function copySelection() {
+  const objs = canvas.getActiveObjects();
+  if (!objs.length) return false;
+  canvas.discardActiveObject();      // 讓座標回到絕對值再複製
+  internalClip = [];
+  for (const o of objs) internalClip.push(await cloneObj(o));
+  reselect(objs);
+  return true;
+}
+async function pasteInternal() {
+  if (!internalClip) return;
+  const copies = [];
+  for (const o of internalClip) {
+    const c = await cloneObj(o);
+    o.set({ left: o.left + 20, top: o.top + 20 });     // 連續貼上時逐次位移
+    c.set({ left: c.left + 20, top: c.top + 20 });
+    if (!c.name || !c.name.endsWith('副本')) c.name = (c.name || labelOf(c)) + ' 副本';
+    canvas.add(c); copies.push(c);
+  }
+  if (tool !== 'select') setTool('select');
+  reselect(copies);
+  commit();
+}
+function order(how) {
+  const a = canvas.getActiveObject(); if (!a) return;
+  ({ front: () => canvas.bringToFront(a), back: () => canvas.sendToBack(a), forward: () => canvas.bringForward(a), backward: () => canvas.sendBackwards(a) })[how]();
+  canvas.requestRenderAll(); commit();
+}
+function align(how) {
+  const objs = canvas.getActiveObjects(); if (!objs.length) return;
+  canvas.discardActiveObject();
+  const box = objs.length > 1 ? unionBounds(objs) : { left: 0, top: 0, width: W, height: H };
+  objs.forEach(o => {
+    const b = o.getBoundingRect(true, true);
+    let dx = 0, dy = 0;
+    if (how === 'l') dx = box.left - b.left;
+    if (how === 'c') dx = box.left + box.width / 2 - (b.left + b.width / 2);
+    if (how === 'r') dx = box.left + box.width - (b.left + b.width);
+    if (how === 't') dy = box.top - b.top;
+    if (how === 'm') dy = box.top + box.height / 2 - (b.top + b.height / 2);
+    if (how === 'b') dy = box.top + box.height - (b.top + b.height);
+    o.set({ left: o.left + dx, top: o.top + dy }); o.setCoords();
+  });
+  reselect(objs); commit();
+}
+function distribute(axis) {
+  const objs = canvas.getActiveObjects(); if (objs.length < 3) return toast('至少選取 3 個物件才能平均分布');
+  canvas.discardActiveObject();
+  const items = objs.map(o => ({ o, b: o.getBoundingRect(true, true) }));
+  const P = axis === 'h' ? ['left', 'width'] : ['top', 'height'];
+  items.sort((a, b) => a.b[P[0]] - b.b[P[0]]);
+  const start = items[0].b[P[0]], end = items[items.length - 1].b[P[0]] + items[items.length - 1].b[P[1]];
+  const total = items.reduce((s, i) => s + i.b[P[1]], 0);
+  const space = (end - start - total) / (items.length - 1);
+  let cur = start;
+  items.forEach(({ o, b }) => { o.set(P[0], o[P[0]] + (cur - b[P[0]])); o.setCoords(); cur += b[P[1]] + space; });
+  reselect(objs); commit();
+}
+function group() {
+  const a = canvas.getActiveObject();
+  if (!a || a.type !== 'activeSelection') return;
+  const g = a.toGroup(); g.name = autoName(g);
+  canvas.requestRenderAll(); commit();
+}
+function ungroup() {
+  const a = canvas.getActiveObject();
+  if (!a || a.type !== 'group') return;
+  a.toActiveSelection();
+  canvas.requestRenderAll(); commit();
+}
+function toggleLock(o, val) {
+  const lock = val ?? !o.locked;
+  o.set({ locked: lock, selectable: !lock, evented: !lock });
+  if (lock && canvas.getActiveObjects().includes(o)) canvas.discardActiveObject();
+}
+function flip(axis) {
+  canvas.getActiveObjects().forEach(o => o.set(axis, !o[axis]));
+  canvas.requestRenderAll(); commit();
+}
+function selectAll() {
+  setTool('select');
+  const objs = userObjects().filter(o => o.selectable !== false && o.visible);
+  reselect(objs);
+}
+function clearCanvas() {
+  if (!userObjects().length) return;
+  if (!confirm('確定要清空畫布上的所有物件？（可用 Ctrl+Z 復原）')) return;
+  canvas.discardActiveObject();
+  userObjects().forEach(o => canvas.remove(o));
+  canvas.requestRenderAll();
+  commit();
+}
+
+// ============================================================
+// 屬性面板
+// ============================================================
+function getShadow(o) { return o.shadow && typeof o.shadow === 'object' ? o.shadow : null; }
+function readShadowInputs() {
+  return { color: hexA($('[data-k=shadowColor]').value, 0.45), blur: +$('[data-k=shadowBlur]').value, offsetX: +$('[data-k=shadowOff]').value, offsetY: +$('[data-k=shadowOff]').value };
+}
+function setStrokeDash(o) {
+  const dash = o.dash || '';
+  o.set({ strokeDashArray: dashArray(dash, o.strokeWidth), strokeLineCap: dash === 'dot' || o.type === 'line' || o.kind === 'arrow' ? 'round' : 'butt' });
+}
+function setAdj(o, k, v) { o.adj = { ...ADJ0, ...(o.adj || {}), [k]: v }; applyAdj(o); }
+function editingStyle(o, styles) {
+  // 文字編輯中且有選取範圍時，只改選取的字
+  if (o.isEditing && o.selectionStart !== o.selectionEnd) { o.setSelectionStyles(styles); return true; }
+  return false;
+}
+
+// key → { get(o), set(o, v), only(o) }
+const K = {
+  opacity: { get: o => Math.round(o.opacity * 100), set: (o, v) => o.set('opacity', v / 100) },
+  blend: { get: o => o.globalCompositeOperation || 'source-over', set: (o, v) => o.set('globalCompositeOperation', v) },
+  shadowOn: { get: o => !!getShadow(o), set: (o, v) => o.set('shadow', v ? new fabric.Shadow(readShadowInputs()) : null) },
+  shadowColor: { get: o => getShadow(o) ? toHex(getShadow(o).color, '#000000') : '#000000', set: (o) => getShadow(o) && o.set('shadow', new fabric.Shadow(readShadowInputs())) },
+  shadowBlur: { get: o => getShadow(o)?.blur ?? 20, set: (o) => getShadow(o) && o.set('shadow', new fabric.Shadow(readShadowInputs())) },
+  shadowOff: { get: o => getShadow(o)?.offsetY ?? 8, set: (o) => getShadow(o) && o.set('shadow', new fabric.Shadow(readShadowInputs())) },
+
+  // 圖片
+  roundPct: { only: isImage, get: o => o.roundPct || 0, set: (o, v) => { o.roundPct = v; applyRound(o); } },
+  imgStrokeW: { only: isImage, get: o => o.stroke ? o.strokeWidth : 0, set: (o, v) => o.set({ strokeWidth: v, stroke: v ? $('[data-k=imgStroke]').value : null, strokeUniform: true }) },
+  imgStroke: { only: isImage, get: o => toHex(o.stroke, '#ffffff'), set: (o, v) => o.strokeWidth && o.set('stroke', v) },
+
+  // 文字
+  fontFamily: { only: isText, get: o => o.fontFamily, set: (o, v) => { if (!editingStyle(o, { fontFamily: v })) o.set('fontFamily', v); ensureFont(o); } },
+  fontSize: { only: isText, get: o => Math.round(o.fontSize * (o.scaleY || 1)), set: (o, v) => { if (v < 1) return; const s = v / (o.scaleY || 1); if (!editingStyle(o, { fontSize: s })) o.set('fontSize', s); } },
+  textFill: { only: isText, get: o => toHex(o.fill, '#111827'), set: (o, v) => { if (!editingStyle(o, { fill: v })) o.set('fill', v); } },
+  bold: { only: isText, get: o => o.fontWeight === 'bold' || o.fontWeight >= 700, set: (o, v) => { if (!editingStyle(o, { fontWeight: v ? 'bold' : 'normal' })) o.set('fontWeight', v ? 'bold' : 'normal'); ensureFont(o); } },
+  italic: { only: isText, get: o => o.fontStyle === 'italic', set: (o, v) => { if (!editingStyle(o, { fontStyle: v ? 'italic' : 'normal' })) o.set('fontStyle', v ? 'italic' : 'normal'); } },
+  underline: { only: isText, get: o => !!o.underline, set: (o, v) => { if (!editingStyle(o, { underline: v })) o.set('underline', v); } },
+  linethrough: { only: isText, get: o => !!o.linethrough, set: (o, v) => { if (!editingStyle(o, { linethrough: v })) o.set('linethrough', v); } },
+  textAlign: { only: isText, get: o => o.textAlign, set: (o, v) => o.set('textAlign', v) },
+  lineHeight: { only: isText, get: o => Math.round(o.lineHeight * 100), set: (o, v) => o.set('lineHeight', v / 100), fmt: v => (v / 100).toFixed(2) },
+  charSpacing: { only: isText, get: o => o.charSpacing || 0, set: (o, v) => o.set('charSpacing', v) },
+  textStrokeW: { only: isText, get: o => o.stroke ? o.strokeWidth : 0, set: (o, v) => o.set({ strokeWidth: v, stroke: v ? $('[data-k=textStroke]').value : null, paintFirst: 'stroke', strokeLineJoin: 'round' }) },
+  textStroke: { only: isText, get: o => toHex(o.stroke, '#ffffff'), set: (o, v) => o.stroke && o.set('stroke', v) },
+  textBgOn: { only: isText, get: o => !!o.backgroundColor, set: (o, v) => o.set('backgroundColor', v ? $('[data-k=textBg]').value : '') },
+  textBg: { only: isText, get: o => toHex(o.backgroundColor, '#fef08a'), set: (o, v) => o.set('backgroundColor', v) },
+
+  // 形狀
+  stroke: { only: isShape, get: o => toHex(o.stroke, '#ef4444'), set: (o, v) => { o.set('stroke', v); if (o.kind === 'arrow') o.set('fill', v); if (!o.strokeWidth) o.set('strokeWidth', 4); } },
+  strokeWidth: { only: isShape, get: o => o.strokeWidth || 0, set: (o, v) => { o.set('strokeWidth', v); setStrokeDash(o); } },
+  dash: { only: isShape, get: o => o.dash || '', set: (o, v) => { o.dash = v; setStrokeDash(o); } },
+  fillOn: { only: canFill, get: o => !!o.fill && new fabric.Color(o.fill).getAlpha() > 0, set: (o, v) => o.set('fill', v ? $('[data-k=fill]').value : 'rgba(0,0,0,0)') },
+  fill: { only: canFill, get: o => { const c = new fabric.Color(o.fill || '#000'); return c.getAlpha() > 0 ? '#' + c.toHex().toLowerCase() : '#fde047'; }, set: (o, v) => o.set('fill', v) },
+  rx: { only: o => o.type === 'rect', get: o => Math.round(o.rx || 0), set: (o, v) => o.set({ rx: v, ry: v }) },
+
+  // 編號
+  badgeNum: { only: o => o.kind === 'badge', get: o => o.item(1).text, set: (o, v) => { const t = o.item(1); t.set('text', String(v).slice(0, 4)); t.set('fontSize', o.item(0).radius * (String(v).length > 2 ? 0.75 : String(v).length > 1 ? 0.95 : 1.15)); o.dirty = true; } },
+  badgeColor: { only: o => o.kind === 'badge', get: o => toHex(o.item(0).fill, '#ef4444'), set: (o, v) => { o.item(0).set('fill', v); o.dirty = true; } },
+};
+['brightness', 'contrast', 'saturation', 'vibrance', 'hue', 'sharpen', 'blur', 'noise', 'pixelate', 'preset', 'removeOn', 'removeColor', 'removeDist'].forEach(k => {
+  K['a_' + k] = { only: isImage, get: o => (o.adj || ADJ0)[k] ?? ADJ0[k], set: (o, v) => setAdj(o, k, v) };
+});
+
+function inputVal(el) {
+  if (el.type === 'checkbox') return el.checked;
+  if (el.type === 'range' || el.type === 'number') return +el.value;
+  return el.value;
+}
+function setInput(el, v) {
+  if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+  const out = el.parentElement.querySelector('output');
+  if (out && el.type === 'range') { const fmt = K[el.dataset.k]?.fmt; out.textContent = fmt ? fmt(+el.value) : el.value; }
+}
+$$('#pane-props [data-k]').forEach(el => {
+  const k = el.dataset.k;
+  const handler = () => {
+    const v = inputVal(el);
+    if (el.type === 'range') setInput(el, el.value);
+    if (['x', 'y', 'w', 'h', 'angle'].includes(k)) return setGeo(k, v);
+    const def = K[k]; if (!def) return;
+    canvas.getActiveObjects().forEach(o => { if (!def.only || def.only(o)) { def.set(o, v); o.dirty = true; o.setCoords(); } });
+    if (k === 'shadowOn' || k === 'a_removeOn') syncPanelVisibility();
+    canvas.requestRenderAll();
+    commitSoon();
+  };
+  el.addEventListener('input', handler);
+  if (el.type === 'number' || el.tagName === 'SELECT' || el.type === 'checkbox') el.addEventListener('change', () => commit());
+  else el.addEventListener('change', () => commit());
+});
+
+function setGeo(k, v) {
+  const o = canvas.getActiveObject(); if (!o || canvas.getActiveObjects().length !== 1 || isNaN(v)) return;
+  const b = o.getBoundingRect(true, true);
+  if (k === 'x') o.set('left', o.left + (v - b.left));
+  if (k === 'y') o.set('top', o.top + (v - b.top));
+  if (k === 'angle') o.rotate(v);
+  if (k === 'w' && v > 0) { const s = v / o.width; if ($('#keepRatio').checked) o.set('scaleY', o.scaleY * s / o.scaleX); o.set('scaleX', s); }
+  if (k === 'h' && v > 0) { const s = v / o.height; if ($('#keepRatio').checked) o.set('scaleX', o.scaleX * s / o.scaleY); o.set('scaleY', s); }
+  o.setCoords();
+  canvas.requestRenderAll();
+  if (k !== 'x' && k !== 'y') fillGeo(k);
+  commitSoon();
+}
+function fillGeo(except) {
+  const objs = canvas.getActiveObjects();
+  if (objs.length !== 1) return;
+  const o = objs[0], b = o.getBoundingRect(true, true);
+  const vals = { x: Math.round(b.left), y: Math.round(b.top), w: Math.round(o.width * o.scaleX), h: Math.round(o.height * o.scaleY), angle: Math.round(o.angle || 0) };
+  $$('#geoBox [data-k]').forEach(el => { if (el.dataset.k !== except && document.activeElement !== el) el.value = vals[el.dataset.k]; });
+}
+function syncPanelVisibility() {
+  const shadowOn = $('[data-k=shadowOn]').checked;
+  $$('[data-shadow]').forEach(e => e.hidden = !shadowOn);
+  const rm = $('[data-k=a_removeOn]').checked;
+  $$('[data-remove]').forEach(e => e.hidden = !rm);
+}
+function updatePanel() {
+  const objs = crop ? [] : canvas.getActiveObjects();
+  const one = objs.length === 1 ? objs[0] : null;
+  $('#secCrop').hidden = !crop;
+  $('#secTool').hidden = !!crop || tool === 'select';
+  $('#secNone').hidden = !!crop || tool !== 'select' || objs.length > 0;
+  $('#secCommon').hidden = !objs.length;
+  $('#secImage').hidden = !(one && isImage(one));
+  $('#secText').hidden = !objs.some(isText);
+  $('#secShape').hidden = !objs.some(isShape);
+  $('#secBadge').hidden = !(one && one.kind === 'badge');
+  $('#railCrop').disabled = !(one && isImage(one));
+  $('#railCrop').classList.toggle('on', !!crop);
+
+  if (tool !== 'select' && !crop) {
+    $('#toolTitle').textContent = TOOL_NAMES[tool] + ' 設定';
+    $('#toolHint').textContent = TOOL_HINTS[tool] || '';
+    $$('#secTool [data-tools]').forEach(r => r.hidden = !r.dataset.tools.split(' ').includes(tool));
+    $$('#secTool [data-t]').forEach(el => setInput(el, style[el.dataset.t]));
+  }
+  if (!objs.length) return;
+
+  $('#selTitle').textContent = one ? (one.name || labelOf(one)) : `${objs.length} 個物件`;
+  $('#geoBox').hidden = !one;
+  $('#multiBtns').hidden = false;
+  $('[data-act=group]').hidden = !(objs.length > 1);
+  $('[data-act=ungroup]').hidden = !(one && one.type === 'group');
+  $('[data-act=distH]').hidden = $('[data-act=distV]').hidden = objs.length < 3;
+  $('#alignHint').textContent = one ? '對齊會以整張畫布為基準。' : '多選時會彼此對齊。';
+  $$('[data-fillrow]').forEach(r => r.hidden = !objs.some(canFill));
+  $$('[data-rxrow]').forEach(r => r.hidden = !objs.some(o => o.type === 'rect'));
+
+  $$('#pane-props [data-k]').forEach(el => {
+    const k = el.dataset.k, def = K[k];
+    if (!def) return;
+    const target = objs.find(o => !def.only || def.only(o));
+    if (target) setInput(el, def.get(target));
+  });
+  fillGeo();
+  syncPanelVisibility();
+}
+
+// 色票
+function buildSwatches() {
+  $$('[data-sw]').forEach(box => {
+    const [ns, key] = box.dataset.sw.split(':');
+    const pal = box.dataset.palette === 'note' ? NOTE_PALETTE : PALETTE;
+    box.innerHTML = '';
+    pal.forEach(c => {
+      const b = document.createElement('button'); b.type = 'button'; b.style.background = c; b.title = c;
+      b.addEventListener('click', () => {
+        const input = document.querySelector(ns === 't' ? `[data-t="${key}"]` : `#pane-props [data-k="${key}"]`);
+        input.value = c;
+        if (key === 'textBg') { const on = $('[data-k=textBgOn]'); if (!on.checked) { on.checked = true; on.dispatchEvent(new Event('input')); } }
+        input.dispatchEvent(new Event('input'));
+        input.dispatchEvent(new Event('change'));
+      });
+      box.appendChild(b);
+    });
+  });
+}
+function buildFontSelects() {
+  $$('.fontSel').forEach(sel => {
+    sel.innerHTML = FONTS.map(([v, n]) => `<option value="${v}" style="font-family:'${v}'">${n}</option>`).join('');
+  });
+}
+
+// 工具設定輸入
+$$('#secTool [data-t]').forEach(el => {
+  el.addEventListener('input', () => {
+    const k = el.dataset.t;
+    style[k] = inputVal(el);
+    if (el.type === 'range') setInput(el, el.value);
+    if (tool === 'pen' || tool === 'marker') setupBrush();
+    saveStyle();
+  });
+});
+
+// ============================================================
+// 圖層面板
+// ============================================================
+let layersRAF = 0;
+function refreshLayersSoon() { if (!layersRAF) layersRAF = requestAnimationFrame(() => { layersRAF = 0; refreshLayers(); }); }
+let dragIdx = -1;
+function refreshLayers() {
+  if ($('#pane-layers').hidden) return;
+  const ul = $('#layerList');
+  const objs = userObjects().slice().reverse();
+  const act = new Set(canvas.getActiveObjects());
+  ul.innerHTML = '';
+  if (!objs.length) { ul.innerHTML = '<li class="hint" style="cursor:default">畫布上還沒有物件</li>'; return; }
+  objs.forEach((o, i) => {
+    const li = document.createElement('li');
+    li.className = (act.has(o) ? 'sel ' : '') + (o.visible ? '' : 'off');
+    li.draggable = true;
+    li.innerHTML = `<span class="ty">${svgUse(ICON_OF(o))}</span><span class="nm"></span>
+      <button class="ib${o.locked ? ' act' : ''}" data-l="lock" title="${o.locked ? '解除鎖定' : '鎖定'}">${svgUse(o.locked ? 'lock' : 'unlock')}</button>
+      <button class="ib" data-l="vis" title="${o.visible ? '隱藏' : '顯示'}">${svgUse(o.visible ? 'eye' : 'eyeoff')}</button>`;
+    li.querySelector('.nm').textContent = o.name || labelOf(o);
+    li.addEventListener('click', e => {
+      const b = e.target.closest('[data-l]');
+      if (b) {
+        if (b.dataset.l === 'vis') { o.visible = !o.visible; if (!o.visible && act.has(o)) canvas.discardActiveObject(); }
+        else toggleLock(o);
+        canvas.requestRenderAll(); commit(); refreshLayers();
+        return;
+      }
+      if (o.locked || !o.visible) return;
+      if (tool !== 'select') setTool('select');
+      if (e.shiftKey || e.ctrlKey || e.metaKey) {
+        const cur = canvas.getActiveObjects();
+        reselect(cur.includes(o) ? cur.filter(x => x !== o) : [...cur, o]);
+      } else reselect([o]);
+    });
+    li.querySelector('.nm').addEventListener('dblclick', e => {
+      const span = e.currentTarget;
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = o.name || '';
+      span.textContent = ''; span.appendChild(inp); inp.focus(); inp.select();
+      const done = ok => { if (ok && inp.value.trim()) o.name = inp.value.trim(); commit(); refreshLayers(); updatePanel(); };
+      inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') done(true); if (ev.key === 'Escape') done(false); ev.stopPropagation(); });
+      inp.addEventListener('blur', () => done(true));
+    });
+    li.addEventListener('dragstart', e => { dragIdx = i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'layer'); });
+    li.addEventListener('dragover', e => {
+      if (dragIdx < 0) return;
+      e.preventDefault(); e.stopPropagation();
+      const r = li.getBoundingClientRect(), below = e.clientY > r.top + r.height / 2;
+      li.classList.toggle('drop-above', !below); li.classList.toggle('drop-below', below);
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('drop-above', 'drop-below'));
+    li.addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (dragIdx < 0 || dragIdx === i) { dragIdx = -1; refreshLayers(); return; }
+      const r = li.getBoundingClientRect(), below = e.clientY > r.top + r.height / 2;
+      const moving = objs[dragIdx];
+      const list = objs.filter(x => x !== moving);
+      let at = list.indexOf(o) + (below ? 1 : 0);
+      list.splice(at, 0, moving);
+      // list 由上到下 → 畫布 index 由下到上
+      list.slice().reverse().forEach((obj, idx) => canvas.moveTo(obj, idx));
+      dragIdx = -1;
+      canvas.requestRenderAll(); commit(); refreshLayers();
+    });
+    li.addEventListener('dragend', () => { dragIdx = -1; });
+    ul.appendChild(li);
+  });
+}
+
+// ============================================================
+// 畫布分頁
+// ============================================================
+function buildPresetSelect() {
+  const sel = $('#cvPreset');
+  sel.innerHTML = '<option value="">— 常用尺寸 —</option>' + PRESETS.map(g =>
+    `<optgroup label="${g.g}">${g.items.map(([n, w, h]) => `<option value="${w}x${h}">${n}（${w}×${h}）</option>`).join('')}</optgroup>`).join('');
+}
+function syncCanvasTab() {
+  $('#cvW').value = W; $('#cvH').value = H;
+  const v = `${W}x${H}`;
+  $('#cvPreset').value = [...$('#cvPreset').options].some(o => o.value === v) ? v : '';
+  const bg = canvas.backgroundColor;
+  $('#bgTransparent').checked = !bg;
+  if (bg) $('#bgColor').value = toHex(bg, '#ffffff');
+  updateStatus();
+}
+$('#cvPreset').addEventListener('change', e => { if (!e.target.value) return; const [w, h] = e.target.value.split('x'); $('#cvW').value = w; $('#cvH').value = h; });
+$('#cvSwap').addEventListener('click', () => { const w = $('#cvW').value; $('#cvW').value = $('#cvH').value; $('#cvH').value = w; });
+$('#cvApply').addEventListener('click', () => resizeCanvas(+$('#cvW').value, +$('#cvH').value, { scaleContent: $('#cvScale').checked }));
+function setBg(color) { canvas.backgroundColor = color; canvas.requestRenderAll(); commit(); }
+$('#bgColor').addEventListener('input', e => { $('#bgTransparent').checked = false; canvas.backgroundColor = e.target.value; canvas.requestRenderAll(); commitSoon(); });
+$('#bgTransparent').addEventListener('change', e => setBg(e.target.checked ? null : $('#bgColor').value));
+(() => {
+  const box = $('#bgSwatches');
+  ['#ffffff', '#f4f1ea', '#111827', '#fde68a', '#fecdd3', '#bfdbfe', '#bbf7d0', '#e9d5ff', '#1e3a5f', '#7f1d1d'].forEach(c => {
+    const b = document.createElement('button'); b.type = 'button'; b.style.background = c; b.title = c;
+    b.addEventListener('click', () => { $('#bgColor').value = c; $('#bgTransparent').checked = false; setBg(c); });
+    box.appendChild(b);
+  });
+  box.style.marginLeft = '72px';
+})();
+['lyGap', 'lyMargin', 'lyRound'].forEach(id => { const el = $('#' + id); const out = el.parentElement.querySelector('output'); const f = () => out.textContent = el.value; el.addEventListener('input', f); f(); });
+$('#lyGo').addEventListener('click', layoutGrid);
+$('#snapChk').addEventListener('change', e => { snapOn = e.target.checked; });
+$('#btnClear').addEventListener('click', clearCanvas);
+
+// ============================================================
+// 新畫布對話框
+// ============================================================
+function buildPresetDialog() {
+  const root = $('#presetGroups');
+  root.innerHTML = '';
+  PRESETS.forEach(g => {
+    const h = document.createElement('h4'); h.textContent = g.g; root.appendChild(h);
+    const grid = document.createElement('div'); grid.className = 'presets';
+    g.items.forEach(([n, w, hh]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'preset';
+      const s = 26 / Math.max(w, hh);
+      b.innerHTML = `<span class="shape"><i style="width:${Math.max(4, w * s)}px;height:${Math.max(4, hh * s)}px"></i></span><span><b></b><small>${w} × ${hh}</small></span>`;
+      b.querySelector('b').textContent = n;
+      b.addEventListener('click', () => { $$('.preset').forEach(x => x.classList.remove('on')); b.classList.add('on'); $('#nwW').value = w; $('#nwH').value = hh; });
+      b.addEventListener('dblclick', () => $('#nwGo').click());
+      grid.appendChild(b);
+    });
+    root.appendChild(grid);
+  });
+}
+function openNewDialog() {
+  $('#nwW').value = W; $('#nwH').value = H;
+  $$('.preset').forEach(b => b.classList.toggle('on', b.querySelector('small').textContent === `${W} × ${H}`));
+  $('#nwKeep').checked = userObjects().length > 0;
+  $('#nwKeep').parentElement.hidden = !userObjects().length;
+  $('#dlgNew').showModal();
+}
+$('#nwGo').addEventListener('click', () => {
+  const w = +$('#nwW').value, h = +$('#nwH').value;
+  if (!(w >= 16 && h >= 16)) return toast('請輸入有效的寬高');
+  $('#dlgNew').close();
+  if (!$('#nwKeep').checked && userObjects().length) {
+    canvas.discardActiveObject();
+    userObjects().forEach(o => canvas.remove(o));
+  }
+  if (w === W && h === H) { commit(); return; }
+  resizeCanvas(w, h, { scaleContent: false });
+});
+
+// ============================================================
+// 匯出
+// ============================================================
+function exportOpts() {
+  return { fmt: $('#exFmt').value, q: +$('#exQ').value / 100, scale: +$('#exScale').value, sel: $('#exRange').value === 'sel' };
+}
+function updateExportInfo() {
+  const o = exportOpts();
+  $('#exQRow').hidden = o.fmt === 'image/png';
+  $('#exQv').textContent = $('#exQ').value;
+  let w = W, h = H;
+  const act = canvas.getActiveObjects();
+  if (o.sel && act.length) { const b = unionBounds(act); w = b.width; h = b.height; }
+  w = Math.round(w * o.scale); h = Math.round(h * o.scale);
+  const warn = Math.max(w, h) > 16000 ? '　⚠ 尺寸太大，瀏覽器可能無法產生' : '';
+  const transNote = o.fmt === 'image/jpeg' && !canvas.backgroundColor ? '　（JPG 不支援透明，會以白色填底）' : '';
+  $('#exInfo').textContent = `輸出尺寸：${w} × ${h} px${transNote}${warn}`;
+}
+['exFmt', 'exQ', 'exScale', 'exRange'].forEach(id => $('#' + id).addEventListener('input', updateExportInfo));
+function openExport() {
+  if (crop) exitCrop(true);
+  if (canvas.getActiveObject()?.isEditing) canvas.getActiveObject().exitEditing();
+  const hasSel = canvas.getActiveObjects().length > 0;
+  $('#exRange').querySelector('[value=sel]').disabled = !hasSel;
+  if (!hasSel) $('#exRange').value = 'all';
+  updateExportInfo();
+  $('#dlgExport').showModal();
+}
+async function renderExport() {
+  const o = exportOpts();
+  const act = canvas.getActiveObjects();
+  canvas.discardActiveObject();
+  const prevBg = canvas.backgroundColor;
+  const hidden = [];
+  let region = null;
+  if (o.sel && act.length) {
+    region = unionBounds(act);
+    userObjects().forEach(x => { if (!act.includes(x) && x.visible) { x.visible = false; hidden.push(x); } });
+    if (o.fmt !== 'image/jpeg') canvas.backgroundColor = null;
+  }
+  if (o.fmt === 'image/jpeg' && !canvas.backgroundColor) canvas.backgroundColor = '#ffffff';
+  try {
+    const m = o.scale / zoom;
+    const el = region
+      ? canvas.toCanvasElement(m, { left: region.left * zoom, top: region.top * zoom, width: region.width * zoom, height: region.height * zoom })
+      : canvas.toCanvasElement(m);
+    return await canvasToBlob(el, o.fmt, o.q);
+  } finally {
+    hidden.forEach(x => x.visible = true);
+    canvas.backgroundColor = prevBg;
+    reselect(act);
+    canvas.renderAll();
+  }
+}
+$('#exGo').addEventListener('click', async () => {
+  try {
+    const blob = await renderExport();
+    const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[exportOpts().fmt];
+    const name = ($('#exName').value.trim() || 'collage').replace(/[\\/:*?"<>|]/g, '_');
+    downloadBlob(blob, `${name}.${ext}`);
+    $('#dlgExport').close();
+    toast('已下載 ' + name + '.' + ext);
+  } catch (e) {
+    console.error(e);
+    toast(e && e.name === 'SecurityError' ? '有圖片來自不允許跨站使用的網站，無法匯出' : '匯出失敗：' + (e.message || e));
+  }
+});
+$('#exCopy').addEventListener('click', async () => {
+  try {
+    const prev = $('#exFmt').value; $('#exFmt').value = 'image/png';
+    const blob = await renderExport();
+    $('#exFmt').value = prev;
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    $('#dlgExport').close();
+    toast('已複製到剪貼簿，可直接貼到 LINE、Slack 或文件中');
+  } catch (e) {
+    console.error(e);
+    toast('瀏覽器不允許寫入剪貼簿，請改用「下載」', 3200);
+  }
+});
+
+// ============================================================
+// 專案存檔 / 開啟
+// ============================================================
+const blobToDataURL = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+async function mapImages(objs, fn) {
+  for (const o of objs || []) {
+    if (o.type === 'image' && o.src) o.src = await fn(o.src);
+    if (o.objects) await mapImages(o.objects, fn);
+  }
+}
+async function saveProject() {
+  if (crop) exitCrop(true);
+  const json = canvas.toJSON(PROPS);
+  await mapImages(json.objects, async src => src.startsWith('blob:') ? blobToDataURL(await (await fetch(src)).blob()) : src);
+  const data = { app: 'collage-editor', version: 1, width: W, height: H, canvas: json };
+  const name = ($('#exName').value.trim() || 'collage').replace(/[\\/:*?"<>|]/g, '_');
+  downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), `${name}.collage.json`);
+  dirty = false;
+  toast('專案已儲存，之後可用「開啟專案」繼續編輯');
+}
+async function openProjectFile(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data.canvas || !data.width) throw new Error('不是這個編輯器的專案檔');
+    if (dirty && userObjects().length && !confirm('開啟專案會取代目前畫布內容，確定嗎？')) return;
+    await mapImages(data.canvas.objects, async src => src.startsWith('data:') ? URL.createObjectURL(await (await fetch(src)).blob()) : src);
+    hist.busy = true;
+    canvas.discardActiveObject();
+    W = data.width; H = data.height;
+    canvas.loadFromJSON(data.canvas, () => {
+      hist.busy = false;
+      fitZoom();
+      afterLoad();
+      commit();
+      dirty = false;
+      $('#exName').value = file.name.replace(/(\.collage)?\.json$/i, '');
+      toast('已開啟專案');
+    });
+  } catch (e) {
+    hist.busy = false;
+    toast('無法開啟：' + e.message, 3200);
+  }
+}
+
+// ============================================================
+// 剪貼簿
+// ============================================================
+const typing = () => {
+  const a = document.activeElement;
+  return (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable) && a !== document.body) || canvas.getActiveObject()?.isEditing;
+};
+// 複製物件時在系統剪貼簿留一個記號，貼上時才分得出「貼物件」還是「貼外部截圖 / 文字」
+function onCopy(e, cut) {
+  if (typing() || $('dialog[open]') || !canvas.getActiveObjects().length) return;
+  e.preventDefault();
+  clipStamp = 'collage-clip:' + Date.now();
+  try { e.clipboardData.setData('text/plain', clipStamp); } catch {}
+  copySelection().then(() => { if (cut) removeSelected(); });
+}
+document.addEventListener('copy', e => onCopy(e, false));
+document.addEventListener('cut', e => onCopy(e, true));
+document.addEventListener('paste', e => {
+  if (typing() || $('dialog[open]')) return;
+  const dt = e.clipboardData; if (!dt) return;
+  const files = [...dt.files].filter(f => f.type.startsWith('image/'));
+  const text = dt.getData('text/plain');
+  e.preventDefault();
+  if (files.length) return addImageFiles(files);
+  if (internalClip && (text.startsWith('collage-clip:') || !text)) return pasteInternal();
+  if (/^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg)(\?\S*)?$/i.test(text.trim())) return addImageFromWebURL(text.trim());
+  if (text.trim()) {
+    const t = new fabric.Textbox(text.trim().slice(0, 2000), { left: W * 0.1, top: H * 0.1, width: W * 0.6, fontSize: Math.round(baseSize() / 36), fontFamily: style.font, fill: style.text, splitByGrapheme: true });
+    if (tool !== 'select') setTool('select');
+    addObj(t); ensureFont(t);
+  }
+});
+
+// ============================================================
+// 鍵盤
+// ============================================================
+const TOOL_KEYS = { v: 'select', h: 'hand', p: 'pen', i: 'marker', l: 'line', a: 'arrow', r: 'rect', o: 'ellipse', t: 'text', n: 'note', m: 'badge', x: 'mosaic' };
+document.addEventListener('keydown', e => {
+  if ($('dialog[open]')) return;
+  const mod = e.ctrlKey || e.metaKey;
+  const k = e.key.toLowerCase();
+  if (k === 'escape') {
+    if (crop) return exitCrop(false);
+    const a = canvas.getActiveObject();
+    if (a?.isEditing) { a.exitEditing(); canvas.requestRenderAll(); return; }
+    if (tool !== 'select') return setTool('select');
+    canvas.discardActiveObject(); canvas.requestRenderAll();
+    return;
+  }
+  if (typing()) return;
+  if (crop && k === 'enter') { e.preventDefault(); return exitCrop(true); }
+  if (e.key === ' ' && !spaceDown) { e.preventDefault(); spaceDown = true; applyToolMode(); return; }
+  if (mod) {
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); return undo(); }
+    if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); return redo(); }
+    if (k === 'd') { e.preventDefault(); return duplicate(); }
+    if (k === 'a') { e.preventDefault(); return selectAll(); }
+    if (k === 'g') { e.preventDefault(); return e.shiftKey ? ungroup() : group(); }
+    if (k === 's') { e.preventDefault(); return saveProject(); }
+    if (k === 'e') { e.preventDefault(); return openExport(); }
+    if (k === 'o') { e.preventDefault(); return $('#fileProj').click(); }
+    if (k === '0') { e.preventDefault(); return fitZoom(); }
+    if (k === '1') { e.preventDefault(); return zoomAround(1); }
+    if (k === '=' || k === '+') { e.preventDefault(); return zoomAround(zoom * 1.25); }
+    if (k === '-') { e.preventDefault(); return zoomAround(zoom / 1.25); }
+    if (k === ']') { e.preventDefault(); return order('front'); }
+    if (k === '[') { e.preventDefault(); return order('back'); }
+    return;
+  }
+  if (e.altKey) return;
+  if (k === 'delete' || k === 'backspace') { e.preventDefault(); return removeSelected(); }
+  if (k === ']') return order('forward');
+  if (k === '[') return order('backward');
+  if (k === '?') return $('#dlgHelp').showModal();
+  if (k === 'c') { const a = canvas.getActiveObject(); if (isImage(a)) enterCrop(a); return; }
+  if (k.startsWith('arrow')) {
+    const objs = canvas.getActiveObjects(); if (!objs.length) return;
+    e.preventDefault();
+    const d = e.shiftKey ? 10 : 1;
+    const a = canvas.getActiveObject();
+    if (k === 'arrowleft') a.left -= d; if (k === 'arrowright') a.left += d;
+    if (k === 'arrowup') a.top -= d; if (k === 'arrowdown') a.top += d;
+    a.setCoords(); canvas.requestRenderAll(); fillGeo(); commitSoon();
+    return;
+  }
+  if (TOOL_KEYS[k] && !e.shiftKey) setTool(TOOL_KEYS[k]);
+});
+document.addEventListener('keyup', e => { if (e.key === ' ' && spaceDown) { spaceDown = false; applyToolMode(); } });
+window.addEventListener('blur', () => { if (spaceDown) { spaceDown = false; applyToolMode(); } });
+
+// ============================================================
+// 按鈕
+// ============================================================
+const ACTIONS = {
+  addImg: () => $('#fileImg').click(),
+  newCanvas: openNewDialog,
+  selectAll,
+  help: () => $('#dlgHelp').showModal(),
+  dup: () => duplicate(),
+  del: removeSelected,
+  lock: () => { canvas.getActiveObjects().forEach(o => toggleLock(o, true)); canvas.discardActiveObject(); canvas.requestRenderAll(); commit(); toast('已鎖定，可在「圖層」分頁解鎖'); },
+  front: () => order('front'), back: () => order('back'), forward: () => order('forward'), backward: () => order('backward'),
+  'al-l': () => align('l'), 'al-c': () => align('c'), 'al-r': () => align('r'), 'al-t': () => align('t'), 'al-m': () => align('m'), 'al-b': () => align('b'),
+  flipX: () => flip('flipX'), flipY: () => flip('flipY'),
+  distH: () => distribute('h'), distV: () => distribute('v'),
+  group, ungroup,
+  crop: () => enterCrop(canvas.getActiveObject()),
+  cropApply: () => exitCrop(true), cropCancel: () => exitCrop(false),
+  resetImg: () => {
+    const o = canvas.getActiveObject(); if (!isImage(o)) return;
+    const nat = natural(o), c = o.getCenterPoint(), dispW = o.width * o.scaleX;
+    o.set({ cropX: 0, cropY: 0, width: nat.w, height: nat.h, adj: { ...ADJ0 }, roundPct: 0, flipX: false, flipY: false, stroke: null, strokeWidth: 0 });
+    o.scale(dispW / nat.w); o.setPositionByOrigin(c, 'center', 'center');
+    applyRound(o); applyAdj(o); o.setCoords(); updatePanel(); commit();
+  },
+  resetAdj: () => { const o = canvas.getActiveObject(); if (!isImage(o)) return; o.adj = { ...ADJ0 }; applyAdj(o); updatePanel(); commit(); },
+  fitCanvas: () => { const o = canvas.getActiveObject(); if (!isImage(o)) return; containInto(o, 0, 0, W, H); canvas.requestRenderAll(); updatePanel(); commit(); },
+  fillCanvas: () => { const o = canvas.getActiveObject(); if (!isImage(o)) return; coverInto(o, 0, 0, W, H); canvas.requestRenderAll(); updatePanel(); commit(); },
+  asBg: () => {
+    const o = canvas.getActiveObject(); if (!isImage(o)) return;
+    coverInto(o, 0, 0, W, H); canvas.sendToBack(o); o.name = '背景'; toggleLock(o, true);
+    canvas.requestRenderAll(); commit(); toast('已設為背景並鎖定，可在「圖層」分頁解鎖');
+  },
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (b && ACTIONS[b.dataset.act]) { e.preventDefault(); ACTIONS[b.dataset.act](); }
+});
+$$('.tool[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+$('#railCrop').addEventListener('click', () => { if (crop) exitCrop(true); else enterCrop(canvas.getActiveObject()); });
+$('#railHelp').addEventListener('click', () => $('#dlgHelp').showModal());
+$('#stHelp').addEventListener('click', () => $('#dlgHelp').showModal());
+$$('#cropRatios [data-ratio]').forEach(b => b.addEventListener('click', () => setCropRatio(b.dataset.ratio)));
+$('#btnNew').addEventListener('click', openNewDialog);
+$('#btnAddImg').addEventListener('click', () => $('#fileImg').click());
+$('#fileImg').addEventListener('change', e => { addImageFiles(e.target.files); e.target.value = ''; });
+$('#btnUndo').addEventListener('click', undo);
+$('#btnRedo').addEventListener('click', redo);
+$('#btnZoomIn').addEventListener('click', () => zoomAround(zoom * 1.25));
+$('#btnZoomOut').addEventListener('click', () => zoomAround(zoom / 1.25));
+$('#zoomSel').addEventListener('change', e => { const v = e.target.value; if (v === 'fit') fitZoom(); else if (v !== 'custom') zoomAround(+v); });
+$('#btnExport').addEventListener('click', openExport);
+$('#btnSave').addEventListener('click', saveProject);
+$('#btnOpen').addEventListener('click', () => $('#fileProj').click());
+$('#fileProj').addEventListener('change', e => { if (e.target.files[0]) openProjectFile(e.target.files[0]); e.target.value = ''; });
+$('#btnPanel').addEventListener('click', () => $('#panel').classList.toggle('open'));
+$$('.tabs button').forEach(b => b.addEventListener('click', () => {
+  $$('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['props', 'layers', 'canvas'].forEach(t => $('#pane-' + t).hidden = t !== b.dataset.tab);
+  if (b.dataset.tab === 'layers') refreshLayers();
+  if (b.dataset.tab === 'canvas') syncCanvasTab();
+}));
+$$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+window.addEventListener('beforeunload', e => { if (dirty && userObjects().length) { e.preventDefault(); e.returnValue = ''; } });
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if ($('#zoomSel').value === 'fit') fitZoom(); }, 150); });
+
+// ============================================================
+// 啟動
+// ============================================================
+buildFontSelects();
+buildSwatches();
+buildPresetSelect();
+buildPresetDialog();
+fitZoom();
+setTool('select');
+syncCanvasTab();
+commit();
+updateEmpty();
+document.fonts && document.fonts.load('40px "Noto Sans TC"', '中文').catch(() => {});
+})();
+</script>
+</body>
+</html>

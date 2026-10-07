@@ -324,11 +324,25 @@ body {
         </div>
       </div>
 
+      <div class="tool-card" onclick="openTool('image-editor.html', '圖片拼貼編輯器')">
+        <div class="tool-card-top">
+          <div class="tool-icon icon-sand">🧩</div>
+          <div class="arrow-icon">↗</div>
+        </div>
+        <div class="tool-name">圖片拼貼編輯器</div>
+        <div class="tool-desc">在畫布上拼貼多張圖片，可裁切、調色、套濾鏡，加文字、便利貼、箭頭與馬賽克，內建社群與列印常用尺寸，全程在瀏覽器本地處理不上傳。</div>
+        <div class="tool-tags">
+          <span class="tag">圖片拼貼</span>
+          <span class="tag">加註標記</span>
+          <span class="tag">多種常用尺寸</span>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <div id="frame-wrap">
-    <iframe id="tool-frame" src="" title="工具" allow="local-fonts"></iframe>
+    <iframe id="tool-frame" src="" title="工具" allow="local-fonts; clipboard-write"></iframe>
   </div>
 
 </div>
