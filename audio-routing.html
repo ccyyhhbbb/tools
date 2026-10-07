@@ -332,6 +332,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   <div class="seg flow-only" title="連線樣式"><button data-ws="curve">曲線</button><button data-ws="ortho">直角</button><button data-ws="straight">直線</button></div>
   <div class="seg venue-only" title="線材走法（影響長度估算）"><button data-vr="manhattan">沿地面直角</button><button data-vr="direct">直線</button></div>
   <button class="tb cv-only" data-tog="snap" title="移動時對齊格線">格線吸附</button>
+  <button class="tb cv-only" data-tog="osnap" title="拖曳時自動對齊其他物件的邊緣與中心，並顯示參考線（拖曳時按住 Alt 暫時關閉）">物件對齊</button>
   <button class="tb cv-only" data-tog="labels" title="在線上顯示線材編號與長度">線材標籤</button>
   <button class="tb flow-only" data-tog="arrows" title="顯示訊號方向箭頭">方向箭頭</button>
   <button class="tb cv-only" data-tog="trace" title="選取裝置時，只亮起它的上下游訊號路徑 (T)">訊號追蹤</button>
@@ -426,7 +427,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <ul>
         <li><b>新增裝置</b>：從左側裝置庫點選或拖曳；也可以在畫布空白處<b>雙擊</b>或按 <kbd>A</kbd> 開啟快速新增。</li>
         <li><b>設定 I/O</b>：選取裝置後，在右側面板用「輸入／輸出」數量調整 In／Out 數，並可統一設定接頭與訊號類型；「＋ 加入接口」可加 USB、Dante、ADAT、MIDI、耳機輸出等。</li>
-        <li><b>拉線</b>：從接口圓點拖曳到另一個接口。輸出可以接到多個輸入（會提示需要 Y 線）；輸入只能有一個來源，接新的會取代舊的。</li>
+        <li><b>拉線</b>：從接口圓點拖曳到另一個接口；或<b>點一下</b>接口，線會跟著游標，再點一下要接的接口即可（點空白處會開快速新增，<kbd>Esc</kbd> 或右鍵取消）。場地配置也一樣：點一下裝置外圈，再點另一台裝置。輸出可以接到多個輸入（會提示需要 Y 線）；輸入只能有一個來源，接新的會取代舊的。</li>
         <li><b>改接／拔線</b>：從已接線的「輸入端」拖曳即可把線拔起來改接，放到空白處就是拔除。</li>
         <li><b>拉到空白處</b>：從輸出拉線放開在空白處，會跳出快速新增，選好裝置後自動接上最適合的接口。</li>
         <li><b>雙向接口</b>（USB、網路、AES50 等）兩側都有接點，線會自動走較近的一邊。</li>
@@ -467,6 +468,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <ul>
         <li>滾輪縮放；<kbd>空白鍵</kbd>＋拖曳、滑鼠中鍵拖曳或 <kbd>Shift</kbd>＋滾輪平移；觸控螢幕可單指拖曳平移。</li>
         <li>在空白處拖曳可框選；<kbd>Shift</kbd>＋點擊可加選。</li>
+        <li><b>物件對齊</b>：拖曳時會自動對齊其他裝置、區域框或家具的邊緣與中心，並顯示粉紅色參考線；按住 <kbd>Alt</kbd> 暫時關閉，或用工具列的「物件對齊」切換。</li>
         <li><b>區域框</b>可標示舞台、FOH、機櫃等位置；拖曳框的標題列會連同框內裝置一起移動（按住 <kbd>Alt</kbd> 只移動框）。</li>
       </ul>
       <h3>快捷鍵</h3>
@@ -1252,11 +1254,12 @@ const TH={
 const KEY='audioRouting.v1';
 let doc=sanitize({name:'未命名專案'});
 let view={x:60,y:60,k:1};
-const settings={wire:'curve',snap:true,labels:true,arrows:true,trace:false,theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
+const settings={wire:'curve',snap:true,osnap:true,labels:true,arrows:true,trace:false,theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
 let sel={n:new Set(),w:new Set(),z:new Set(),f:new Set(),i:new Set()};
 let undoS=[],redoS=[],pendingSnap=null;
 let compatCache=new Map(), issues=[], cablePlan={rows:[],summary:[]};
 let drag=null, spaceDown=false, lastMouse={cx:0,cy:0,x:0,y:0};
+let wireArm=null; // 點一下接口後「拿著」的線：滑鼠放開也繼續跟著游標，再點一下目標完成
 const cv=$('#cv');
 
 const getNode=id=>doc.nodes.find(n=>n.id===id);
@@ -1417,8 +1420,8 @@ const snapshot=()=>JSON.stringify(doc);
 function pushUndo(s){ undoS.push(s); if(undoS.length>150) undoS.shift(); redoS=[]; }
 function takeSnap(){ if(pendingSnap){ pushUndo(pendingSnap); pendingSnap=null; } }
 function edit(fn){ const s=snapshot(); const r=fn(); if(r!==false) pushUndo(s); renderAll(); return r; }
-function undo(){ if(!undoS.length) return; assetsDirty=true; redoS.push(snapshot()); doc=JSON.parse(undoS.pop()); fixSel(); renderAll(); }
-function redo(){ if(!redoS.length) return; assetsDirty=true; undoS.push(snapshot()); doc=JSON.parse(redoS.pop()); fixSel(); renderAll(); }
+function undo(){ if(!undoS.length) return; wireArm=null; $('#Lt').innerHTML=''; assetsDirty=true; redoS.push(snapshot()); doc=JSON.parse(undoS.pop()); fixSel(); renderAll(); }
+function redo(){ if(!redoS.length) return; wireArm=null; $('#Lt').innerHTML=''; assetsDirty=true; undoS.push(snapshot()); doc=JSON.parse(redoS.pop()); fixSel(); renderAll(); }
 let saveT;
 let assetsDirty=false, quotaWarned=false;
 function usedAssets(){ const o={}; doc.images.forEach(im=>{ if(ASSETS[im.a]) o[im.a]=ASSETS[im.a]; }); return o; }
@@ -1978,6 +1981,7 @@ function updateStock(){
 }
 function setMode(m){
   if(settings.mode===m) return;
+  cancelWireArm();
   // 每個畫面各自記住視角
   if(settings.mode!=='clist') settings['view_'+settings.mode]={...view};
   settings.mode=m; settings.measure=false; calib=null; cropping=null; settings.seat=null; $('#Lt').innerHTML='';
@@ -2295,6 +2299,11 @@ cv.addEventListener('pointerdown',e=>{
     endCrop();
   }
   const t=e.target, pt=evWorld(e);
+  if(wireArm){
+    const d=wireArm; wireArm=null; drag=null;
+    if(d.kind==='vwire'){ $('#Lt').innerHTML=''; const tg=t.closest('.vnode'); if(tg&&tg.dataset.node!==d.from) showPairMenu(d.from,tg.dataset.node,e.clientX,e.clientY); return; }
+    moveWire(e,pt,d); finishWire(d,e); return;
+  }
   if(isVenue()){ venueDown(e,t,pt); return; }
   const ph=t.closest('.ph'), ng=t.closest('.node'), wg=t.closest('.wire'), zr=t.closest('.zres'), zh=t.closest('.zhit'), ir=t.closest('.ires'), ig=t.closest('.img');
   const key=ph?'p'+ph.dataset.n+ph.dataset.p:ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:(zh||zr)?'z'+(zh||zr).closest('.zone').dataset.z:ig?'i'+ig.dataset.i:'empty';
@@ -2320,28 +2329,30 @@ cv.addEventListener('pointerdown',e=>{
 cv.addEventListener('pointermove',e=>{
   const pt=evWorld(e); lastMouse={cx:e.clientX,cy:e.clientY,x:pt.x,y:pt.y};
   if(isVenue()){ const mr=$('#mread'); if(mr) mr.textContent=`x ${(pt.x/VS).toFixed(1)} m · y ${(pt.y/VS).toFixed(1)} m`; }
-  if(!drag){ hoverTip(e); return; }
+  if(!drag){
+    if(wireArm){ if(wireArm.kind==='vwire') drawVwire(wireArm,e,pt); else moveWire(e,pt,wireArm); return; }
+    hoverTip(e); return;
+  }
   const d=drag;
   if(d.kind==='measure'){ d.x1=pt.x; d.y1=pt.y; moveMeasure(d); return; }
   if(d.kind==='seatrect'){ d.x1=pt.x; d.y1=pt.y; const T=theme(), x=Math.min(d.x0,d.x1), y=Math.min(d.y0,d.y1), w=Math.abs(d.x1-d.x0), h=Math.abs(d.y1-d.y0);
     $('#Lt').innerHTML=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#d97706" fill-opacity=".12" stroke="#d97706" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/><text x="${x+w/2}" y="${y-6}" text-anchor="middle" font-size="12" font-weight="700" fill="#d97706">${(w/VS).toFixed(1)} × ${(h/VS).toFixed(1)} m</text>`; return; }
-  if(d.kind==='vwire'){
-    const a=getNode(d.from), T=theme(), el=document.elementFromPoint(e.clientX,e.clientY), tg=el&&el.closest&&el.closest('.vnode');
-    const tn=tg&&tg.dataset.node!==d.from?getNode(tg.dataset.node):null;
-    const B=tn?{x:tn.vx*VS,y:tn.vy*VS}:pt;
-    $('#Lt').innerHTML=`<path d="M${a.vx*VS} ${a.vy*VS}L${B.x} ${B.y}" stroke="${T.sel}" stroke-width="2.5" stroke-dasharray="${tn?'':'6 5'}" vector-effect="non-scaling-stroke"/>${tn?`<circle cx="${B.x}" cy="${B.y}" r="20" fill="none" stroke="${T.sel}" stroke-width="2"/>`:''}`;
-    return;
-  }
+  if(d.kind==='vwire'){ drawVwire(d,e,pt); return; }
   if(d.kind==='pan'){ view.x=d.vx+(e.clientX-d.cx); view.y=d.vy+(e.clientY-d.cy); if(Math.abs(e.clientX-d.cx)+Math.abs(e.clientY-d.cy)>4) d.moved=true; applyView(); }
   else if(d.kind==='nodes'||d.kind==='zone'){
-    const dx=pt.x-d.x0, dy=pt.y-d.y0;
+    let dx=pt.x-d.x0, dy=pt.y-d.y0;
     if(!d.moved&&Math.abs(dx)+Math.abs(dy)<3/view.k) return; d.moved=true;
+    // 物件對齊：對到的那一軸不再套格線吸附
+    const r=e.altKey?{dx,dy,gx:null,gy:null}:objSnap(d,dx,dy); dx=r.dx; dy=r.dy;
+    const ox=r.gx!=null, oy=r.gy!=null, fine=v=>Math.round(v*1000)/1000;
+    const mX=v=>ox?fine(v):snapM(v), mY=v=>oy?fine(v):snapM(v), pX=v=>ox?fine(v):snapV(v), pY=v=>oy?fine(v):snapV(v);
     for(const it of d.items){
-      if(it.v){ it.o.vx=snapM(it.x+dx/VS); it.o.vy=snapM(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.vx*VS},${it.o.vy*VS})`); }
-      else if(it.im){ if(it.S===1){ it.o.x=snapV(it.x+dx); it.o.y=snapV(it.y+dy); } else { it.o.x=snapM(it.x+dx/VS); it.o.y=snapM(it.y+dy/VS); } if(it.el) it.el.setAttribute('transform',`translate(${it.o.x*it.S},${it.o.y*it.S})`); }
-      else if(it.ff){ it.o.x=snapM(it.x+dx/VS); it.o.y=snapM(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x*VS},${it.o.y*VS}) rotate(${it.o.rot||0})`); }
-      else { it.o.x=snapV(it.x+dx); it.o.y=snapV(it.y+dy); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x},${it.o.y})`); }
+      if(it.v){ it.o.vx=mX(it.x+dx/VS); it.o.vy=mY(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.vx*VS},${it.o.vy*VS})`); }
+      else if(it.im){ if(it.S===1){ it.o.x=pX(it.x+dx); it.o.y=pY(it.y+dy); } else { it.o.x=mX(it.x+dx/VS); it.o.y=mY(it.y+dy/VS); } if(it.el) it.el.setAttribute('transform',`translate(${it.o.x*it.S},${it.o.y*it.S})`); }
+      else if(it.ff){ it.o.x=mX(it.x+dx/VS); it.o.y=mY(it.y+dy/VS); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x*VS},${it.o.y*VS}) rotate(${it.o.rot||0})`); }
+      else { it.o.x=pX(it.x+dx); it.o.y=pY(it.y+dy); if(it.el) it.el.setAttribute('transform',`translate(${it.o.x},${it.o.y})`); }
     }
+    $('#Lt').innerHTML=ox||oy?guideSVG(d,r):'';
     renderWires();
   }
   else if(d.kind==='crop'){
@@ -2368,6 +2379,7 @@ function endDrag(e){
   try{cv.releasePointerCapture(e.pointerId);}catch(_){}
   if(d.kind==='pan'){ if(d.tapClear&&!d.moved){ clearSel(); renderAll(); } }
   else if(d.kind==='nodes'||d.kind==='zone'||d.kind==='zres'||d.kind==='ires'||d.kind==='crop'){
+    if(d.kind==='nodes'||d.kind==='zone') $('#Lt').innerHTML='';
     if(d.moved) pushUndo(d.before);
     else if(d.clickId&&sel.n.size>1){ selectOnly('n',d.clickId); }
     renderAll();
@@ -2376,7 +2388,7 @@ function endDrag(e){
     $('#Lt').innerHTML='';
     const el=document.elementFromPoint(e.clientX,e.clientY), tg=el&&el.closest&&el.closest('.vnode');
     if(tg&&tg.dataset.node!==d.from) showPairMenu(d.from,tg.dataset.node,e.clientX,e.clientY);
-    else if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6){ selectOnly('n',d.from); renderAll(); }
+    else if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6){ selectOnly('n',d.from); renderAll(); wireArm=d; drawVwire(d,e,evWorld(e)); toast('再點另一台裝置即可選接口連線（Esc 或右鍵取消）'); }
   }
   else if(d.kind==='measure'){ /* 量測線保留在畫面上，直到下次點擊 */ }
   else if(d.kind==='seatrect'){
@@ -2456,8 +2468,7 @@ function startWire(ph,e,pt){
   drag={kind:'wire',anchor,an,ap,picked,before,cand,target:null,sx:e.clientX,sy:e.clientY,movedFar:false,clickN:nid};
   hideTip(); renderCanvas(); moveWire(e,pt);
 }
-function moveWire(e,pt){
-  const d=drag;
+function moveWire(e,pt,d=drag){
   if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)>6) d.movedFar=true;
   const el=document.elementFromPoint(e.clientX,e.clientY), ph=el&&el.closest&&el.closest('.ph');
   d.target=ph&&d.cand.has(ph.dataset.n+'|'+ph.dataset.p)?{n:ph.dataset.n,p:ph.dataset.p,side:ph.dataset.s}:null;
@@ -2473,7 +2484,8 @@ function moveWire(e,pt){
   } else B={x:pt.x,y:pt.y,d:pt.x>A.x?-1:1};
   if(!d.target&&d.ap.dir==='in') { B.d=pt.x<A.x?1:-1; }
   const P=pathOf(A,B,settings.wire);
-  $('#Lt').innerHTML=`<path d="${P.d}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linecap="round"${d.target?'':' stroke-dasharray="6 5"'}/>`+(d.target?`<circle cx="${B.x}" cy="${B.y}" r="8" fill="none" stroke="${col}" stroke-width="2"/>`:'');
+  // pointer-events="none"：預覽線不能擋住 elementFromPoint 找目標接口
+  $('#Lt').innerHTML=`<g pointer-events="none"><path d="${P.d}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linecap="round"${d.target?'':' stroke-dasharray="6 5"'}/>`+(d.target?`<circle cx="${B.x}" cy="${B.y}" r="8" fill="none" stroke="${col}" stroke-width="2"/>`:'')+'</g>';
   if(d.target){
     const tn=getNode(d.target.n), tp=getPort(tn,d.target.p);
     let h=`<div class="tt-t">→ ${esc(tn.name)}・${esc(tp.name)}</div>`;
@@ -2482,8 +2494,9 @@ function moveWire(e,pt){
   } else hideTip();
 }
 function finishWire(d,e){
+  // 只點一下沒拖曳：線留在游標上，等下一次點擊（pointerdown 時完成）
+  if(!d.movedFar&&!d.sticky){ d.sticky=true; wireArm=d; toast('再點一下要接的接口即可連線；點空白處快速新增，Esc 或右鍵取消'); return; }
   $('#Lt').innerHTML=''; hideTip();
-  if(!d.movedFar){ if(d.picked) doc.wires.push(d.picked); selectOnly('n',d.clickN); renderAll(); return; }
   if(d.target){
     const o=orient(d.anchor,d.target);
     if(o){ connectRaw(o[0],o[1]); pushUndo(d.before); }
@@ -2494,6 +2507,63 @@ function finishWire(d,e){
     if(el&&el.closest('#cv')&&!el.closest('.node')){ renderAll(); openQA(e.clientX,e.clientY,evWorld(e),{n:d.anchor.n,p:d.anchor.p}); return; }
   }
   renderAll();
+}
+
+function cancelWireArm(){
+  const d=wireArm; if(!d) return false; wireArm=null; $('#Lt').innerHTML=''; hideTip();
+  if(d.kind!=='vwire'&&d.picked){ doc.wires.push(d.picked); renderAll(); }
+  return true;
+}
+function drawVwire(d,e,pt){
+  const a=getNode(d.from); if(!a||!placed(a)){ $('#Lt').innerHTML=''; return; }
+  const T=theme(), el=document.elementFromPoint(e.clientX,e.clientY), tg=el&&el.closest&&el.closest('.vnode');
+  const tn=tg&&tg.dataset.node!==d.from?getNode(tg.dataset.node):null;
+  const B=tn?{x:tn.vx*VS,y:tn.vy*VS}:pt;
+  $('#Lt').innerHTML=`<g pointer-events="none"><path d="M${a.vx*VS} ${a.vy*VS}L${B.x} ${B.y}" stroke="${T.sel}" stroke-width="2.5" stroke-dasharray="${tn?'':'6 5'}" vector-effect="non-scaling-stroke"/>${tn?`<circle cx="${B.x}" cy="${B.y}" r="20" fill="none" stroke="${T.sel}" stroke-width="2"/>`:''}</g>`;
+}
+
+/* ── 物件對齊：拖曳時對齊其他物件的左／中／右與上／中／下，並畫參考線 ── */
+// 回傳畫布座標的外框；場地裝置是點，旋轉 0／90／180／270 度以外的家具只用中心
+function itemBox(it){
+  const o=it.o;
+  if(it.v) return {x:it.x*VS,y:it.y*VS,w:0,h:0};
+  if(it.ff){ const r=((Math.round(o.rot||0)%180)+180)%180; if(r!==0&&r!==90) return {x:it.x*VS,y:it.y*VS,w:0,h:0}; const w=(r?o.d:o.w)*VS, h=(r?o.w:o.d)*VS; return {x:it.x*VS-w/2,y:it.y*VS-h/2,w,h}; }
+  if(it.im) return {x:it.x*it.S,y:it.y*it.S,w:o.w*it.S,h:o.h*it.S};
+  if(o.ports) return {x:it.x,y:it.y,w:o.w,h:lay(o).h};
+  return o.kind==='text'?{x:it.x,y:it.y,w:tw(o.title||'','700 '+(o.fs||18)+'px'),h:o.fs||18}:{x:it.x,y:it.y,w:o.w,h:o.h};
+}
+function snapTargets(d){
+  if(d.tg) return d.tg;
+  const mv=new Set(d.items.map(it=>it.o)), out=[];
+  if(isVenue()){
+    doc.nodes.forEach(n=>{ if(placed(n)&&!mv.has(n)) out.push({x:n.vx*VS,y:n.vy*VS,w:0,h:0}); });
+    doc.furn.forEach(f=>{ if(f.vv===doc.venue&&!mv.has(f)) out.push(itemBox({o:f,x:f.x,y:f.y,ff:true})); });
+  } else {
+    doc.nodes.forEach(n=>{ if(!mv.has(n)) out.push({x:n.x,y:n.y,w:n.w,h:lay(n).h}); });
+    doc.zones.forEach(z=>{ if(!mv.has(z)&&z.kind!=='text') out.push({x:z.x,y:z.y,w:z.w,h:z.h}); });
+  }
+  return d.tg=out;
+}
+const featX=b=>[b.x,b.x+b.w/2,b.x+b.w], featY=b=>[b.y,b.y+b.h/2,b.y+b.h];
+function objSnap(d,dx,dy){
+  const none={dx,dy,gx:null,gy:null};
+  if(!settings.osnap||!d.items.length) return none;
+  if(!d.b0){ const bs=d.items.map(itemBox); d.b0={x:Math.min(...bs.map(b=>b.x)),y:Math.min(...bs.map(b=>b.y))}; d.b0.w=Math.max(...bs.map(b=>b.x+b.w))-d.b0.x; d.b0.h=Math.max(...bs.map(b=>b.y+b.h))-d.b0.y; }
+  const thr=7/view.k, b=d.b0, mx=featX({...b,x:b.x+dx}), my=featY({...b,y:b.y+dy});
+  let bx=null, by=null;
+  for(const t of snapTargets(d)){
+    for(const a of featX(t)) for(const m of mx){ const df=a-m; if(Math.abs(df)<thr&&(!bx||Math.abs(df)<Math.abs(bx.df))) bx={df,at:a}; }
+    for(const a of featY(t)) for(const m of my){ const df=a-m; if(Math.abs(df)<thr&&(!by||Math.abs(df)<Math.abs(by.df))) by={df,at:a}; }
+  }
+  return {dx:dx+(bx?bx.df:0),dy:dy+(by?by.df:0),gx:bx?bx.at:null,gy:by?by.at:null};
+}
+function guideSVG(d,r){
+  const b={...d.b0,x:d.b0.x+r.dx,y:d.b0.y+r.dy}, near=(v,a)=>Math.abs(v-a)<.5, pad=16/view.k;
+  const st='stroke="#ec4899" stroke-width="1.2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke" pointer-events="none"';
+  let s='';
+  if(r.gx!=null){ let y1=b.y,y2=b.y+b.h; for(const t of d.tg) if(featX(t).some(v=>near(v,r.gx))){ y1=Math.min(y1,t.y); y2=Math.max(y2,t.y+t.h); } s+=`<path d="M${r.gx} ${y1-pad}V${y2+pad}" ${st}/>`; }
+  if(r.gy!=null){ let x1=b.x,x2=b.x+b.w; for(const t of d.tg) if(featY(t).some(v=>near(v,r.gy))){ x1=Math.min(x1,t.x); x2=Math.max(x2,t.x+t.w); } s+=`<path d="M${x1-pad} ${r.gy}H${x2+pad}" ${st}/>`; }
+  return s;
 }
 
 /* ── wheel / drop / context ── */
@@ -2516,6 +2586,7 @@ cv.addEventListener('drop',e=>{
 });
 cv.addEventListener('contextmenu',e=>{
   e.preventDefault(); hideTip();
+  if(cancelWireArm()) return;
   const t=e.target, pt=evWorld(e), ng=t.closest('.node'), wg=t.closest('.wire'), zg=t.closest('.zone');
   let items;
   const fg=t.closest('.furn'), ig=t.closest('.img');
@@ -3038,7 +3109,7 @@ function renderStatus(){
   const chk=err||warn?`<button class="st-btn" data-st="issues">${err?`<span class="c-err">● ${err} 個錯誤</span> `:''}${warn?`<span class="c-warn">● ${warn} 個注意</span>`:''}</button>`:`<span class="c-ok">✓ 連線檢查正常</span>`;
   if(isCList()){ const cl=doc.cl, c=clCon(); $('#status').innerHTML=`<span>Channel List ${cl.rows.length} 軌</span><span>主控台：${c?esc(c.name):'未指定'}</span><span>同步：${CL_SYNC[cl.sync]}</span>${chk}<span class="grow"></span><span class="hide-m">⌖ 可以到訊號流程找出這一軌的裝置 · Ctrl+Z 復原</span>`; return; }
   const v=isVenue()?`<span>本場地 ${doc.nodes.filter(placed).length} 台 · 已擺放 ${doc.nodes.filter(placedAny).length}/${doc.nodes.length}</span>`:`<span>裝置 ${doc.nodes.length}</span>`;
-  const hint=isVenue()?'<span id="mread" class="hide-m"></span><span class="hide-m">拖曳裝置外圈到另一台裝置即可拉線 · 滾輪縮放 · 空白鍵＋拖曳平移</span>':'<span class="hide-m">拖曳接口拉線 · 雙擊空白處新增 · 滾輪縮放 · 空白鍵＋拖曳平移</span>';
+  const hint=isVenue()?'<span id="mread" class="hide-m"></span><span class="hide-m">拖曳或點一下裝置外圈，再到另一台裝置即可拉線 · 滾輪縮放 · 空白鍵＋拖曳平移</span>':'<span class="hide-m">拖曳或點一下接口拉線 · 雙擊空白處新增 · 滾輪縮放 · 空白鍵＋拖曳平移</span>';
   $('#status').innerHTML=`${v}<span>連線 ${doc.wires.length}</span>${chk}<span class="grow"></span>${hint}`;
 }
 $('#status').addEventListener('click',e=>{ if(e.target.closest('[data-st]')) openReports('issues'); });
@@ -3139,6 +3210,7 @@ $('#lib-list').addEventListener('dragstart',e=>{ const it=e.target.closest('.lib
    ========================================================= */
 window.addEventListener('keydown',e=>{
   const inField=e.target.matches&&e.target.matches('input,textarea,select,[contenteditable]');
+  if(e.key==='Escape'&&wireArm){ cancelWireArm(); return; }
   if(e.key==='Escape'&&cropping){ endCrop(); return; }
   if(e.key==='Escape'){ closeFloating(); $$('.modal-wrap').forEach(m=>m.hidden=true); if(settings.seat){ settings.seat=null; $('#Lt').innerHTML=''; renderAll(); toast('已結束座位模式'); return; } if(!inField&&(sel.n.size||sel.w.size||sel.z.size||sel.f.size)){ clearSel(); renderAll(); } return; }
   if(inField) return;
