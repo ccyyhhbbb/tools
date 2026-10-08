@@ -52,7 +52,7 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .only-m{display:none}
 
 /* ── layout ── */
-#mid{flex:1;display:flex;min-height:0;position:relative}
+#mid{flex:1;display:flex;min-height:0;position:relative;overflow:hidden}
 #lib{width:var(--libw,236px);background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;min-height:0;position:relative}
 .lib-rz{position:absolute;top:0;bottom:0;right:-4px;width:8px;cursor:ew-resize;z-index:6}
 .lib-rz::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:2px;background:transparent;transition:background .15s}
@@ -204,6 +204,50 @@ kbd{font-family:inherit;font-size:10.5px;padding:1px 5px;border:1px solid var(--
 .tabs button{height:30px;padding:0 12px;border:0;border-radius:7px;background:transparent;cursor:pointer;color:var(--dim);font-size:12.5px}
 .tabs button.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
 .rep-tools{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+
+/* ── 內部路由編輯 ── */
+.modal.rte{width:min(780px,100%)}
+.rte-hint{font-size:12px;color:var(--dim);line-height:1.65;margin-bottom:10px}
+.rte-hint b{color:var(--text)}
+#rte-svg{display:block;margin:0 auto;touch-action:none;user-select:none;-webkit-user-select:none}
+#rte-svg .rtrow{cursor:pointer}
+#rte-svg .rtrow:hover .rtbg{fill:var(--hover)}
+#rte-svg .rtw{cursor:pointer}
+#rte-svg .rtw:hover .rtv{stroke:var(--danger);stroke-width:3.6px}
+.rtm-wrap{overflow:auto;max-height:64vh;border:1px solid var(--line);border-radius:10px}
+.rtm{border-collapse:collapse;font-size:11.5px}
+.rtm th,.rtm td{border:1px solid var(--line);padding:0}
+.rtm thead th{position:sticky;top:0;background:var(--panel2);z-index:1;height:100px;vertical-align:bottom;padding:4px 2px;font-weight:500}
+.rtm thead th span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;display:inline-block;max-height:94px;overflow:hidden;text-overflow:ellipsis}
+.rtm tbody th{position:sticky;left:0;background:var(--panel2);text-align:left;padding:3px 8px;white-space:nowrap;font-weight:500;max-width:190px;overflow:hidden;text-overflow:ellipsis;z-index:1}
+.rtm thead .rtm-c{left:0;z-index:2;font-size:10.5px;color:var(--dim);vertical-align:middle;writing-mode:horizontal-tb}
+.rtm td{width:26px;min-width:26px;height:24px;text-align:center;cursor:pointer;color:var(--accent);font-size:13px}
+.rtm td:hover{background:var(--accent-bg)}
+.rtm td.on{background:var(--accent-bg);font-weight:700}
+.rtm td.x{cursor:default;color:var(--dim2);background:transparent}
+
+/* ── 多份 Channel List ── */
+.cl-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;max-width:1400px}
+.cl-tabs button{height:30px;padding:0 12px;border:1px solid var(--line2);border-radius:8px;background:var(--panel);cursor:pointer;font-size:12.5px;color:var(--dim);display:inline-flex;align-items:center;gap:7px}
+.cl-tabs button small{font-size:10.5px;color:var(--dim2);font-weight:400}
+.cl-tabs button:hover{border-color:var(--accent)}
+.cl-tabs button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);font-weight:600}
+.cl-tabs .cl-tabadd{border-style:dashed}
+.cl-star{display:inline-block;margin-left:10px;font-size:11px;background:#f59e0b;color:#fff;border-radius:5px;padding:1px 7px;vertical-align:2px}
+
+/* ── 聚光燈導覽 ── */
+#tour{position:fixed;inset:0;z-index:95}
+#tour-spot{position:fixed;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.58);outline:2px solid var(--accent);outline-offset:0;transition:left .25s,top .25s,width .25s,height .25s;pointer-events:none}
+#tour-spot.none{outline-color:transparent}
+#tour-card{position:fixed;width:min(350px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line2);border-radius:13px;box-shadow:var(--shadow);padding:14px 16px 12px;transition:left .25s,top .25s}
+.tc-step{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.06em}
+.tc-t{font-size:15px;font-weight:700;margin:3px 0 6px}
+.tc-b{font-size:12.5px;line-height:1.7;color:var(--dim)}
+.tc-btns{display:flex;gap:6px;align-items:center;margin-top:12px}
+.tc-btns button{height:28px;padding:0 12px;border:1px solid var(--line2);border-radius:7px;background:var(--panel2);cursor:pointer;font-size:12px}
+.tc-btns button:disabled{opacity:.4;cursor:default}
+.tc-btns .pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.tc-btns [data-tr="skip"]{border-color:transparent;background:transparent;color:var(--dim)}
 .tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:18px}
 .tbl th{text-align:left;color:var(--dim);font-weight:600;position:sticky;top:-14px;background:var(--panel);border-bottom:1px solid var(--line2);padding:7px 8px;white-space:nowrap;z-index:1}
 .tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -348,7 +392,8 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   <button class="tb cv-only" data-tog="osnap" title="拖曳時自動對齊其他物件的邊緣與中心，並顯示參考線（拖曳時按住 Alt 暫時關閉）">物件對齊</button>
   <button class="tb cv-only" data-tog="labels" title="在線上顯示線材編號與長度">線材標籤</button>
   <button class="tb flow-only" data-tog="arrows" title="顯示訊號方向箭頭">方向箭頭</button>
-  <button class="tb cv-only" data-tog="trace" title="選取裝置時，只亮起它的上下游訊號路徑 (T)">訊號追蹤</button>
+  <button class="tb cv-only" data-tog="trace" title="選取裝置、線，或點一下接口，只亮起真正走得到的訊號路徑（依內部路由） (T)">訊號追蹤</button>
+  <div class="seg flow-only" id="rvseg" title="裝置內部路由線的顯示方式"><button data-rv="show" title="內部路由線正常顯示">⇄ 路由</button><button data-rv="dim" title="內部路由線半透明">半透明</button><button data-rv="hide" title="不顯示內部路由線">不顯示</button></div>
   <div class="sep"></div>
   <button class="tb flow-only" data-cmd="zone" title="新增區域框（若有選取裝置，會自動框住）">▭ 區域框</button>
   <button class="tb flow-only" data-cmd="text" title="新增文字標註">T 文字</button>
@@ -361,6 +406,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   <button class="tb" data-menu="file">檔案 ▾</button>
   <button class="tb" data-menu="tpl">範例 ▾</button>
   <button class="tb icon" data-cmd="theme" title="切換深色／淺色">◐</button>
+  <button class="tb" data-cmd="tour" title="聚光燈逐步導覽：一步一步介紹主要功能">教學</button>
   <button class="tb icon" data-cmd="help" title="使用說明">?</button>
   <button class="tb icon only-m" id="b-side" title="屬性面板">⚙</button>
 </header>
@@ -437,6 +483,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   <div class="modal">
     <div class="m-head"><b>使用說明</b><div class="grow"></div><button class="x" data-close>✕</button></div>
     <div class="m-body help">
+      <p>第一次使用，建議先按工具列的 <b>教學</b> 看一遍聚光燈導覽（約一分鐘）。</p>
       <h3>基本操作</h3>
       <ul>
         <li><b>新增裝置</b>：從左側裝置庫點選或拖曳；也可以在畫布空白處<b>雙擊</b>或按 <kbd>A</kbd> 開啟快速新增。</li>
@@ -445,12 +492,25 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
         <li><b>改接／拔線</b>：從已接線的「輸入端」拖曳即可把線拔起來改接，放到空白處就是拔除。</li>
         <li><b>拉到空白處</b>：從輸出拉線放開在空白處，會跳出快速新增，選好裝置後自動接上最適合的接口。</li>
         <li><b>雙向接口</b>（USB、網路、AES50 等）兩側都有接點，線會自動走較近的一邊。</li>
+        <li><b>雙擊裝置</b>開啟它的內部路由（見下一節）；只有輸入或只有輸出的裝置（麥克風、喇叭）雙擊則是編輯名稱。</li>
+      </ul>
+      <h3>內部路由（裝置內部的訊號走向）</h3>
+      <ul>
+        <li>介面、混音器、Stage Box 等裝置，哪個輸入走到哪個輸出，在流程圖的接線上看不出來。<b>雙擊裝置</b>（或右鍵 →「⇄ 內部路由…」、右側面板「編輯內部路由」）就能設定。</li>
+        <li><b>接線圖</b>：放大的裝置方框，左邊是訊號進來的接口、右邊是出去的接口（雙向接口兩邊都有）。從左邊拖曳到右邊，或先點一邊再點另一邊即可建立；點一下路由線刪除。</li>
+        <li><b>矩陣</b>：每列是進來的接口、每欄是出去的接口，點格子打勾或取消，適合幾十軌的控台。</li>
+        <li>「同編號一對一」會一次加入 In 1 → Out 1、In 2 → Out 2…；「全部清除」回到未設定。可以用 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原。</li>
+        <li>主畫面上的路由線用工具列 <b>⇄ 路由／半透明／不顯示</b> 切換。畫面線很多時用半透明或不顯示比較清楚。</li>
+        <li>沒有設定內部路由的裝置，訊號追蹤時視為「所有輸入都通往所有輸出」。</li>
       </ul>
       <h3>Channel List（軌道表）</h3>
       <ul>
-        <li>上方切到 <b>☰ Channel List</b>，填寫演出活動、日期、樂團，並選擇<b>主控台</b>。<b>CH 編號就是主控台的第幾個輸入</b>。</li>
+        <li>上方切到 <b>☰ Channel List</b>，填寫演出活動、日期、樂團，並選擇<b>控台</b>。<b>CH 編號就是這台控台的第幾個輸入</b>。</li>
+        <li><b>主控台</b>：在訊號流程選取控台，右側面板按「★ 設為主控台」（或右鍵選單），方框上方會出現 ★ 主控台 標記。切到 Channel List 時預設顯示主控台的清單。</li>
+        <li><b>多台控台</b>：FOH、Monitor 等每台控台可以有自己的一份清單。用清單上方的分頁切換，「＋ 其他控台的清單」新增；有自己清單的控台在流程圖上會標 ☰ Channel List。「列印全部」會把每份清單都印出來。</li>
         <li><b>拾音設備</b>：點「＋ 麥克風」選圖上的裝置，或輸入型號（例如 Beta58）新增；新增的裝置會出現在訊號流程圖。</li>
-        <li><b>路徑</b>：按 ＋ 一站一站加入途經的裝置（介面、DI、Stage Box…），每站可選輸入與輸出接口。最後一站若是 Stage Box 等遠端 I/O，選「終點：遠端輸入」，訊號會經數位連線（AES50、Dante…）進控台；最後一站有輸出則直接接到控台的第 CH 個輸入。</li>
+        <li><b>路徑</b>：按 ＋ 一站一站加入途經的裝置（介面、DI、Stage Box…），每站可選輸入與輸出接口。最後一站若是 Stage Box 等遠端 I/O，選「（終點）」，訊號會經數位連線（AES50、Dante…）進控台；最後一站有輸出則直接接到控台的第 CH 個輸入。</li>
+        <li>每一站的「輸入 › 輸出」就是那台裝置的<b>內部路由</b>，會和訊號流程同步：清單改了，流程圖的路由線跟著改；在流程圖設定內部路由，清單的路徑也會照著追出來。</li>
         <li><b>同步模式</b>：「清單 → 流程圖」以清單為準，改清單會改流程圖的接線；「流程圖 → 清單」清單依接線自動產生，路徑唯讀；「雙向同步」任一邊改，另一邊跟著更新。</li>
         <li>每一軌的 ⌖ 會切到訊號流程並選取這一軌的裝置；清單可匯出 CSV 或列印。</li>
       </ul>
@@ -458,17 +518,18 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <ul>
         <li>連線會自動檢查：Mic／Line／樂器／喇叭電平、類比與數位格式、接頭是否需轉接、電容麥是否開 48V、鋁帶麥誤開 48V、線長上限。有問題的線中間會出現 <b class="c-warn">!</b> 標記。</li>
         <li><b>📋 報表</b>：連線表（Patch list）、每台裝置的輸入／輸出表、線材清單（依種類與長度統計）、器材清單、問題清單；都可匯出 CSV 或列印成 PDF。</li>
-        <li><b>訊號追蹤</b>：開啟後選取任一裝置，只會亮起它上下游的訊號路徑。</li>
+        <li><b>訊號追蹤</b>（<kbd>T</kbd>）：開啟後選取裝置或線，只亮起它上下游真正走得到的路徑；有設定內部路由的裝置會照路由逐路追，不會整台全亮。開啟時<b>點一下某個接口</b>，只追那一路（例如 Mic 3 → Stage Box In 3 → 控台 CH 3），這時點接口不會拉線，要拉線請直接拖曳。</li>
       </ul>
       <h3>C-LAB 器材與庫存</h3>
       <ul>
         <li>左側「TSL 器材」分頁是臺灣聲響實驗室器材清單（2025.12.31 版）；「園區器材」依場地列出各展演空間的現有設備（手冊 202408 版）。右邊數字是「已用／數量」，用超過會變紅；把某場地的設備拿到別的場地用也會提醒。</li>
         <li>「品牌型號」分頁的接口依原廠規格建立（例如 X32、WING、dLive、MIPRO 無線系統）；無線發射器和接收機不同系列會被標成不相容。</li>
         <li>標示「型號待確認」的品項（Focusrite Red、MOTU MK5）是依名稱推測的型號，接口可在右側面板自行修改。</li>
+        <li>TSL 器材也有 DAD CORE256（Thunderbolt／Dante／MADI 介面路由器）；它的內部路由可以雙擊設定。</li>
       </ul>
       <h3>活動臨時器材、自訂器材、來源標註</h3>
       <ul>
-        <li>左側「活動臨時」分頁依活動列出臨時進場的器材（例如 2026Forum 的紅外線口譯系統），會一直保留，之後也查得到。</li>
+        <li>左側「活動臨時」分頁依活動列出臨時進場的器材（例如 2026Forum 的 TAIDEN HCS-5100MA/08 紅外線口譯系統），會一直保留，之後也查得到。</li>
         <li><b>＋ 新增自訂器材</b>：清單裡沒有的器材，可以自己填名稱、型號、數量、類型（決定接口）、圖示、來源與活動分組。自訂器材存在這台電腦的瀏覽器，並會一起存進 JSON；清單上的 ✎ 可以修改或刪除。</li>
         <li><b>來源</b>：每台裝置會標示 <span class="srcb" style="background:rgba(59,130,246,.18);color:#3b82f6">TSL</span><span class="srcb" style="background:rgba(16,185,129,.18);color:#10b981">場地</span><span class="srcb" style="background:rgba(245,158,11,.2);color:#f59e0b">自備</span>（來者自備）。從 TSL／園區器材加入會自動標示，也可以在右側面板改；多選時可以一次設定。器材清單報表會列出來源。</li>
         <li>左側欄的右邊緣可以拖曳調整寬度，雙擊還原。</li>
@@ -493,10 +554,26 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
         <li><b>區域框</b>可標示舞台、FOH、機櫃等位置；拖曳框的標題列會連同框內裝置一起移動（按住 <kbd>Alt</kbd> 只移動框）。</li>
       </ul>
       <h3>快捷鍵</h3>
-      <p><kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原　<kbd>Ctrl</kbd>+<kbd>Y</kbd> 重做　<kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> 複製貼上　<kbd>Ctrl</kbd>+<kbd>D</kbd> 再製　<kbd>Ctrl</kbd>+<kbd>A</kbd> 全選　<kbd>Del</kbd> 刪除　<kbd>方向鍵</kbd> 微調（<kbd>Shift</kbd> ×10）　<kbd>F</kbd> 顯示全部　<kbd>T</kbd> 訊號追蹤　<kbd>Ctrl</kbd>+<kbd>S</kbd> 儲存檔案</p>
+      <p><kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原　<kbd>Ctrl</kbd>+<kbd>Y</kbd> 重做　<kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> 複製貼上　<kbd>Ctrl</kbd>+<kbd>D</kbd> 再製　<kbd>Ctrl</kbd>+<kbd>A</kbd> 全選　<kbd>Del</kbd> 刪除　<kbd>方向鍵</kbd> 微調（<kbd>Shift</kbd> ×10）　<kbd>F</kbd> 顯示全部　<kbd>T</kbd> 訊號追蹤　<kbd>雙擊裝置</kbd> 內部路由　<kbd>Ctrl</kbd>+<kbd>S</kbd> 儲存檔案</p>
       <h3>存檔</h3>
       <p>內容會自動保存在這台電腦的瀏覽器裡。要備份或分享給別人，請用「檔案 → 儲存 JSON」，對方用「開啟 JSON」即可載入。</p>
     </div>
+  </div>
+</div>
+
+<div id="rte" class="modal-wrap" hidden>
+  <div class="modal rte">
+    <div class="m-head"><b id="rte-t">內部路由</b><div class="tabs" id="rte-tabs"><button data-rtv="box" title="放大的裝置方框：拖曳拉線">接線圖</button><button data-rtv="mx" title="輸入 × 輸出的格子，點一下打勾">矩陣</button></div><div class="grow"></div>
+      <button class="btn" data-ra="same" title="In 1 → Out 1、In 2 → Out 2…">同編號一對一</button><button class="btn danger" data-ra="clear">全部清除</button><button class="x" data-close title="關閉 (Esc)">✕</button></div>
+    <div class="m-body" id="rte-body"></div>
+  </div>
+</div>
+
+<div id="tour" hidden>
+  <div id="tour-spot"></div>
+  <div id="tour-card" role="dialog" aria-live="polite">
+    <div class="tc-step"></div><div class="tc-t"></div><div class="tc-b"></div>
+    <div class="tc-btns"><button data-tr="skip">跳過</button><span class="grow"></span><button data-tr="prev">上一步</button><button data-tr="next" class="pri">下一步</button></div>
   </div>
 </div>
 
@@ -570,6 +647,7 @@ const SIG={
   snake:  {l:'類比多芯 (Cat)',  c:['#fb923c','#c2410c'], fam:'snake'},
   dmx:    {l:'DMX 燈光',        c:['#e879f9','#a21caf'], fam:'dmx'},
   ctrl:   {l:'控制/踏板',       c:['#a3a3a3','#525252'], fam:'ctrl'},
+  conf:   {l:'會議系統數位音訊', c:['#94a3b8','#475569'], fam:'conf'},
 };
 const CONN={
   XLR:{l:'XLR',s:'XLR'}, COMBO:{l:'Combo (XLR/TRS)',s:'Combo'}, TRS:{l:'TRS 6.3mm',s:'TRS'}, TS:{l:'TS 6.3mm',s:'TS'},
@@ -579,7 +657,7 @@ const CONN={
   MIDI:{l:'MIDI 5-pin',s:'DIN'}, DB25:{l:'DB25',s:'DB25'}, RF:{l:'無線 RF',s:'RF'}, BT:{l:'藍牙',s:'BT'},
   HDMI:{l:'HDMI',s:'HDMI'}, SDI:{l:'SDI',s:'SDI'},
   TNC:{l:'TNC 天線',s:'TNC'}, MXLR4:{l:'Mini XLR 4-pin',s:'mXLR4'}, TA3:{l:'TA3 (Mini XLR 3)',s:'TA3'}, MDOT:{l:'DPA MicroDot',s:'μDot'},
-  EURO:{l:'歐式端子 Phoenix',s:'Euro'}, DP:{l:'DisplayPort',s:'DP'}, XLR5:{l:'XLR 5-pin (DMX)',s:'XLR5'}, SLOT:{l:'擴充卡槽',s:'SLOT'},
+  EURO:{l:'歐式端子 Phoenix',s:'Euro'}, DIN6:{l:'6-pin DIN',s:'DIN6'}, DB9:{l:'DB9 (RS-232)',s:'DB9'}, DP:{l:'DisplayPort',s:'DP'}, XLR5:{l:'XLR 5-pin (DMX)',s:'XLR5'}, SLOT:{l:'擴充卡槽',s:'SLOT'},
 };
 const CABLE_NAME={XLR:'XLR 線',TRS:'TRS 線',TS:'TS 導線',MINI:'3.5mm 線',RCA:'RCA 線',SPK:'speakON 喇叭線',BIND:'喇叭線',
   USBC:'USB-C 線',USBB:'USB-B 線',USBA:'USB-A 線',TB:'Thunderbolt 線',RJ45:'網路線 (CAT)',ECON:'etherCON 網路線',OPT:'光纖線',
@@ -732,7 +810,7 @@ function parsePorts(spec){
 const MIDI_IO='in|MIDI In|MIDI|midi;out|MIDI Out|MIDI|midi';
 const MODELS=[
   // TAIDEN 數位紅外線同步口譯系統（2026Forum 活動臨時器材）
-  ['taiden_5100ma','pa','📶','TAIDEN','HCS-5100MA','數位紅外線發射主機','','in|8*Ch|RCA|line;in|Aux 1,Aux 2|XLR|line;in|HF In|BNC|rf;out|6*HF Out|BNC|rf','taiden hcs-5100ma 紅外線 輻射主機 發射主機 同步口譯 翻譯 ir transmitter'],
+  ['taiden_5100ma','pa','📶','TAIDEN','HCS-5100MA/08','數位紅外線發射主機（8 頻道）','','in|8*Audio In|RCA|line;out|8*Audio Out|RCA|line;in|Aux In 1（Floor/Mono）,Aux In 2（Alarm）|XLR|line;in|HF In|BNC|rf;out|6*HF Out|BNC|rf;io|會議主機（6-pin DIN）|DIN6|conf;io|DCS|RJ45|conf;io|Fiber|OPT|conf;io|Ethernet|RJ45|ctrl;io|RS-232|DB9|ctrl;io|USB|USBB|ctrl;in|Alarm|EURO|ctrl','taiden hcs-5100ma hcs-5100ma/08 紅外線 輻射主機 發射主機 同步口譯 翻譯 ir transmitter'],
   ['taiden_5100t25','pa','🟪','TAIDEN','HCS-5100T/25','25W 紅外線發射器（輻射板）','','in|HF In|BNC|rf;out|HF Out|BNC|rf;out|IR|RF|rf','taiden hcs-5100t 紅外線 發射器 輻射板 radiator'],
   ['taiden_ir_rx','pa','📟','TAIDEN','數位紅外線接收器','紅外線接收器','','in|IR|RF|rf;out|Phones|MINI|hp','taiden 紅外線 接收器 receiver 口譯 聽眾'],
   ['taiden_interp','mix','🎛️','TAIDEN','雙人翻譯員操作台','口譯員操作台','','in|Mic 1,Mic 2|MINI|mic;out|Phones 1,Phones 2|MINI|hp;io|主機連接|RJ45|ctrl','taiden interpreter 翻譯員 口譯 操作台 口譯間'],
@@ -755,6 +833,7 @@ const MODELS=[
   ['midas_dl16','mix','🧰','Midas','DL16','數位舞台箱','','in|16*In|XLR|micline;out|8*Out|XLR|line;io|AES50 A,AES50 B|ECON|aes50;out|ADAT Out 1,ADAT Out 2|OPT|adat;out|ULTRANET|RJ45|ultranet;'+MIDI_IO,'dl16 midas stagebox aes50'],
   ['kt_dn100','mix','📦','Klark Teknik','DN100','主動 DI','need','in|Input|TS|inst;out|Link|TS|inst;out|Out|XLR|mic','dn100 di box active'],
   // ── 錄音介面 ──
+  ['dad_core256','mix','🔌','DAD (Digital Audio Denmark)','CORE256','Thunderbolt／Dante／MADI 介面路由器','','io|Thunderbolt 1,Thunderbolt 2|TB|tb|ch=256×256;io|Dante Pri,Dante Sec|RJ45|net|ch=256×256;in|MADI In|BNC|madi|ch=64;out|MADI Out|BNC|madi|ch=64;in|ADAT In 1,ADAT In 2|OPT|adat;out|ADAT Out 1,ADAT Out 2|OPT|adat;in|Word Clock In|BNC|clock;out|Word Clock Out|BNC|clock;io|擴充模組（MADI SFP／DADLink）|SLOT|card','dad core256 core 256 digital audio denmark ntp dadman thunderbolt dante madi atmos 介面 路由'],
   ['ssl_2p','mix','🔌','Solid State Logic','SSL 2+','錄音介面','','in|In 1,In 2|COMBO|micline;out|Out 1 L,Out 2 R|TRS|line;out|Out 1 RCA,Out 2 RCA,Out 3 RCA,Out 4 RCA|RCA|line;out|Phones A,Phones B|TRS|hp;'+MIDI_IO+';io|USB-C|USBC|usb|ch=2×4','ssl2+ ssl 2 plus interface 介面'],
   ['focus_red8','mix','🔌','Focusrite','Red 8Pre（Red Pre Dante，型號待確認）','錄音介面','','in|8*Mic In|XLR|micline;in|Inst 1,Inst 2|TS|inst;in|Line In 1-8,Line In 9-16|DB25|line;out|Line Out 1-8,Line Out 9-16|DB25|line;out|Monitor L,Monitor R|TRS|line;out|Phones 1,Phones 2|TRS|hp;in|ADAT In 1,ADAT In 2|OPT|adat;out|ADAT Out 1,ADAT Out 2|OPT|adat;in|S/PDIF In|RCA|spdif;out|S/PDIF Out|RCA|spdif;io|Dante Pri,Dante Sec|RJ45|net|ch=32×32;io|Thunderbolt|TB|tb;in|WC In|BNC|clock;out|WC Out|BNC|clock','focusrite red dante interface'],
   ['ant_orion32','mix','🔌','Antelope Audio','Orion 32+','錄音介面','','in|In 1-8,In 9-16,In 17-24,In 25-32|DB25|line;out|Out 1-8,Out 9-16,Out 17-24,Out 25-32|DB25|line;out|Monitor L,Monitor R|TRS|line;in|ADAT In 1,ADAT In 2|OPT|adat;out|ADAT Out 1,ADAT Out 2|OPT|adat;in|MADI In|OPT|madi;out|MADI Out|OPT|madi;in|S/PDIF In|RCA|spdif;out|S/PDIF Out|RCA|spdif;io|USB|USBB|usb|ch=32×32;io|Thunderbolt|TB|tb|ch=64×64;in|WC In|BNC|clock;out|WC Out|BNC|clock','orion antelope madi interface'],
@@ -942,7 +1021,7 @@ const INV=[
   ['sl-chair','fvl','椅子','',42,'f_chair'],
 
   // 2026Forum：數位式紅外線設備照片.pdf（型號與數量待確認）
-  ['ev26f-ma','ev-2026forum','數位式紅外線輻射主機','TAIDEN HCS-5100MA',1,'taiden_5100ma','','細項型號（頻道數）與數量待確認'],
+  ['ev26f-ma','ev-2026forum','數位式紅外線輻射主機','TAIDEN HCS-5100MA/08',1,'taiden_5100ma','','8 頻道（使用者 2026-10-08 確認）；數量待確認'],
   ['ev26f-rad','ev-2026forum','25 瓦紅外線發射器','TAIDEN HCS-5100T/25',1,'taiden_5100t25','','數量待確認'],
   ['ev26f-rx','ev-2026forum','數位式紅外線接收器','',1,'taiden_ir_rx','','附耳機；型號與數量待確認'],
   ['ev26f-interp','ev-2026forum','雙人翻譯員操作台','',1,'taiden_interp','','裝置於口譯間內；型號、接口與數量待確認'],
@@ -982,6 +1061,7 @@ const INV=[
   ['tsl-ssl2p','tsl','SSL 錄音介面','SSL 2+',1,'ssl_2p'],
   ['tsl-red','tsl','Focusrite 錄音介面','Red Pre Dante',1,'focus_red8','','型號待確認'],
   ['tsl-orion','tsl','Orion 錄音介面','Orion 32+',1,'ant_orion32'],
+  ['tsl-dadcore','tsl','DAD 介面路由器','DAD CORE256',1,'dad_core256','','使用者 2026-10-08 補充；ADAT 埠數與選配模組待確認'],
   ['tsl-mixpre','tsl','Sound Devices 錄音介面','MixPre 10 II',1,'sd_mixpre10'],
   ['tsl-motu','tsl','MOTU 錄音介面','MK5',2,'motu_ul5','','其中一台家輝；型號待確認'],
   ['tsl-oxy25','tsl','MIDI 鍵盤','M-AUDIO Oxygen25',1,'maudio_oxy25'],
@@ -1300,7 +1380,7 @@ const srcBadge=k=>SRC[k]?`<span class="srcb" style="background:${SRC[k].c}2e;col
 const KEY='audioRouting.v1';
 let doc=sanitize({name:'未命名專案'});
 let view={x:60,y:60,k:1};
-const settings={wire:'curve',snap:true,osnap:true,libW:236,labels:true,arrows:true,trace:false,theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
+const settings={wire:'curve',snap:true,osnap:true,libW:236,labels:true,arrows:true,trace:false,rtView:'dim',theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
 let sel={n:new Set(),w:new Set(),z:new Set(),f:new Set(),i:new Set()};
 let undoS=[],redoS=[],pendingSnap=null;
 let compatCache=new Map(), issues=[], cablePlan={rows:[],summary:[]};
@@ -1325,7 +1405,7 @@ const selNode=()=>sel.n.size===1&&!sel.w.size&&!sel.z.size?getNode([...sel.n][0]
 const selWire=()=>sel.w.size===1?getWire([...sel.w][0]):null;
 const selZone=()=>sel.z.size===1?getZone([...sel.z][0]):null;
 function removeWiresOfPort(nid,pid){ doc.wires=doc.wires.filter(w=>!((w.a.n===nid&&w.a.p===pid)||(w.b.n===nid&&w.b.p===pid))); }
-function clearSel(){ sel.n.clear(); sel.w.clear(); sel.z.clear(); sel.f.clear(); sel.i.clear(); }
+function clearSel(){ trFocus=null; sel.n.clear(); sel.w.clear(); sel.z.clear(); sel.f.clear(); sel.i.clear(); }
 function selectOnly(k,id){ clearSel(); sel[k].add(id); }
 function toggleSel(k,id){ sel[k].has(id)?sel[k].delete(id):sel[k].add(id); }
 function fixSel(){ for(const id of [...sel.n]) if(!getNode(id)) sel.n.delete(id); for(const id of [...sel.w]) if(!getWire(id)) sel.w.delete(id); for(const id of [...sel.z]) if(!getZone(id)) sel.z.delete(id); for(const id of [...sel.f]) if(!getFurn(id)) sel.f.delete(id); for(const id of [...sel.i]) if(!getImg(id)) sel.i.delete(id); }
@@ -1339,7 +1419,7 @@ function uniqueName(base,except){
 }
 function makeNode(type,x,y){
   const T=TYPES[type]||TYPES.custom, d=T.make();
-  return {id:uid(),type:TYPES[type]?type:'custom',icon:T.icon,src:'',name:uniqueName(d.name||T.name),model:d.model||'',loc:'',ph:d.ph||'',color:'',w:d.w||210,notes:'',flip:false,x:Math.round(x),y:Math.round(y),ports:d.ports,inv:'',vx:null,vy:null,vz:null};
+  return {id:uid(),type:TYPES[type]?type:'custom',icon:T.icon,src:'',name:uniqueName(d.name||T.name),model:d.model||'',loc:'',ph:d.ph||'',color:'',w:d.w||210,notes:'',flip:false,x:Math.round(x),y:Math.round(y),ports:d.ports,rt:[],inv:'',vx:null,vy:null,vz:null};
 }
 // key 是 "inv:<id>" 或型別 key
 function makeAny(key,x,y){
@@ -1484,6 +1564,17 @@ function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{
   catch(e){ if(!quotaWarned){ quotaWarned=true; toast('瀏覽器儲存空間不足（圖片太大）：請用「檔案 → 儲存 JSON」保存，或刪掉部分圖片'); } }
 },400); }
 const cropOf=c=>c&&[c.x,c.y,c.w,c.h].every(v=>v!=null&&isFinite(+v))&&+c.w>0&&+c.h>0?{x:clamp(+c.x,0,1),y:clamp(+c.y,0,1),w:clamp(+c.w,.001,1),h:clamp(+c.h,.001,1)}:null;
+// 裝置內部路由 n.rt：[[來源接口（輸入或雙向）, 目的接口（輸出或雙向）], …]，去掉失效與重複的
+function rtNorm(n,list){
+  const seen=new Set(), out=[];
+  for(const r of (Array.isArray(list)?list:[])){
+    if(!Array.isArray(r)) continue;
+    const a=n.ports.find(p=>p.id===String(r[0])), b=n.ports.find(p=>p.id===String(r[1]));
+    if(!a||!b||(a===b&&a.dir!=='io')||a.dir==='out'||b.dir==='in') continue;
+    const k=a.id+'>'+b.id; if(seen.has(k)) continue; seen.add(k); out.push([a.id,b.id]);
+  }
+  return out;
+}
 function sanitize(d){
   const out={name:String(d.name||'未命名專案'),nodes:[],wires:[],zones:[],furn:[],images:[],venue:String(d.venue||''),vcal:(d.vcal&&typeof d.vcal==='object')?d.vcal:{},
     vopt:Object.assign({slack:10,ends:1},d.vopt||{}),customVenue:d.customVenue&&d.customVenue.img?d.customVenue:null,
@@ -1496,15 +1587,21 @@ function sanitize(d){
     out.nodes.push({id:String(n.id),type:T,icon:(n.icon==='📡'&&TYPES[T].icon==='🎤')?'🎤':(n.icon||TYPES[T].icon),src:SRC[n.src]?n.src:'',name:String(n.name??''),model:String(n.model??''),loc:String(n.loc??''),ph:n.ph||'',color:n.color||'',
       w:clamp(+n.w||210,140,480),notes:String(n.notes??''),flip:!!n.flip,x:+n.x||0,y:+n.y||0,inv:INVM.has(n.inv)?n.inv:'',vx:num(n.vx),vy:num(n.vy),vz:num(n.vz),vv:n.vv?String(n.vv):(num(n.vx)!=null?out.venue:''),
       ports:(Array.isArray(n.ports)?n.ports:[]).filter(p=>p&&p.id).map(p=>({id:String(p.id),dir:['in','out','io'].includes(p.dir)?p.dir:'in',name:String(p.name??''),conn:CONN[p.conn]?p.conn:'XLR',sig:SIG[p.sig]?p.sig:'line',ch:String(p.ch??''),p48:!!p.p48,grp:p.grp||'',sys:p.sys?String(p.sys):''}))});
+    const x=out.nodes[out.nodes.length-1]; x.rt=rtNorm(x,n.rt);
   }
   const has=(r)=>{ const n=out.nodes.find(x=>x.id===r?.n); return n&&n.ports.some(p=>p.id===r.p); };
   for(const w of (Array.isArray(d.wires)?d.wires:[])) if(w&&has(w.a)&&has(w.b)) out.wires.push({id:String(w.id||uid()),a:{n:w.a.n,p:w.a.p},b:{n:w.b.n,p:w.b.p},label:String(w.label??''),len:String(w.len??''),cable:String(w.cable??''),color:w.color||'',note:String(w.note??'')});
   for(const z of (Array.isArray(d.zones)?d.zones:[])) if(z) out.zones.push({id:String(z.id||uid()),kind:z.kind==='text'?'text':'frame',title:String(z.title??''),x:+z.x||0,y:+z.y||0,w:+z.w||400,h:+z.h||300,color:z.color||'',fs:+z.fs||18,note:String(z.note??'')});
   for(const im of (Array.isArray(d.images)?d.images:[])) if(im&&im.a) out.images.push({id:String(im.id||uid()),m:im.m==='venue'?'venue':'flow',vv:String(im.vv||''),x:+im.x||0,y:+im.y||0,w:Math.max(.05,+im.w||1),h:Math.max(.05,+im.h||1),ar:+im.ar||((+im.w||1)/(+im.h||1)),a:String(im.a),name:String(im.name??''),op:clamp(+(im.op??1),.05,1),lock:!!im.lock,front:!!im.front,crop:cropOf(im.crop)});
-  const cl=d.cl||{}, okN=id=>!!id&&out.nodes.some(n=>n.id===id);
-  out.cl={console:okN(cl.console)?String(cl.console):'',sync:['l2f','f2l','sync'].includes(cl.sync)?cl.sync:'sync',event:String(cl.event??''),date:String(cl.date??''),band:String(cl.band??''),gone:[],
+  const okN=id=>!!id&&out.nodes.some(n=>n.id===id);
+  const cleanCL=cl=>({console:okN(cl.console)?String(cl.console):'',sync:['l2f','f2l','sync'].includes(cl.sync)?cl.sync:'sync',event:String(cl.event??''),date:String(cl.date??''),band:String(cl.band??''),gone:[],
     rows:(Array.isArray(cl.rows)?cl.rows:[]).filter(Boolean).map(r=>({id:String(r.id||uid()),name:String(r.name??''),who:String(r.who??''),note:String(r.note??''),mic:okN(r.mic)?String(r.mic):'',mo:String(r.mo??''),
-      pts:(Array.isArray(r.pts)?r.pts:[]).filter(p=>p&&okN(p.n)).map(p=>({n:String(p.n),i:String(p.i??''),o:String(p.o??'')})),ap:Array.isArray(r.ap)?r.ap.map(String):[]}))};
+      pts:(Array.isArray(r.pts)?r.pts:[]).filter(p=>p&&okN(p.n)).map(p=>({n:String(p.n),i:String(p.i??''),o:String(p.o??'')})),ap:Array.isArray(r.ap)?r.ap.map(String):[],ar:Array.isArray(r.ar)?r.ar.map(String):[]}))});
+  // 多台控台各自一份 Channel List（舊專案只有 cl 一份）；main 是「主控台」
+  out.cls=(Array.isArray(d.cls)&&d.cls.length?d.cls:[d.cl||{}]).filter(c=>c&&typeof c==='object').map(cleanCL).filter((c,i,a)=>!c.console||a.findIndex(x=>x.console===c.console)===i);
+  if(!out.cls.length) out.cls=[cleanCL({})];
+  out.clI=clamp(Math.round(+d.clI||0),0,out.cls.length-1);
+  out.main=okN(d.main)?String(d.main):(d.main===''?'':out.cls[0].console);
   for(const f of (Array.isArray(d.furn)?d.furn:[])) if(f&&FURN[f.k]) out.furn.push({id:String(f.id||uid()),k:f.k,vv:String(f.vv||''),x:+f.x||0,y:+f.y||0,w:clamp(+f.w||FURN[f.k].w,.05,30),d:clamp(+f.d||FURN[f.k].d,.05,30),h:clamp(+f.h||0,0,20),rot:+f.rot||0,label:String(f.label??''),inv:INVM.has(f.inv)?f.inv:''});
   return out;
 }
@@ -1702,6 +1799,9 @@ function nodeSVG(n,T,o){
   s+=`<g clip-path="url(#k${n.id})"><rect width="${w}" height="${HEAD}" fill="${col}" fill-opacity="${T.headA}"/><rect width="${w}" height="3" fill="${col}"/></g>`;
   if(n.ports.length) s+=`<line x1="0" x2="${w}" y1="${HEAD}" y2="${HEAD}" stroke="${T.stroke}"/>`;
   if(Ly.nio&&Ly.main){ const yy=HEAD+PADT+Ly.main*ROW+SEP/2; s+=`<line x1="10" x2="${w-10}" y1="${yy}" y2="${yy}" stroke="${T.stroke}" stroke-dasharray="3 3"/>`; }
+  s+=rtSVG(n,T,o,Ly);
+  const cb=conBadge(n);
+  if(cb){ const bw=tw(cb.t,'700 10px')+14; s+=`<g transform="translate(0 -21)"><rect width="${bw}" height="16" rx="5" fill="${cb.c}" fill-opacity="${cb.main?1:.18}"/><text x="7" y="11.6" font-size="10" font-weight="700" fill="${cb.main?'#fff':cb.c}">${esc(cb.t)}</text></g>`; }
   s+=`<rect width="${w}" height="${h}" rx="8" fill="none" stroke="${isSel?T.sel:T.stroke}" stroke-width="${isSel?1.6:1}"/>`;
   s+=`<text x="12" y="30" font-size="18">${esc(n.icon||'⬜')}</text>`;
   const sk=srcOf(n), sT=SRC[sk], sW=sT?tw(sT.l,'700 9.5px')+10:0;
@@ -1760,22 +1860,49 @@ function zoneSVG(z,T,o){
   return s+'</g>';
 }
 function connSet(){ const c=new Set(); for(const w of doc.wires){ c.add(w.a.n+'|'+w.a.p); c.add(w.b.n+'|'+w.b.p); } return c; }
+// 裝置內部路由：有設定就照設定走；沒設定時視為每個輸入都通往每個輸出
+const isSrcP=p=>p.dir!=='out', isDstP=p=>p.dir!=='in';
+const hasRt=n=>!!(n&&n.rt&&n.rt.length);
+const rtKey=(nid,a,b)=>nid+'|'+a+'>'+b;
+function rtOuts(n,pid){ return hasRt(n)?n.rt.filter(r=>r[0]===pid).map(r=>r[1]):n.ports.filter(q=>isDstP(q)&&q.id!==pid).map(q=>q.id); }
+function rtIns(n,pid){ return hasRt(n)?n.rt.filter(r=>r[1]===pid).map(r=>r[0]):n.ports.filter(q=>isSrcP(q)&&q.id!==pid).map(q=>q.id); }
+function cleanRt(){ for(const n of doc.nodes) n.rt=hasRt(n)?rtNorm(n,n.rt):[]; }
+let trFocus=null; // 訊號追蹤時點一下的接口 {n,p}：只追這一路
+// 以「接口」為單位追蹤：ph 'in' 是訊號從這個接口進入裝置，'out' 是從這個接口離開；down 往下游、否則往上游
 function traceSets(){
-  if(!settings.trace||!sel.n.size) return null;
-  const N=new Set(sel.n), W=new Set();
-  const io=new Map(doc.wires.map(w=>{ const E=ends(w); return [w.id,E&&isIoWire(E)]; }));
-  const walk=down=>{
-    const q=[...sel.n], seen=new Set(sel.n);
-    while(q.length){ const x=q.shift();
-      for(const w of doc.wires){
-        let nx=null;
-        if(down){ if(w.a.n===x) nx=w.b.n; else if(io.get(w.id)&&w.b.n===x) nx=w.a.n; }
-        else { if(w.b.n===x) nx=w.a.n; else if(io.get(w.id)&&w.a.n===x) nx=w.b.n; }
-        if(nx!=null){ W.add(w.id); N.add(nx); if(!seen.has(nx)){ seen.add(nx); q.push(nx); } }
-      }
-    }
-  };
-  walk(true); walk(false); return {n:N,w:W};
+  if(!settings.trace) return null;
+  const N=new Set(), W=new Set(), R=new Set(), seen=new Set(), q=[];
+  const io=new Map(doc.wires.map(w=>{ const E=ends(w); return [w.id,!!(E&&isIoWire(E))]; }));
+  const push=(n,p,ph,down)=>{ const k=n+'|'+p+'|'+ph+(down?'v':'^'); if(seen.has(k)) return; seen.add(k); N.add(n); q.push([n,p,ph,down]); };
+  const fromPort=(nid,p)=>{ if(isSrcP(p)){ push(nid,p.id,'in',true); push(nid,p.id,'in',false); } if(isDstP(p)){ push(nid,p.id,'out',true); push(nid,p.id,'out',false); } };
+  const fn=trFocus&&getNode(trFocus.n), fp=fn&&getPort(fn,trFocus.p);
+  if(fp) fromPort(fn.id,fp);
+  else {
+    for(const id of sel.n){ const n=getNode(id); if(!n) continue; N.add(id); n.ports.forEach(p=>{ if(isDstP(p)) push(id,p.id,'out',true); if(isSrcP(p)) push(id,p.id,'in',false); }); (n.rt||[]).forEach(r=>R.add(rtKey(id,r[0],r[1]))); }
+    for(const id of sel.w){ const w=getWire(id); if(!w) continue; W.add(id); push(w.b.n,w.b.p,'in',true); push(w.a.n,w.a.p,'out',false); if(io.get(id)){ push(w.a.n,w.a.p,'in',true); push(w.b.n,w.b.p,'out',false); } }
+  }
+  if(!q.length&&!N.size) return null;
+  while(q.length){
+    const [nid,pid,ph,down]=q.shift(), n=getNode(nid); if(!n) continue;
+    if(down&&ph==='out'){ for(const w of doc.wires){ if(w.a.n===nid&&w.a.p===pid){ W.add(w.id); push(w.b.n,w.b.p,'in',true); } else if(io.get(w.id)&&w.b.n===nid&&w.b.p===pid){ W.add(w.id); push(w.a.n,w.a.p,'in',true); } } }
+    else if(down){ for(const o of rtOuts(n,pid)){ if(hasRt(n)) R.add(rtKey(nid,pid,o)); push(nid,o,'out',true); } }
+    else if(ph==='in'){ for(const w of doc.wires){ if(w.b.n===nid&&w.b.p===pid){ W.add(w.id); push(w.a.n,w.a.p,'out',false); } else if(io.get(w.id)&&w.a.n===nid&&w.a.p===pid){ W.add(w.id); push(w.b.n,w.b.p,'out',false); } } }
+    else { for(const i of rtIns(n,pid)){ if(hasRt(n)) R.add(rtKey(nid,i,pid)); push(nid,i,'in',false); } }
+  }
+  return {n:N,w:W,r:R};
+}
+// 裝置方框裡的內部路由線（訊號流程主畫面）：正常／半透明／不顯示
+function rtSVG(n,T,o,Ly){
+  if(!hasRt(n)||settings.rtView==='hide') return '';
+  const L=7, Rx=n.w-7; let s='<g pointer-events="none">';
+  for(const [a,b] of n.rt){
+    const pa=getPort(n,a), pb=getPort(n,b), A=Ly.pos[a], B=Ly.pos[b]; if(!pa||!pb||!A||!B) continue;
+    const x1=n.flip?Rx:L, x2=n.flip?L:Rx, mx=(x1+x2)/2;
+    let op=settings.rtView==='show'?.8:.22, sw=1.5;
+    if(o.tr){ if(o.tr.r.has(rtKey(n.id,a,b))){ op=1; sw=2.6; } else op=settings.rtView==='show'?.12:.06; }
+    s+=`<path d="M${x1} ${A.y}C${mx} ${A.y} ${mx} ${B.y} ${x2} ${B.y}" fill="none" stroke="${sc(pa.sig,T)}" stroke-width="${sw}" stroke-opacity="${op}" stroke-linecap="round"/>`;
+  }
+  return s+'</g>';
 }
 /* ── 場地配置畫面 ── */
 function venueBgSVG(v,T,exp,href){
@@ -2010,7 +2137,7 @@ function renderVenue(T,o){
 
 let lastO=null;
 function renderCanvas(){
-  analyze();
+  cleanRt(); analyze();
   document.body.classList.toggle('m-venue',isVenue());
   document.body.classList.toggle('m-clist',isCList());
   if(isCList()){ renderCList(); save(); return; }
@@ -2029,7 +2156,7 @@ function renderWires(){
   if(isVenue()){ cablePlan=planCables(); $('#Lw').innerHTML=vwireLayer(T,lastO||{conn:connSet()}); return; }
   $('#Lw').innerHTML=doc.wires.map(w=>wireSVG(w,T,lastO||{conn:connSet()})).join('');
 }
-function renderAll(){ renderCanvas(); renderPanel(); renderStatus(); renderToolbar(); updateStock(); }
+function renderAll(){ renderCanvas(); renderPanel(); renderStatus(); renderToolbar(); updateStock(); if(!$('#rte').hidden) renderRt(); }
 function updateStock(){
   $$('#lib-list .lib-item[data-key^="inv:"]').forEach(el=>{
     const i=INVM.get(el.dataset.key.slice(4)), s=el.querySelector('.stock'); if(!i||!s) return;
@@ -2043,7 +2170,7 @@ function setMode(m){
   if(settings.mode!=='clist') settings['view_'+settings.mode]={...view};
   settings.mode=m; settings.measure=false; calib=null; cropping=null; settings.seat=null; $('#Lt').innerHTML='';
   clearSel(); closeFloating();
-  if(m==='clist'){ renderAll(); renderLib(); return; }
+  if(m==='clist'){ const mi=doc.cls.findIndex(c=>c.console&&c.console===doc.main); if(mi>=0) doc.clI=mi; renderAll(); renderLib(); return; }
   buildDefs();
   const sv=settings['view_'+m];
   if(sv&&isFinite(sv.k)){ view={...sv}; applyView(); renderAll(); }
@@ -2282,6 +2409,7 @@ function paste(at){
     const old=n.id; n.id=uid(); nm.set(old,n.id); n.x+=dx; n.y+=dy; n.name=uniqueName(n.name);
     if(placed(n)){ n.vx=snapM(n.vx+.6*pasteN); n.vy=snapM(n.vy+.6*pasteN); }
     for(const p of n.ports){ const op=p.id; p.id=uid(); pm.set(old+'|'+op,p.id); }
+    n.rt=(n.rt||[]).map(r=>[pm.get(old+'|'+r[0]),pm.get(old+'|'+r[1])]).filter(r=>r[0]&&r[1]);
     doc.nodes.push(n); sel.n.add(n.id);
   }
   for(const w of c.wires){ const a={n:nm.get(w.a.n),p:pm.get(w.a.n+'|'+w.a.p)}, b={n:nm.get(w.b.n),p:pm.get(w.b.n+'|'+w.b.p)}; w.id=uid(); w.a=a; w.b=b; doc.wires.push(w); }
@@ -2365,7 +2493,7 @@ cv.addEventListener('pointerdown',e=>{
   const ph=t.closest('.ph'), ng=t.closest('.node'), wg=t.closest('.wire'), zr=t.closest('.zres'), zh=t.closest('.zhit'), ir=t.closest('.ires'), ig=t.closest('.img');
   const key=ph?'p'+ph.dataset.n+ph.dataset.p:ng?'n'+ng.dataset.node:wg?'w'+wg.dataset.w:(zh||zr)?'z'+(zh||zr).closest('.zone').dataset.z:ig?'i'+ig.dataset.i:'empty';
   if(isDbl(key)){
-    if(ng&&!ph){ selectOnly('n',ng.dataset.node); renderAll(); openSide(); focusField('[data-nf="name"]'); drag={kind:'none'}; return; }
+    if(ng&&!ph){ const id=ng.dataset.node; selectOnly('n',id); renderAll(); if(rtAble(getNode(id))) openRt(id); else { openSide(); focusField('[data-nf="name"]'); } drag={kind:'none'}; return; }
     if(wg){ selectOnly('w',wg.dataset.w); renderAll(); openSide(); focusField('[data-wf="label"]'); drag={kind:'none'}; return; }
     if(zh){ selectOnly('z',zh.closest('.zone').dataset.z); renderAll(); openSide(); focusField('[data-zf="title"]'); drag={kind:'none'}; return; }
     if(ig){ selectOnly('i',ig.dataset.i); renderAll(); openSide(); focusField('[data-im="name"]'); drag={kind:'none'}; return; }
@@ -2522,7 +2650,7 @@ function startWire(ph,e,pt){
   const an=getNode(anchor.n), ap=getPort(an,anchor.p);
   const cand=new Set();
   for(const m of doc.nodes) for(const q of m.ports){ if(m.id===anchor.n&&q.id===anchor.p) continue; if(dirOk(ap,q)) cand.add(m.id+'|'+q.id); }
-  drag={kind:'wire',anchor,an,ap,picked,before,cand,target:null,sx:e.clientX,sy:e.clientY,movedFar:false,clickN:nid};
+  drag={kind:'wire',anchor,an,ap,picked,before,cand,target:null,sx:e.clientX,sy:e.clientY,movedFar:false,clickN:nid,clickP:{n:nid,p:pid}};
   hideTip(); renderCanvas(); moveWire(e,pt);
 }
 function moveWire(e,pt,d=drag){
@@ -2551,6 +2679,12 @@ function moveWire(e,pt,d=drag){
   } else hideTip();
 }
 function finishWire(d,e){
+  // 訊號追蹤開啟時，點一下接口（沒拖曳）＝只追這個接口的那一路，不拉線
+  if(!d.movedFar&&!d.sticky&&settings.trace&&d.clickP){
+    $('#Lt').innerHTML=''; hideTip(); if(d.picked) doc=JSON.parse(d.before);
+    const cp=d.clickP, cn=getNode(cp.n), pp=getPort(cn,cp.p); selectOnly('n',cp.n); trFocus=cp; renderAll();
+    if(cn&&pp) toast(`訊號追蹤：${cn.name}・${pp.name}`); return;
+  }
   // 只點一下沒拖曳：線留在游標上，等下一次點擊（pointerdown 時完成）
   if(!d.movedFar&&!d.sticky){ d.sticky=true; wireArm=d; toast('再點一下要接的接口即可連線；點空白處快速新增，Esc 或右鍵取消'); return; }
   $('#Lt').innerHTML=''; hideTip();
@@ -2660,7 +2794,10 @@ cv.addEventListener('contextmenu',e=>{
     items=[['在這裡新增裝置…','雙擊',()=>openQA(e.clientX,e.clientY,pt,null)],['顯示全部','F',fitView]];
   } else if(ng){
     const id=ng.dataset.node; if(!sel.n.has(id)){ selectOnly('n',id); renderAll(); }
-    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],['再製','Ctrl+D',dupSel],['複製','Ctrl+C',()=>copySel()],['左右翻轉','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)) n.flip=!n.flip; }))],
+    const nn=getNode(id), extra=[];
+    if(rtAble(nn)) extra.push(['⇄ 內部路由…','雙擊',()=>openRt(id)]);
+    if(nn.ports.some(p=>p.dir==='in')&&doc.main!==id) extra.push(['★ 設為主控台','',()=>setMain(id)]);
+    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],...extra,['再製','Ctrl+D',dupSel],['複製','Ctrl+C',()=>copySel()],['左右翻轉','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)) n.flip=!n.flip; }))],
       ['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['用區域框框住','',()=>addZone('frame')],['-'],
       ['移除所有接線','',()=>edit(()=>{ doc.wires=doc.wires.filter(w=>!sel.n.has(w.a.n)&&!sel.n.has(w.b.n)); })],['刪除','Del',delSel,'danger']];
   } else if(wg){
@@ -2868,6 +3005,18 @@ function panelNode(n){
     h+=fld('高度 (m)',`<input type="number" min="0" max="20" step="0.1" data-nf="vz" value="${n.vz??''}" placeholder="${Math.round(nodeHt({...n,vz:null})*100)/100}（自動）">`);
     h+=`<div class="hint">裝置離地高度，會加進線長估算（例如喇叭架 1.8 m、吊掛 4 m、地板 0）。</div>`;
     h+=`<div class="btns">${placedAny(n)?'<button class="btn" data-act="unplace">從場地移除</button>':(isVenue()&&doc.venue?`<button class="btn" data-act="place" data-n="${n.id}">放到目前場地中央</button>`:'')}</div>`;
+  }
+  h+=secH('內部路由');
+  if(rtAble(n)){
+    const rs=(n.rt||[]).map(([a,b])=>{ const pa=getPort(n,a), pb=getPort(n,b); return pa&&pb?pa.name+' → '+pb.name:''; }).filter(Boolean);
+    h+=`<div class="hint">${rs.length?`已設定 ${rs.length} 條：${esc(rs.slice(0,4).join('、'))}${rs.length>4?'…':''}`:'尚未設定：訊號追蹤時視為所有輸入都通往所有輸出。'}</div>`;
+    h+=`<div class="btns"><button class="btn" data-act="rtedit">⇄ 編輯內部路由（雙擊裝置）</button>${rs.length?'<button class="btn" data-act="rtclear">清除</button>':''}</div>`;
+  } else h+=`<div class="hint">這台裝置只有輸入或只有輸出，不需要內部路由。</div>`;
+  if(n.ports.some(p=>p.dir==='in')){
+    const li=doc.cls.findIndex(c=>c.console===n.id);
+    h+=secH('控台與 Channel List');
+    h+=doc.main===n.id?`<div class="hint">★ 這台是主控台：Channel List 預設顯示它的清單。</div><div class="btns"><button class="btn" data-act="clopen">☰ 開啟 Channel List</button><button class="btn" data-act="unmain">取消主控台</button></div>`
+      :`<div class="btns"><button class="btn" data-act="setmain">★ 設為主控台</button><button class="btn" data-act="clopen">☰ ${li>=0?'開啟':'建立'}它的 Channel List</button></div>`;
   }
   h+=secH('I/O 數量');
   h+=ioCount(n,'in','輸入 In')+ioCount(n,'out','輸出 Out')+(hasIoGrp?ioCount(n,'io','雙向 I/O'):'');
@@ -3114,6 +3263,11 @@ side.addEventListener('click',e=>{
     case 'dup': dupSel(); break;
     case 'del': delSel(); break;
     case 'trace': settings.trace=true; renderAll(); break;
+    case 'rtedit': openRt(n.id); break;
+    case 'rtclear': edit(()=>{ n.rt=[]; }); break;
+    case 'setmain': setMain(n.id); break;
+    case 'unmain': edit(()=>{ doc.main=''; }); break;
+    case 'clopen': { let i=doc.cls.findIndex(c=>c.console===n.id); if(i<0){ edit(()=>{ i=clListFor(n.id,true); }); } openCList(i); break; }
     case 'iolist': repDev=n.id; openReports('io'); break;
     case 'unwire': edit(()=>{ const before=doc.wires.length; doc.wires=doc.wires.filter(w=>!sel.n.has(w.a.n)&&!sel.n.has(w.b.n)); if(before===doc.wires.length) return false; }); break;
     case 'selw': selectOnly('w',b.dataset.w); renderAll(); break;
@@ -3159,6 +3313,7 @@ function renderToolbar(){
   $$('[data-ws]').forEach(b=>b.classList.toggle('on',b.dataset.ws===settings.wire));
   $$('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===settings.mode));
   $$('[data-vr]').forEach(b=>b.classList.toggle('on',b.dataset.vr===settings.vroute));
+  $$('[data-rv]').forEach(b=>b.classList.toggle('on',b.dataset.rv===settings.rtView));
   $$('[data-cmd="seat"]').forEach(b=>b.classList.toggle('on',!!settings.seat));
   if(document.activeElement!==$('#venueSel')) $('#venueSel').innerHTML=venueOptions();
   $$('[data-tog]').forEach(b=>b.classList.toggle('on',!!settings[b.dataset.tog]));
@@ -3168,7 +3323,7 @@ function renderToolbar(){
 function renderStatus(){
   const warn=issues.filter(i=>i.lv===2).length, err=issues.filter(i=>i.lv===3).length;
   const chk=err||warn?`<button class="st-btn" data-st="issues">${err?`<span class="c-err">● ${err} 個錯誤</span> `:''}${warn?`<span class="c-warn">● ${warn} 個注意</span>`:''}</button>`:`<span class="c-ok">✓ 連線檢查正常</span>`;
-  if(isCList()){ const cl=doc.cl, c=clCon(); $('#status').innerHTML=`<span>Channel List ${cl.rows.length} 軌</span><span>主控台：${c?esc(c.name):'未指定'}</span><span>同步：${CL_SYNC[cl.sync]}</span>${chk}<span class="grow"></span><span class="hide-m">⌖ 可以到訊號流程找出這一軌的裝置 · Ctrl+Z 復原</span>`; return; }
+  if(isCList()){ const cl=CL(), c=clCon(); $('#status').innerHTML=`<span>Channel List ${cl.rows.length} 軌</span><span>控台：${c?esc(c.name)+(c.id===doc.main?' ★ 主控台':''):'未指定'}${doc.cls.length>1?`（共 ${doc.cls.length} 份清單）`:''}</span><span>同步：${CL_SYNC[cl.sync]}</span>${chk}<span class="grow"></span><span class="hide-m">⌖ 可以到訊號流程找出這一軌的裝置 · Ctrl+Z 復原</span>`; return; }
   const v=isVenue()?`<span>本場地 ${doc.nodes.filter(placed).length} 台 · 已擺放 ${doc.nodes.filter(placedAny).length}/${doc.nodes.length}</span>`:`<span>裝置 ${doc.nodes.length}</span>`;
   const hint=isVenue()?'<span id="mread" class="hide-m"></span><span class="hide-m">拖曳或點一下裝置外圈，再到另一台裝置即可拉線 · 滾輪縮放 · 空白鍵＋拖曳平移</span>':'<span class="hide-m">拖曳或點一下接口拉線 · 雙擊空白處新增 · 滾輪縮放 · 空白鍵＋拖曳平移</span>';
   $('#status').innerHTML=`${v}<span>連線 ${doc.wires.length}</span>${chk}<span class="grow"></span>${hint}`;
@@ -3188,6 +3343,7 @@ function cmd(c){
     case 'reports': openReports(); break;
     case 'theme': settings.theme=themeName()==='dark'?'light':'dark'; applyTheme(); renderAll(); break;
     case 'help': $('#help').hidden=false; break;
+    case 'tour': startTour(); break;
     case 'zoomin': { const r=stageRect(); zoomAt(r.width/2,r.height/2,1.2); break; }
     case 'zoomout': { const r=stageRect(); zoomAt(r.width/2,r.height/2,1/1.2); break; }
     case 'zoom100': { const r=stageRect(); zoomAt(r.width/2,r.height/2,1/view.k); break; }
@@ -3203,8 +3359,9 @@ $('#top').addEventListener('click',e=>{
   else if(b.dataset.ws){ settings.wire=b.dataset.ws; renderAll(); }
   else if(b.dataset.mode) setMode(b.dataset.mode);
   else if(b.dataset.vr){ settings.vroute=b.dataset.vr; renderAll(); }
+  else if(b.dataset.rv){ settings.rtView=b.dataset.rv; renderAll(); }
   else if(b.dataset.tog){ const k=b.dataset.tog; settings[k]=!settings[k];
-    if(k==='trace'&&settings.trace&&!sel.n.size) toast('選取一台裝置來追蹤它的訊號路徑');
+    if(k==='trace'&&settings.trace&&!sel.n.size&&!sel.w.size) toast('選取裝置或線，或點一下接口，來追蹤訊號路徑');
     if(k==='measure'){ $('#Lt').innerHTML=''; if(settings.measure) toast('在平面圖上拖曳即可量測距離'); }
     renderAll(); }
   else if(b.dataset.menu){ const r=b.getBoundingClientRect(); showMenu(r.left,r.bottom+4,b.dataset.menu==='file'?fileMenu():tplMenu()); }
@@ -3277,11 +3434,14 @@ $('#lib-list').addEventListener('dragstart',e=>{ const it=e.target.closest('.lib
    ========================================================= */
 window.addEventListener('keydown',e=>{
   const inField=e.target.matches&&e.target.matches('input,textarea,select,[contenteditable]');
+  if(!$('#tour').hidden){ if(e.key==='Escape') endTour(); else if(e.key==='ArrowRight'||e.key==='Enter') tourGo(1); else if(e.key==='ArrowLeft') tourGo(-1); else return; e.preventDefault(); return; }
+  if(!$('#rte').hidden&&(e.ctrlKey||e.metaKey)&&['z','y'].includes(e.key.toLowerCase())&&!inField){ e.preventDefault(); (e.key.toLowerCase()==='y'||e.shiftKey)?redo():undo(); return; }
+  if(!$('#rte').hidden&&e.key==='Escape'&&rte.arm){ rte.arm=null; renderRt(); return; }
   if(e.key==='Escape'&&wireArm){ cancelWireArm(); return; }
   if(e.key==='Escape'&&cropping){ endCrop(); return; }
   if(e.key==='Escape'){ closeFloating(); $$('.modal-wrap').forEach(m=>m.hidden=true); if(settings.seat){ settings.seat=null; $('#Lt').innerHTML=''; renderAll(); toast('已結束座位模式'); return; } if(!inField&&(sel.n.size||sel.w.size||sel.z.size||sel.f.size)){ clearSel(); renderAll(); } return; }
   if(inField) return;
-  if(!$('#rep').hidden||!$('#help').hidden||!$('#cust').hidden) return;
+  if($$('.modal-wrap').some(m=>!m.hidden)) return;
   const mod=e.ctrlKey||e.metaKey, k=e.key.toLowerCase();
   if(cropping&&k==='enter'){ e.preventDefault(); endCrop(); return; }
   // Channel List 畫面只保留復原／重做／存檔
@@ -3298,7 +3458,7 @@ window.addEventListener('keydown',e=>{
   if(k==='delete'||k==='backspace'){ e.preventDefault(); delSel(); return; }
   if(k==='f'){ fitView(); return; }
   if(k==='r'&&isVenue()&&sel.f.size){ rotSel(e.shiftKey?15:90); return; }
-  if(k==='t'){ settings.trace=!settings.trace; if(settings.trace&&!sel.n.size) toast('選取一台裝置來追蹤它的訊號路徑'); renderAll(); return; }
+  if(k==='t'){ settings.trace=!settings.trace; if(settings.trace&&!sel.n.size&&!sel.w.size) toast('選取裝置或線，或點一下接口，來追蹤訊號路徑'); renderAll(); return; }
   if(k==='a'){ e.preventDefault(); const r=stageRect(); const inside=lastMouse.cx>r.left&&lastMouse.cx<r.right&&lastMouse.cy>r.top&&lastMouse.cy<r.bottom; const c=inside?lastMouse:{cx:r.left+r.width/2,cy:r.top+r.height/2,...viewCenter()}; openQA(c.cx,c.cy,{x:c.x,y:c.y},null); return; }
   const st=e.shiftKey?10:1;
   if(k==='arrowleft'){ e.preventDefault(); nudge(-st,0); } else if(k==='arrowright'){ e.preventDefault(); nudge(st,0); }
@@ -3531,7 +3691,7 @@ async function printAll(){
   const pa=$('#print-area');
   let h=`<h1>${esc(doc.name)}</h1><div class="pdate">${new Date().toLocaleString('zh-TW')} · ${doc.nodes.length} 台裝置 · ${doc.wires.length} 條連線${doc.venues.length?' · 場地：'+doc.venues.map(v=>esc(venueShort(v))).join('、'):''}</div>`;
   if(img) h+=`<img src="${img}">`;
-  if(doc.cl.rows.length) h+=`<h2 class="pb">${esc((doc.cl.band?doc.cl.band+' ':'')+'Stage Channel List')}</h2>`+clPrintHTML();
+  { const k0=doc.clI; doc.cls.forEach((c,k)=>{ if(!c.rows.length) return; doc.clI=k; const cn=clCon(); h+=`<h2 class="pb">${esc((c.band?c.band+' ':'')+'Stage Channel List'+(doc.cls.length>1&&cn?' — '+cn.name+(cn.id===doc.main?'（主控台）':''):''))}</h2>`+clPrintHTML(); }); doc.clI=k0; }
   vimgs.forEach(([id,src])=>{ h+=`<h2 class="pb">場地配置：${esc(venueName(id))}</h2><img src="${src}">`; });
   if(vimgs.length) h+=repPlan();
   if(doc.wires.length) h+=`<h2 class="pb">連線表</h2>`+repPatch(true);
@@ -3548,7 +3708,7 @@ async function printAll(){
 /* =========================================================
    channel list：控台輸入軌道表，可與訊號流程同步
    ========================================================= */
-// doc.cl.rows[i] 是主控台 CH i+1。訊號鏈 = 拾音設備 mic（輸出 mo）→ pts 途經裝置 {n,i,o} → 主控台
+// CL().rows[i] 是主控台 CH i+1。訊號鏈 = 拾音設備 mic（輸出 mo）→ pts 途經裝置 {n,i,o} → 主控台
 // 最後一站有輸出 o：接到主控台第 CH 個輸入；最後一站只有輸入 i：遠端 I/O（Stage Box 等），經數位連線進控台
 // row.ap 記錄清單上次在流程圖建立的線，清單改掉時才知道要拔哪些
 const CL_SYNC={l2f:'清單 → 流程圖',f2l:'流程圖 → 清單',sync:'雙向同步'};
@@ -3556,7 +3716,30 @@ const CL_HEAD=['軌道編號','樂器／音源','演奏者','拾音設備／麥�
 const isCList=()=>settings.mode==='clist';
 const clRow=()=>({id:uid(),name:'',who:'',note:'',mic:'',mo:'',pts:[],ap:[]});
 const clEmpty=r=>!r.mic&&!r.pts.length&&!r.name&&!r.who&&!r.note;
-const clCon=()=>getNode(doc.cl.console);
+const CL=()=>doc.cls[doc.clI]||doc.cls[0];
+const clCon=()=>getNode(CL().console);
+// 訊號流程方框上方的標記：★ 主控台；其他有自己 Channel List 的控台
+function conBadge(n){
+  if(doc.main&&doc.main===n.id) return {t:'★ 主控台',c:'#f59e0b',main:true};
+  if(doc.cls.some(c=>c.console===n.id)) return {t:'☰ Channel List',c:'#3b82f6',main:false};
+  return null;
+}
+// 找出（或建立）某台控台的清單，回傳索引
+function clListFor(id,create){
+  let i=doc.cls.findIndex(c=>c.console===id);
+  if(i<0&&create){
+    const cur=CL();
+    if(!cur.console&&!cur.rows.length){ cur.console=id; i=doc.clI; }
+    else { doc.cls.push({console:id,sync:'sync',event:cur.event,date:cur.date,band:cur.band,gone:[],rows:[]}); i=doc.cls.length-1; }
+  }
+  return i;
+}
+function setMain(id){
+  const n=getNode(id); if(!n) return;
+  edit(()=>{ doc.main=id; const i=clListFor(id,true); if(i>=0) doc.clI=i; });
+  toast(`已設為主控台：${n.name}（Channel List 會顯示它的清單）`);
+}
+function openCList(i){ setMode('clist'); if(i>=0&&i<doc.cls.length&&doc.clI!==i){ doc.clI=i; renderAll(); } }
 const clIns=()=>{ const c=clCon(); return c?c.ports.filter(p=>p.dir==='in'):[]; };
 const firstOut=n=>n&&(n.ports.find(p=>p.dir==='out')||n.ports.find(p=>p.dir==='io'));
 const wkey=(a,b)=>a.n+'|'+a.p+'>'+b.n+'|'+b.p;
@@ -3567,12 +3750,13 @@ const inWired=(n,p)=>doc.wires.some(w=>w.b.n===n&&w.b.p===p);
 
 // 刪除裝置或接口後，清掉清單裡失效的參照
 function clClean(){
-  const cl=doc.cl; if(cl.console&&!clCon()) cl.console='';
+  if(doc.main&&!getNode(doc.main)) doc.main='';
+  for(const cl of doc.cls){ if(cl.console&&!getNode(cl.console)) cl.console='';
   for(const r of cl.rows){
     const m=getNode(r.mic); if(!m){ r.mic=''; r.mo=''; } else if(!getPort(m,r.mo)){ const o=firstOut(m); r.mo=o?o.id:''; }
     r.pts=r.pts.filter(p=>getNode(p.n));
     r.pts.forEach(p=>{ const n=getNode(p.n); if(p.i&&!getPort(n,p.i)) p.i=''; if(p.o&&!getPort(n,p.o)) p.o=''; });
-  }
+  } }
 }
 function clSeq(r){ return (r.mic&&r.mo?[{n:r.mic,o:r.mo,mic:true}]:[]).concat(r.pts); }
 // 這一軌在流程圖上應有的連線
@@ -3584,9 +3768,19 @@ function clImplied(r,idx){
   return out.filter(x=>{ const pa=getPort(getNode(x.a.n),x.a.p), pb=getPort(getNode(x.b.n),x.b.p); return pa&&pb&&x.a.n!==x.b.n&&pa.dir!=='in'&&pb.dir!=='out'; });
 }
 const clMissing=(r,i)=>clImplied(r,i).filter(x=>!hasWire(wkey(x.a,x.b))).length;
+// 這一軌在各裝置裡應有的內部路由（途經裝置的「輸入 → 輸出」）
+function clRtImplied(r){
+  const c=CL().console, out=[];
+  for(const p of r.pts){
+    if(!p.i||!p.o||p.n===c) continue; const n=getNode(p.n), a=getPort(n,p.i), b=getPort(n,p.o);
+    if(a&&b&&a!==b&&isSrcP(a)&&isDstP(b)) out.push({k:rtKey(n.id,a.id,b.id),n:n.id,i:a.id,o:b.id});
+  }
+  return out;
+}
+const rtHas=(n,a,b)=>!!n&&(n.rt||[]).some(r=>r[0]===a&&r[1]===b);
 // 清單 → 流程圖：補上缺的線、拔掉清單之前建立但已經不需要的線
 function clApply(){
-  const cl=doc.cl, old=new Set([...cl.rows.flatMap(r=>r.ap||[]),...(cl.gone||[])]), want=new Map();
+  const cl=CL(), old=new Set([...cl.rows.flatMap(r=>r.ap||[]),...(cl.gone||[])]), want=new Map();
   cl.gone=[];
   cl.rows.forEach((r,i)=>{ const L=clImplied(r,i); r.ap=L.map(x=>wkey(x.a,x.b)); L.forEach(x=>want.set(wkey(x.a,x.b),x)); });
   doc.wires=doc.wires.filter(w=>{ const k=wkey(w.a,w.b); return want.has(k)||!old.has(k); });
@@ -3598,6 +3792,12 @@ function clApply(){
     doc.wires=doc.wires.filter(w=>!((w.b.n===x.b.n&&w.b.p===x.b.p)||(pb.dir==='io'&&on(w,x.b))||(pa.dir==='io'&&on(w,x.a))));
     doc.wires.push({id:uid(),a:{...x.a},b:{...x.b},label:'',len:'',cable:'',color:'',note:''});
   }
+  // 內部路由：補上清單需要的，拔掉清單之前建立但已不需要的
+  const oldR=new Set([...cl.rows.flatMap(r=>r.ar||[]),...(cl.goneR||[])]), wantR=new Map();
+  cl.goneR=[];
+  cl.rows.forEach(r=>{ const L=clRtImplied(r); r.ar=L.map(x=>x.k); L.forEach(x=>wantR.set(x.k,x)); });
+  for(const n of doc.nodes) if(hasRt(n)) n.rt=n.rt.filter(([a,b])=>{ const k=rtKey(n.id,a,b); return wantR.has(k)||!oldR.has(k); });
+  for(const x of wantR.values()){ const n=getNode(x.n); if(n&&!rtHas(n,x.i,x.o)) (n.rt||(n.rt=[])).push([x.i,x.o]); }
 }
 // 和主控台以數位連線相連的裝置（可經過網路交換器）→ 連線種類名稱
 function clLinked(){
@@ -3624,21 +3824,26 @@ function clTerminal(r,idx){
 // 從終點往上游沿著接線找回去；同一台裝置內「哪個輸入對到哪個輸出」沿用清單原本的設定，
 // 否則只在簡單裝置（DI、無線接收機等）用唯一的輸入或相同編號推測
 function clTrace(r,T){
-  const prev=clSeq(r), c=doc.cl.console, chain=[], seen=new Set([T.n]);
+  const prev=clSeq(r), c=CL().console, chain=[], seen=new Set([T.n]);
   if(T.n!==c) chain.push({n:T.n,i:T.p,o:''});
   let cur=T;
   for(let k=0;k<12;k++){
-    const w=doc.wires.find(w=>w.b.n===cur.n&&w.b.p===cur.p); if(!w) break;
-    const U=getNode(w.a.n); if(!U||seen.has(U.id)) break; seen.add(U.id);
-    const op=getPort(U,w.a.p), st=prev.find(p=>p.n===U.id&&p.o===w.a.p);
+    const cp=getPort(getNode(cur.n),cur.p), w=doc.wires.find(w=>w.b.n===cur.n&&w.b.p===cur.p);
+    let up=w?w.a:null;
+    if(!up&&cp&&cp.dir==='io'){ const w2=doc.wires.find(x=>x.a.n===cur.n&&x.a.p===cur.p&&(getPort(getNode(x.b.n),x.b.p)||{}).dir==='io'); if(w2) up=w2.b; }
+    if(!up) break;
+    const U=getNode(up.n); if(!U||seen.has(U.id)) break; seen.add(U.id);
+    const op=getPort(U,up.p), st=prev.find(p=>p.n===U.id&&p.o===up.p);
     let i=st?(getPort(U,st.i)?st.i:''):'';
+    // 有設定內部路由：照路由找（多個輸入都通到這個輸出時，優先用清單原本的、再來是有接線的）
+    if(hasRt(U)){ const c=rtIns(U,up.p); i=c.includes(i)?i:(c.find(x=>inWired(U.id,x))||c[0]||''); }
     // 清單沒寫過的才推測；有 USB／網路等雙向接口的裝置（介面、混音器）內部路由無從得知，不推測
-    if(!st&&!U.ports.some(p=>p.dir==='io')){
+    else if(!st&&!U.ports.some(p=>p.dir==='io')){
       const wired=U.ports.filter(p=>p.dir==='in'&&inWired(U.id,p.id));
       const m=wired.find(p=>pnum(p.name)&&pnum(p.name)===pnum(op&&op.name));
       i=m?m.id:wired.length===1?wired[0].id:'';
     }
-    chain.unshift({n:U.id,i,o:w.a.p});
+    chain.unshift({n:U.id,i,o:up.p});
     if(!i) break; cur={n:U.id,p:i};
   }
   // 最上游是麥克風類 → 放到「拾音設備」欄
@@ -3648,7 +3853,7 @@ function clTrace(r,T){
 }
 // 流程圖 → 清單：每一軌從終點重新追蹤；主控台或遠端 I/O 有接線但清單沒有的輸入，自動補一軌
 function clDerive(){
-  const cl=doc.cl, c=clCon(); if(!c) return;
+  const cl=CL(), c=clCon(); if(!c) return;
   const ins=clIns(), fresh=new Set();
   ins.forEach((p,i)=>{ if(inWired(c.id,p.id)) while(cl.rows.length<=i){ const r=clRow(); fresh.add(r); cl.rows.push(r); } });
   cl.rows.forEach((r,i)=>{ const T=clTerminal(r,i); if(T) Object.assign(r,clTrace(r,T)); });
@@ -3666,7 +3871,7 @@ function clDerive(){
   }
   // 自動補上的軌：樂器名稱先用麥克風的名稱
   fresh.forEach(r=>{ const n=getNode(r.mic); if(!r.name&&n) r.name=n.name; });
-  cl.rows.forEach((r,i)=>{ r.ap=clImplied(r,i).map(x=>wkey(x.a,x.b)).filter(hasWire); });
+  cl.rows.forEach((r,i)=>{ r.ap=clImplied(r,i).map(x=>wkey(x.a,x.b)).filter(hasWire); r.ar=clRtImplied(r).filter(x=>rtHas(getNode(x.n),x.i,x.o)).map(x=>x.k); });
 }
 function clGuessConsole(){
   const nIn=n=>n.ports.filter(p=>p.dir==='in').length;
@@ -3679,7 +3884,8 @@ function clHop(n,idx,isFirst,isLast){
   if(c&&n.id===c.id){ const ci=clIns()[idx]; return {n:n.id,i:ci?ci.id:'',o:''}; }
   const ins=n.ports.filter(p=>p.dir==='in'), outs=n.ports.filter(p=>p.dir==='out'), free=p=>!inWired(n.id,p.id);
   const i=isFirst?null:(ins.find(p=>free(p)&&pnum(p.name)===String(idx+1))||ins.find(free)||ins[0]);
-  const o=isLast&&clRemoteLike(n)?null:(outs.find(p=>i&&pnum(p.name)&&pnum(p.name)===pnum(i.name))||outs[0]||n.ports.find(p=>p.dir==='io'));
+  const ro=hasRt(n)&&i?getPort(n,rtOuts(n,i.id)[0]):null;
+  const o=isLast&&clRemoteLike(n)?null:(ro||outs.find(p=>i&&pnum(p.name)&&pnum(p.name)===pnum(i.name))||outs[0]||n.ports.find(p=>p.dir==='io'));
   return {n:n.id,i:i?i.id:'',o:o?o.id:''};
 }
 // 選單選到的 key → 圖上的裝置；新的裝置放到流程圖現有內容的右邊
@@ -3692,10 +3898,10 @@ function clResolve(k,hint){
   doc.nodes.push(n); return n;
 }
 function clEdit(fn){
-  edit(()=>{ if(fn()===false) return false; const m=doc.cl.sync; if(m!=='f2l') clApply(); if(m==='sync') clDerive(); });
+  edit(()=>{ if(fn()===false) return false; const m=CL().sync; if(m!=='f2l') clApply(); if(m==='sync') clDerive(); });
 }
 function clSetSync(m,btn){
-  const cl=doc.cl; if(cl.sync===m) return;
+  const cl=CL(); if(cl.sync===m) return;
   if(m==='sync'&&cl.sync==='l2f'&&cl.rows.some((r,i)=>clMissing(r,i))){
     const rc=btn.getBoundingClientRect();
     showMenu(rc.left,rc.bottom+4,[['#清單和流程圖目前不一致，要以哪一邊為準？'],
@@ -3736,7 +3942,7 @@ function clHopHTML(r,i,p,k,ro){
     +`<button class="ib" data-ca="hdel" data-r="${i}" data-k="${k}" title="移除這一站">✕</button></span>`;
 }
 function clRowHTML(r,i,ro,lk){
-  const m=getNode(r.mic), e=clEnd(r,i,lk), miss=doc.cl.sync==='l2f'?clMissing(r,i):0;
+  const m=getNode(r.mic), e=clEnd(r,i,lk), miss=CL().sync==='l2f'?clMissing(r,i):0;
   const mic=ro?(m?`<span class="hop ro">${esc(m.icon)} ${esc(m.model||m.name)}</span>`:'')
     :`<button class="cl-pick${m?' on':''}" data-ca="mic" data-r="${i}" title="${m?esc(m.name+(m.model?' · '+m.model:''))+'（點一下更換）':'選擇圖上的麥克風，或輸入型號新增'}">${m?esc(m.icon+' '+(m.model||m.name)):'<span class="dim">＋ 麥克風</span>'}</button>${m?`<button class="ib" data-ca="micx" data-r="${i}" title="移除拾音設備">✕</button>`:''}`;
   const hops=r.pts.map((p,k)=>clHopHTML(r,i,p,k,ro)).join('<span class="arr">→</span>');
@@ -3746,8 +3952,8 @@ function clRowHTML(r,i,ro,lk){
     +`<td class="cl-act"><button class="ib" data-ca="loc" data-r="${i}" title="到訊號流程找出這一軌的裝置">⌖</button>${ro?'':`<button class="ib" data-ca="up" data-r="${i}" title="上移（CH 編號跟著改）">↑</button><button class="ib" data-ca="down" data-r="${i}" title="下移">↓</button>`}<button class="ib" data-ca="ins" data-r="${i}" title="在下方插入一軌">＋</button><button class="ib" data-ca="del" data-r="${i}" title="刪除這一軌">✕</button></td></tr>`;
 }
 function renderCList(){
-  const cl=doc.cl; clClean();
-  if(!cl.console&&!cl.rows.length){ const g=clGuessConsole(); if(g) cl.console=g.id; }
+  const cl=CL(); clClean();
+  if(!cl.console&&!cl.rows.length){ const g=clGuessConsole(); if(g&&!doc.cls.some(c=>c.console===g.id)){ cl.console=g.id; if(!doc.main) doc.main=g.id; } }
   if(cl.sync!=='l2f') clDerive();
   const ro=cl.sync==='f2l', lk=clLinked();
   const nIn=n=>n.ports.filter(p=>p.dir==='in').length;
@@ -3756,12 +3962,15 @@ function renderCList(){
     f2l:'清單依訊號流程的接線自動產生：拾音設備與路徑唯讀，樂器、演奏者、備註可以填寫。',
     sync:'任一邊修改，另一邊都會跟著更新。'}[cl.sync];
   const tools=cl.sync==='l2f'?'<button class="btn" data-ca="apply" title="依清單補上或修正訊號流程的接線">套用到流程圖</button><button class="btn" data-ca="pull" title="依訊號流程目前的接線重新產生路徑">從流程圖讀回</button>':'';
-  let h=`<div class="cl-head"><div class="cl-title">${esc((cl.band?cl.band+' ':'')+'Stage Channel List')}</div>
-    <div class="cl-meta"><span>演出活動</span><input data-cm="event" value="${esc(cl.event)}" placeholder="活動名稱"><span>演出日期</span><input data-cm="date" value="${esc(cl.date)}" placeholder="例如 260918"><span>演出樂團</span><input data-cm="band" value="${esc(cl.band)}" placeholder="團名"><span>主控台</span><select data-cs="console">${cons}</select></div>
-    <div class="cl-bar"><span class="dim">同步</span><div class="seg">${Object.entries(CL_SYNC).map(([k,l])=>`<button data-csync="${k}" class="${cl.sync===k?'on':''}">${l}</button>`).join('')}</div>${tools}<span class="grow"></span><button class="btn" data-ca="add">＋ 新增一軌</button><button class="btn" data-ca="csv">匯出 CSV</button><button class="btn" data-ca="print">列印／PDF</button></div>
-    <div class="cl-hint">${hint}CH 編號 ＝ 主控台的第幾個輸入。路徑的最後一站若是 Stage Box 等遠端 I/O 的輸入，訊號經數位連線（AES50、Dante…）進主控台；最後一站有輸出，就直接接到主控台的第 CH 個輸入。</div></div>`;
+  const multi=doc.cls.length>1, cn=clCon();
+  let h=`<div class="cl-tabs" role="tablist">${doc.cls.map((c,k)=>{ const n=getNode(c.console), m=c.console&&c.console===doc.main;
+    return `<button data-cltab="${k}" class="${k===doc.clI?'on':''}${m?' main':''}" title="${m?'主控台的清單':'切換到這台控台的清單'}">${m?'★ ':''}${esc(n?n.name:'（未指定控台）')}<small>${c.rows.length} 軌</small></button>`; }).join('')}<button class="cl-tabadd" data-ca="newlist" title="為另一台控台（例如 Monitor 控台）建立它自己的 Channel List">＋ 其他控台的清單</button></div>`;
+  h+=`<div class="cl-head"><div class="cl-title">${esc((cl.band?cl.band+' ':'')+'Stage Channel List'+(multi&&cn?' — '+cn.name:''))}${cn&&cn.id===doc.main?'<span class="cl-star">★ 主控台</span>':''}</div>
+    <div class="cl-meta"><span>演出活動</span><input data-cm="event" value="${esc(cl.event)}" placeholder="活動名稱"><span>演出日期</span><input data-cm="date" value="${esc(cl.date)}" placeholder="例如 260918"><span>演出樂團</span><input data-cm="band" value="${esc(cl.band)}" placeholder="團名"><span>控台</span><select data-cs="console">${cons}</select></div>
+    <div class="cl-bar"><span class="dim">同步</span><div class="seg">${Object.entries(CL_SYNC).map(([k,l])=>`<button data-csync="${k}" class="${cl.sync===k?'on':''}">${l}</button>`).join('')}</div>${tools}${cl.console&&cl.console!==doc.main?'<button class="btn" data-ca="setmain" title="Channel List 預設顯示主控台的清單">★ 設為主控台</button>':''}${multi?'<button class="btn danger" data-ca="dellist" title="刪除這份清單（不會刪除流程圖的裝置與接線）">刪除這份清單</button>':''}<span class="grow"></span><button class="btn" data-ca="add">＋ 新增一軌</button><button class="btn" data-ca="csv">匯出 CSV</button><button class="btn" data-ca="print">列印／PDF</button></div>
+    <div class="cl-hint">${hint}CH 編號 ＝ 這台控台的第幾個輸入。途經裝置的「輸入 › 輸出」就是它的內部路由，會和訊號流程同步（雙擊裝置可編輯）。路徑的最後一站若是 Stage Box 等遠端 I/O 的輸入，訊號經數位連線（AES50、Dante…）進主控台；最後一站有輸出，就直接接到主控台的第 CH 個輸入。</div></div>`;
   h+=`<div class="cl-wrap"><table class="cl-tbl"><colgroup><col style="width:66px"><col style="width:13%"><col style="width:7%"><col style="width:12%"><col><col style="width:11%"><col style="width:146px"></colgroup><thead><tr>${CL_HEAD.map(t=>`<th>${t}</th>`).join('')}<th></th></tr></thead><tbody>`;
-  h+=cl.rows.map((r,i)=>clRowHTML(r,i,ro,lk)).join('')||`<tr><td colspan="7" class="cl-empty">還沒有任何軌道。${cl.console?'按「＋ 新增一軌」開始，或在訊號流程把裝置接到主控台的輸入。':'先在上方選擇主控台（或新增一台），再按「＋ 新增一軌」。'}</td></tr>`;
+  h+=cl.rows.map((r,i)=>clRowHTML(r,i,ro,lk)).join('')||`<tr><td colspan="7" class="cl-empty">還沒有任何軌道。${cl.console?'按「＋ 新增一軌」開始，或在訊號流程把裝置接到這台控台的輸入。':'先在上方選擇控台（或新增一台），再按「＋ 新增一軌」。'}</td></tr>`;
   h+=`</tbody></table></div>`;
   const who=new Set([...cl.rows.map(r=>r.who).filter(Boolean),...doc.nodes.filter(n=>catOf(n)==='perf').map(n=>n.name)]);
   h+=`<datalist id="clwho">${[...who].map(v=>`<option value="${esc(v)}">`).join('')}</datalist>`;
@@ -3770,7 +3979,7 @@ function renderCList(){
 }
 // 切到訊號流程並選取這一軌經過的裝置
 function clLocate(r){
-  const ids=[...new Set([...clSeq(r).map(s=>s.n),doc.cl.console])].filter(id=>id&&getNode(id));
+  const ids=[...new Set([...clSeq(r).map(s=>s.n),CL().console])].filter(id=>id&&getNode(id));
   if(!clSeq(r).length){ toast('這一軌還沒有裝置'); return; }
   setMode('flow'); clearSel(); ids.forEach(id=>sel.n.add(id)); renderAll();
   const ns=ids.map(getNode), x1=Math.min(...ns.map(n=>n.x)), y1=Math.min(...ns.map(n=>n.y)), x2=Math.max(...ns.map(n=>n.x+n.w)), y2=Math.max(...ns.map(n=>n.y+lay(n).h));
@@ -3780,16 +3989,19 @@ function clLocate(r){
 const clv=$('#clv');
 clv.addEventListener('focusin',e=>{ if(e.target.matches('input')) pendingSnap=snapshot(); });
 clv.addEventListener('input',e=>{
-  const el=e.target, cl=doc.cl;
+  const el=e.target, cl=CL();
   if(el.dataset.cf){ const r=cl.rows[+el.dataset.r]; if(!r) return; takeSnap(); r[el.dataset.cf]=el.value; save(); renderToolbar(); }
   else if(el.dataset.cm){ takeSnap(); cl[el.dataset.cm]=el.value; if(el.dataset.cm==='band'){ const t=clv.querySelector('.cl-title'); if(t) t.textContent=(el.value?el.value+' ':'')+'Stage Channel List'; } save(); renderToolbar(); }
 });
 clv.addEventListener('change',e=>{
-  const el=e.target, cl=doc.cl;
+  const el=e.target, cl=CL();
   if(el.dataset.cs==='console'){
     pendingSnap=null;
-    if(el.value==='__new'){ el.value=cl.console; openPick(el,{title:'選擇或新增主控台',pick:k=>clEdit(()=>{ cl.console=clResolve(k).id; })}); return; }
-    clEdit(()=>{ cl.console=el.value; });
+    const setCon=id=>{ const j=doc.cls.findIndex((c,k)=>k!==doc.clI&&c.console===id);
+      if(id&&j>=0){ doc.clI=j; renderAll(); toast('這台控台已經有自己的清單，已切換過去'); return; }
+      clEdit(()=>{ if(doc.main&&doc.main===cl.console) doc.main=id; cl.console=id; if(!doc.main&&id) doc.main=id; }); };
+    if(el.value==='__new'){ el.value=cl.console; openPick(el,{title:'選擇或新增控台',pick:k=>{ let id; edit(()=>{ id=clResolve(k).id; }); setCon(id); }}); return; }
+    setCon(el.value);
   } else if(el.dataset.ch){
     pendingSnap=null; const p=(cl.rows[+el.dataset.r]||{pts:[]}).pts[+el.dataset.k]; if(!p) return;
     clEdit(()=>{ p[el.dataset.ch]=el.value; });
@@ -3797,14 +4009,15 @@ clv.addEventListener('change',e=>{
 });
 clv.addEventListener('click',e=>{
   const sy=e.target.closest('[data-csync]'); if(sy){ clSetSync(sy.dataset.csync,sy); return; }
+  const tb=e.target.closest('[data-cltab]'); if(tb){ doc.clI=+tb.dataset.cltab; renderAll(); return; }
   const b=e.target.closest('[data-ca]'); if(!b) return;
-  const cl=doc.cl, i=+b.dataset.r, r=cl.rows[i], k=+b.dataset.k;
+  const cl=CL(), i=+b.dataset.r, r=cl.rows[i], k=+b.dataset.k;
   switch(b.dataset.ca){
     case 'add': clEdit(()=>{ cl.rows.push(clRow()); }); setTimeout(()=>{ const x=clv.querySelector(`input[data-r="${cl.rows.length-1}"]`); if(x){ x.focus(); x.scrollIntoView({block:'nearest'}); } },0); break;
     case 'ins': clEdit(()=>{ cl.rows.splice(i+1,0,clRow()); }); break;
     case 'del':
       if(cl.sync==='f2l'&&clSeq(r).length){ toast('「流程圖 → 清單」模式的軌道由接線產生：請到訊號流程拔線，或切換同步模式'); break; }
-      clEdit(()=>{ cl.gone=[...(cl.gone||[]),...(r.ap||[])]; cl.rows.splice(i,1); }); break;
+      clEdit(()=>{ cl.gone=[...(cl.gone||[]),...(r.ap||[])]; cl.goneR=[...(cl.goneR||[]),...(r.ar||[])]; cl.rows.splice(i,1); }); break;
     case 'up': case 'down': { const j=b.dataset.ca==='up'?i-1:i+1; if(j<0||j>=cl.rows.length) break; clEdit(()=>{ [cl.rows[i],cl.rows[j]]=[cl.rows[j],cl.rows[i]]; }); break; }
     case 'loc': clLocate(r); break;
     case 'mic': openPick(b,{title:'拾音設備：選圖上的裝置，或輸入型號新增',mic:true,pick:key=>clEdit(()=>{
@@ -3820,6 +4033,11 @@ clv.addEventListener('click',e=>{
     case 'hdev': openPick(b,{title:'更換這一站的裝置',pick:key=>clEdit(()=>{ r.pts[k]=clHop(clResolve(key),i,k===0&&!r.mic,k===r.pts.length-1); })}); break;
     case 'hdel': clEdit(()=>{ r.pts.splice(k,1); }); break;
     case 'apply': clEdit(()=>{}); toast('已依清單更新訊號流程的接線'); break;
+    case 'newlist': openPick(b,{title:'另一台控台：選圖上的裝置，或輸入型號新增',pick:key=>clEdit(()=>{ const n=clResolve(key); let j=doc.cls.findIndex(c=>c.console===n.id);
+      if(j<0){ doc.cls.push({console:n.id,sync:'sync',event:cl.event,date:cl.date,band:cl.band,gone:[],rows:[]}); j=doc.cls.length-1; } doc.clI=j; if(!doc.main) doc.main=n.id; })}); break;
+    case 'setmain': setMain(cl.console); break;
+    case 'dellist': { const cn=clCon(); if(!confirm(`刪除「${cn?cn.name:'未指定控台'}」的 Channel List？流程圖的裝置與接線不會刪除（可以復原）。`)) break;
+      edit(()=>{ doc.cls.splice(doc.clI,1); if(cn&&doc.main===cn.id) doc.main=''; doc.clI=Math.max(0,doc.cls.findIndex(c=>c.console&&c.console===doc.main)); }); break; }
     case 'pull': edit(()=>{ clDerive(); }); toast('已依訊號流程更新路徑'); break;
     case 'csv': clCSV(); break;
     case 'print': clPrint(); break;
@@ -3828,21 +4046,21 @@ clv.addEventListener('click',e=>{
 
 /* ── 匯出 ── */
 function clTable(){
-  clClean(); if(doc.cl.sync!=='l2f') clDerive();
-  return doc.cl.rows.map((r,i)=>[chLabel(i),r.name,r.who,clMicText(r),clPathText(r,i),r.note]);
+  clClean(); if(CL().sync!=='l2f') clDerive();
+  return CL().rows.map((r,i)=>[chLabel(i),r.name,r.who,clMicText(r),clPathText(r,i),r.note]);
 }
 function clCSV(){
-  const rows=clTable(), cl=doc.cl, c=clCon(); if(!rows.length){ toast('清單是空的'); return; }
+  const rows=clTable(), cl=CL(), c=clCon(); if(!rows.length){ toast('清單是空的'); return; }
   const out=[csvRow([(cl.band?cl.band+' ':'')+'Stage Channel List']),csvRow(['演出活動',cl.event,'演出日期',cl.date]),csvRow(['演出樂團',cl.band,'主控台',c?c.name+(c.model?' ('+c.model+')':''):'']),'',csvRow(CL_HEAD),...rows.map(csvRow)];
   download(`${fname()}_ChannelList.csv`,new Blob(['﻿'+out.join('\r\n')],{type:'text/csv;charset=utf-8'}));
 }
 function clPrintHTML(){
-  const rows=clTable(), cl=doc.cl, c=clCon();
+  const rows=clTable(), cl=CL(), c=clCon();
   return `<table><tr><th>演出活動</th><td>${esc(cl.event)}</td><th>演出日期</th><td>${esc(cl.date)}</td></tr><tr><th>演出樂團</th><td>${esc(cl.band)}</td><th>主控台</th><td>${esc(c?c.name+(c.model?'（'+c.model+'）':''):'')}</td></tr></table>`
     +`<table><tr>${CL_HEAD.map(t=>`<th>${t}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((v,j)=>`<td>${j<2?'<b>'+esc(v)+'</b>':esc(v)}</td>`).join('')}</tr>`).join('')}</table>`;
 }
 function clPrint(){
-  const cl=doc.cl; if(!cl.rows.length){ toast('清單是空的'); return; }
+  const cl=CL(); if(!cl.rows.length){ toast('清單是空的'); return; }
   $('#print-area').innerHTML=`<h1>${esc((cl.band?cl.band+' ':'')+'Stage Channel List')}</h1><div class="pdate">${esc(doc.name)} · ${new Date().toLocaleString('zh-TW')}</div>`+clPrintHTML();
   setTimeout(()=>window.print(),50);
 }
@@ -3923,6 +4141,167 @@ function applyLibW(){ document.documentElement.style.setProperty('--libw',clamp(
   rz.addEventListener('pointerup',end); rz.addEventListener('pointercancel',end);
   rz.addEventListener('dblclick',()=>{ settings.libW=236; applyLibW(); save(); });
 })();
+
+/* =========================================================
+   內部路由編輯（雙擊裝置）：放大的裝置方框拉線，或矩陣打勾
+   ========================================================= */
+const rte={id:null,view:'box',arm:null};
+let rteDrag=null;
+const rtAble=n=>!!n&&n.ports.some(a=>isSrcP(a)&&n.ports.some(b=>isDstP(b)&&b!==a));
+function openRt(id){
+  const n=getNode(id); if(!rtAble(n)){ toast('這台裝置只有輸入或只有輸出，不需要內部路由'); return; }
+  closeFloating(); cancelWireArm(); rte.id=id; rte.arm=null; $('#rte').hidden=false; renderRt();
+}
+function closeRt(){ $('#rte').hidden=true; rte.id=null; rte.arm=null; rteDrag=null; }
+// on：true 加入、false 刪除、undefined 切換
+function rtToggle(n,a,b,on){
+  if(!n) return; const has=rtHas(n,a,b); if(on===has){ renderRt(); return; }
+  const pa=getPort(n,a), pb=getPort(n,b); if(!pa||!pb||(pa===pb&&pa.dir!=='io')||!isSrcP(pa)||!isDstP(pb)) return;
+  edit(()=>{ if(has) n.rt=n.rt.filter(r=>!(r[0]===a&&r[1]===b)); else (n.rt||(n.rt=[])).push([a,b]); });
+}
+function rtLink(n,a,b){
+  const sP=a.side==='s'?a.p:b.p, dP=a.side==='s'?b.p:a.p;
+  rtToggle(n,sP,dP,true);
+}
+const RW=660, RH=24, RT=62, RX=250;
+function rtBoxSVG(n,T,srcs,dsts){
+  const rows=Math.max(srcs.length,dsts.length,1), H=RT+rows*RH+16, col=nodeColor(n), xs=RX, xd=RW-RX, rt=n.rt||[];
+  const yS=new Map(srcs.map((p,i)=>[p.id,RT+i*RH+RH/2])), yD=new Map(dsts.map((p,i)=>[p.id,RT+i*RH+RH/2]));
+  let s=`<svg id="rte-svg" viewBox="0 0 ${RW} ${H}" width="${RW}" style="max-width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">`;
+  s+=`<clipPath id="rte-clip"><rect x="1" y="1" width="${RW-2}" height="${H-2}" rx="12"/></clipPath><rect x="1" y="1" width="${RW-2}" height="${H-2}" rx="12" fill="${T.node}"/>`;
+  s+=`<g clip-path="url(#rte-clip)"><rect width="${RW}" height="40" fill="${col}" fill-opacity="${T.headA}"/><rect width="${RW}" height="3" fill="${col}"/></g><rect x="1" y="1" width="${RW-2}" height="${H-2}" rx="12" fill="none" stroke="${T.stroke}"/>`;
+  s+=`<text x="16" y="27" font-size="15" font-weight="700" fill="${T.text}">${esc(n.icon)} ${esc(ell(n.name+(n.model?' · '+n.model:''),RW-40,'700 15px'))}</text>`;
+  s+=`<text x="18" y="${RT-8}" font-size="11" font-weight="700" fill="${T.dim}">進來（輸入、雙向）${srcs.length}</text><text x="${RW-18}" y="${RT-8}" text-anchor="end" font-size="11" font-weight="700" fill="${T.dim}">出去（輸出、雙向）${dsts.length}</text>`;
+  for(const [a,b] of rt){
+    const y1=yS.get(a), y2=yD.get(b), pa=getPort(n,a), pb=getPort(n,b); if(y1==null||y2==null||!pa||!pb) continue;
+    const mx=(xs+xd)/2, d=`M${xs} ${y1}C${mx} ${y1} ${mx} ${y2} ${xd} ${y2}`;
+    s+=`<g class="rtw" data-a="${a}" data-b="${b}"><title>${esc(pa.name)} → ${esc(pb.name)}（點一下刪除）</title><path d="${d}" stroke="transparent" stroke-width="12" fill="none"/><path class="rtv" d="${d}" stroke="${sc(pa.sig,T)}" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>`;
+  }
+  const row=(p,side,y)=>{
+    const arm=rte.arm&&rte.arm.side===side&&rte.arm.p===p.id, used=rt.some(r=>side==='s'?r[0]===p.id:r[1]===p.id), tag=CONN[p.conn]?.s||'';
+    const nm=esc(ell(p.name,RX-80,'12px')), x=side==='s'?xs:xd;
+    return `<g class="rtrow" data-side="${side}" data-p="${p.id}" data-y="${y}"><rect class="rtbg" x="${side==='s'?8:xd-6}" y="${y-RH/2+1}" width="${RX-2}" height="${RH-2}" rx="6" fill="${arm?T.selBg:'transparent'}"${arm?` stroke="${T.sel}"`:''}/>`
+      +(side==='s'?`<text x="18" y="${y+4}" font-size="12" fill="${T.text}">${nm}<tspan dx="6" font-size="9.5" font-weight="600" fill="${T.dim}">${esc(tag)}</tspan></text>`
+        :`<text x="${RW-18}" y="${y+4}" font-size="12" text-anchor="end" fill="${T.text}"><tspan font-size="9.5" font-weight="600" fill="${T.dim}">${esc(tag)}</tspan><tspan dx="6">${nm}</tspan></text>`)
+      +dotSVG(x,y,p,T,used,{},'')+'</g>';
+  };
+  srcs.forEach(p=>s+=row(p,'s',yS.get(p.id))); dsts.forEach(p=>s+=row(p,'d',yD.get(p.id)));
+  return s+`<g id="rte-tmp" pointer-events="none"></g></svg>`;
+}
+function rtMatrix(n,srcs,dsts){
+  const on=new Set((n.rt||[]).map(r=>r[0]+'>'+r[1]));
+  let h=`<div class="rtm-wrap"><table class="rtm"><thead><tr><th class="rtm-c">進 ＼ 出</th>${dsts.map(p=>`<th title="${esc(p.name)}"><span>${esc(p.name)}</span></th>`).join('')}</tr></thead><tbody>`;
+  h+=srcs.map(a=>`<tr><th title="${esc(a.name)}">${esc(a.name)}</th>${dsts.map(b=>`<td data-a="${a.id}" data-b="${b.id}" title="${esc(a.name)} → ${esc(b.name)}"${on.has(a.id+'>'+b.id)?' class="on">●':'>'}</td>`).join('')}</tr>`).join('');
+  return h+'</tbody></table></div>';
+}
+function renderRt(){
+  const n=getNode(rte.id); if(!n||!rtAble(n)){ closeRt(); return; }
+  const T=theme(), srcs=n.ports.filter(isSrcP), dsts=n.ports.filter(isDstP), k=(n.rt||[]).length;
+  $('#rte-t').innerHTML=`⇄ 內部路由 · ${esc(n.icon)} ${esc(n.name)}`;
+  $$('#rte-tabs [data-rtv]').forEach(b=>b.classList.toggle('on',b.dataset.rtv===rte.view));
+  let h=`<div class="rte-hint">${rte.view==='box'?'左邊是訊號<b>進來</b>的接口，右邊是訊號<b>出去</b>的接口（雙向接口兩邊都有）。從左邊拖曳到右邊，或先點一邊再點另一邊，就能建立路由；點一下路由線可刪除。AES50、Dante 等雙向接口可以接回自己（訊號從這個接口進來、處理後再從同一個接口送回去）。':'每一列是訊號進來的接口，每一欄是出去的接口；點格子打勾或取消。'}`
+    +(k?` 目前 ${k} 條路由。`:' <b>目前沒有設定</b>：訊號追蹤會把所有輸入視為通往所有輸出。')+` 主畫面上的路由線可用工具列切換「正常／半透明／不顯示」。</div>`;
+  h+=rte.view==='box'?rtBoxSVG(n,T,srcs,dsts):rtMatrix(n,srcs,dsts);
+  const b=$('#rte-body'), st=b.scrollTop; b.innerHTML=h; b.scrollTop=st;
+}
+(()=>{
+  const rb=$('#rte-body');
+  rb.addEventListener('pointerdown',e=>{
+    const n=getNode(rte.id); if(!n||e.button!==0) return;
+    const w=e.target.closest('.rtw'); if(w){ rtToggle(n,w.dataset.a,w.dataset.b,false); return; }
+    const row=e.target.closest('.rtrow'); if(!row){ if(rte.arm&&e.target.closest('#rte-svg')){ rte.arm=null; renderRt(); } return; }
+    e.preventDefault();
+    const me={side:row.dataset.side,p:row.dataset.p};
+    if(rte.arm&&rte.arm.side!==me.side){ const a=rte.arm; rte.arm=null; rtLink(n,a,me); return; }
+    rteDrag={...me,y0:+row.dataset.y,cx:e.clientX,cy:e.clientY,moved:false};
+    try{ rb.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  rb.addEventListener('pointermove',e=>{
+    const d=rteDrag; if(!d) return;
+    if(!d.moved&&Math.hypot(e.clientX-d.cx,e.clientY-d.cy)<5) return; d.moved=true;
+    const svg=$('#rte-svg'), g=$('#rte-tmp'); if(!svg||!g) return;
+    const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse()), x0=d.side==='s'?RX:RW-RX;
+    g.innerHTML=`<path d="M${x0} ${d.y0}L${pt.x} ${pt.y}" stroke="${theme().sel}" stroke-width="2.2" stroke-dasharray="6 4" fill="none"/>`;
+  });
+  const up=e=>{
+    const d=rteDrag; rteDrag=null; if(!d) return; const n=getNode(rte.id); if(!n) return;
+    try{ rb.releasePointerCapture(e.pointerId); }catch(_){}
+    if(d.moved){
+      const g=$('#rte-tmp'); if(g) g.innerHTML='';
+      const el=document.elementFromPoint(e.clientX,e.clientY), row=el&&el.closest&&el.closest('.rtrow');
+      if(row&&row.dataset.side!==d.side) rtLink(n,d,{side:row.dataset.side,p:row.dataset.p});
+      return;
+    }
+    rte.arm=rte.arm&&rte.arm.side===d.side&&rte.arm.p===d.p?null:{side:d.side,p:d.p}; renderRt();
+  };
+  rb.addEventListener('pointerup',up); rb.addEventListener('pointercancel',()=>{ rteDrag=null; const g=$('#rte-tmp'); if(g) g.innerHTML=''; });
+  rb.addEventListener('click',e=>{ const td=e.target.closest('td[data-a]'); if(td) rtToggle(getNode(rte.id),td.dataset.a,td.dataset.b); });
+  $('#rte').addEventListener('click',e=>{
+    if(e.target===$('#rte')||e.target.closest('[data-close]')){ closeRt(); return; }
+    const v=e.target.closest('[data-rtv]'); if(v){ rte.view=v.dataset.rtv; rte.arm=null; renderRt(); return; }
+    const a=e.target.closest('[data-ra]'), n=getNode(rte.id); if(!a||!n) return;
+    if(a.dataset.ra==='clear'){ if((n.rt||[]).length) edit(()=>{ n.rt=[]; }); return; }
+    // 同編號一對一：優先用編號接口（In 1…、Out 1…）
+    const ins=n.ports.filter(p=>p.dir==='in'), outs=n.ports.filter(p=>p.dir==='out');
+    const S=ins.some(p=>p.grp==='in')?ins.filter(p=>p.grp==='in'):ins, D=outs.some(p=>p.grp==='out')?outs.filter(p=>p.grp==='out'):outs, add=[];
+    for(const p of S){ const k=pnum(p.name), q=k&&D.find(x=>pnum(x.name)===k); if(q&&!rtHas(n,p.id,q.id)) add.push([p.id,q.id]); }
+    if(!add.length){ toast('找不到還沒設定的同編號輸入與輸出'); return; }
+    edit(()=>{ (n.rt||(n.rt=[])).push(...add); }); toast(`已加入 ${add.length} 條同編號路由`);
+  });
+})();
+
+/* =========================================================
+   聚光燈逐步導覽（第一次開啟時顯示；工具列「教學」可再看一次）
+   ========================================================= */
+const TOUR=[
+  {t:'歡迎使用音訊 Routing 設計器',b:'接下來用一分鐘介紹主要功能。按「下一步」或鍵盤 → 繼續，Esc 可以隨時離開；之後按右上角的「教學」可以再看一次，「?」是完整說明。'},
+  {el:'#top .seg[title="切換畫面"]',t:'三個畫面',b:'☰ Channel List 是控台輸入軌道表，⇄ 訊號流程畫接線，🗺 場地配置擺器材並估算線長。三個畫面共用同一份資料。'},
+  {el:'#lib',t:'裝置庫',b:'TSL 器材、園區器材、品牌型號、通用、活動臨時五個分頁。點一下加入畫布，或拖曳到想放的位置；清單沒有的器材可以「＋ 新增自訂器材」。'},
+  {el:'#stage',t:'拉線',b:'從接口的圓點拖曳到另一台裝置的接口，或點一下接口、再點目標。拉到空白處放開會開快速新增；雙擊空白處也能新增裝置。'},
+  {el:()=>$$('#Ln .node').find(g=>{ const n=getNode(g.dataset.node); return n&&rtAble(n); })||$('#stage'),t:'雙擊裝置：內部路由',b:'雙擊裝置會打開它的內部路由，設定哪個輸入走到哪個輸出（例如介面 In 1 → Out 3）。可以在放大的方框裡拖曳拉線，或切到「矩陣」打勾。'},
+  {el:'#rvseg',t:'內部路由的顯示方式',b:'主畫面上，裝置方框裡的路由線可以選「正常」「半透明」或「不顯示」。畫面線很多時，切成半透明或不顯示會比較清楚。'},
+  {el:'[data-tog="trace"]',t:'訊號追蹤',b:'開啟後選一台裝置、一條線，或點一下某個接口，只會亮起真正走得到的那一路。有設定內部路由的裝置會照路由追，不會整台全亮。快捷鍵 T。'},
+  {el:'#side',t:'屬性面板',b:'選取裝置後，在這裡改名稱、型號、I/O 數量與來源；也可以「★ 設為主控台」、開它的 Channel List，或編輯內部路由。'},
+  {el:'[data-mode="clist"]',t:'Channel List 與主控台',b:'Channel List 預設顯示主控台的清單。FOH、Monitor 等多台控台可以各有一份清單，用清單上方的分頁切換；清單和訊號流程（含內部路由）會同步。'},
+  {el:'[data-mode="venue"]',t:'場地配置',b:'選 C-LAB 場地平面圖，把裝置擺上去，就會依距離與高度估算每條線的長度，並對照線材庫存。'},
+  {el:'[data-cmd="reports"]',t:'報表與存檔',b:'📋 報表有連線表、輸入／輸出表、線材與器材清單。內容會自動存在這台電腦的瀏覽器；要備份或給別人，用「檔案 → 儲存 JSON」。'},
+  {el:'[data-cmd="tour"]',t:'導覽結束',b:'想再看一次就按這個「教學」按鈕。'},
+];
+let tourI=-1;
+function startTour(){
+  closeFloating(); cancelWireArm(); $$('.modal-wrap').forEach(m=>m.hidden=true);
+  if(isCList()||isVenue()) setMode('flow');
+  tourI=0; $('#tour').hidden=false; showTourStep();
+}
+function endTour(){ $('#tour').hidden=true; tourI=-1; try{ localStorage.setItem(KEY+'.tour','1'); }catch(e){} }
+function tourGo(d){ const j=tourI+d; if(j<0) return; if(j>=TOUR.length){ endTour(); return; } tourI=j; showTourStep(); }
+function tourRect(st){
+  const el=typeof st.el==='function'?st.el():st.el?$(st.el):null; if(!el) return null;
+  const r=el.getBoundingClientRect();
+  return r.width<4||r.height<4||r.right<8||r.left>innerWidth-8||r.bottom<8||r.top>innerHeight-8?null:r;
+}
+function showTourStep(){
+  const st=TOUR[tourI], r=tourRect(st), sp=$('#tour-spot'), cd=$('#tour-card'), pad=6, M=10;
+  cd.querySelector('.tc-step').textContent=`${tourI+1} / ${TOUR.length}`;
+  cd.querySelector('.tc-t').textContent=st.t; cd.querySelector('.tc-b').textContent=st.b;
+  cd.querySelector('[data-tr="prev"]').disabled=tourI===0;
+  cd.querySelector('[data-tr="next"]').textContent=tourI===TOUR.length-1?'完成':'下一步';
+  sp.classList.toggle('none',!r);
+  let R=null;
+  if(r){ const x=Math.max(4,r.left-pad), y=Math.max(4,r.top-pad); R={x,y,w:Math.min(innerWidth-4,r.right+pad)-x,h:Math.min(innerHeight-4,r.bottom+pad)-y}; Object.assign(sp.style,{left:R.x+'px',top:R.y+'px',width:R.w+'px',height:R.h+'px'}); }
+  else Object.assign(sp.style,{left:innerWidth/2+'px',top:innerHeight/2+'px',width:'0px',height:'0px'});
+  const cw=cd.offsetWidth, ch=cd.offsetHeight; let cx,cy;
+  if(!R||(R.w>innerWidth*.55&&R.h>innerHeight*.55)){ cx=(innerWidth-cw)/2; cy=R?R.y+R.h/2-ch/2:(innerHeight-ch)/2; }
+  else if(R.y+R.h+M+ch<innerHeight-8){ cx=R.x; cy=R.y+R.h+M; }
+  else if(R.y-M-ch>8){ cx=R.x; cy=R.y-M-ch; }
+  else if(R.x+R.w+M+cw<innerWidth-8){ cx=R.x+R.w+M; cy=R.y+16; }
+  else if(R.x-M-cw>8){ cx=R.x-M-cw; cy=R.y+16; }
+  else { cx=(innerWidth-cw)/2; cy=innerHeight-ch-16; }
+  cd.style.left=clamp(cx,8,Math.max(8,innerWidth-cw-8))+'px'; cd.style.top=clamp(cy,8,Math.max(8,innerHeight-ch-8))+'px';
+  cd.querySelector('[data-tr="next"]').focus({preventScroll:true});
+}
+$('#tour').addEventListener('click',e=>{ const b=e.target.closest('[data-tr]'); if(!b) return; const a=b.dataset.tr; if(a==='skip') endTour(); else tourGo(a==='next'?1:-1); });
+addEventListener('resize',()=>{ if(!$('#tour').hidden) showTourStep(); });
 
 /* =========================================================
    templates
@@ -4037,6 +4416,7 @@ function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show')
   renderCanvas=function(){ origCanvas(); if($('#empty').dataset.dismissed) $('#empty').hidden=true; };
   if(!loaded) view={x:60,y:60,k:1};
   applyView();
+  try{ if(!localStorage.getItem(KEY+'.tour')) setTimeout(()=>{ if($('#tour').hidden) startTour(); },600); }catch(e){}
 })();
 </script>
 </body>
