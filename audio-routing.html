@@ -356,6 +356,20 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
 .cust-row{display:grid;grid-template-columns:88px 1fr;gap:8px;align-items:center;margin-bottom:8px}
 .cust-row>span{color:var(--dim);font-size:12px}
 
+/* ── 整體介面縮放（畫布用自己的縮放，不套 CSS zoom） ── */
+#top,#lib,#side,#clv,#zoombar,#st,.modal-wrap,#ctx,#qa,#tip,#toast,#tour-card{zoom:var(--uiz,1)}
+#status{height:calc(26px*var(--uiz,1))}
+#st{display:flex;align-items:center;gap:16px;flex:1;min-width:0;overflow:hidden}
+#uiz{display:flex;align-items:center;gap:5px;flex-shrink:0;color:var(--dim);font-size:11.5px}
+#uiz input{width:104px;height:14px;accent-color:var(--accent);cursor:pointer}
+#uiz button{border:0;background:none;color:inherit;cursor:pointer;font-size:11.5px;min-width:36px;text-align:right;padding:0}
+#uiz button:hover{color:var(--text)}
+.hint a{color:var(--accent);cursor:pointer}
+/* ── 圖面資訊 ── */
+.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+#meta-pv{margin-top:10px}
+#meta-pv img{display:block;max-width:100%;max-height:360px;margin:0 auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+@media (max-width:640px){ .meta-grid{grid-template-columns:1fr} #uiz input{width:64px} #uiz>span{display:none} }
 #print-area{display:none}
 @media print{
   @page{size:A4 landscape;margin:10mm}
@@ -369,6 +383,8 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   #print-area table{width:100%;border-collapse:collapse;margin-bottom:10px}
   #print-area th,#print-area td{border:1px solid #bbb;padding:3px 5px;text-align:left;font-size:8.5pt;color:#000;background:#fff;position:static}
   #print-area .pb{page-break-before:always}
+  #print-area .meta-t td{width:25%}
+  #print-area .meta-t td.k{color:#555;width:12%}
   #print-area .rep-tools,#print-area select{display:none}
   #print-area .lv,#print-area .chip{color:#000!important;background:none!important}
 }
@@ -450,7 +466,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   <aside id="side"><div id="side-body"></div></aside>
 </div>
 
-<footer id="status"></footer>
+<footer id="status"><div id="st"></div><div id="uiz" title="整體介面縮放：工具列、側欄、面板、文字與畫布一起放大縮小"><span>介面</span><input type="range" id="uiz-r" min="60" max="160" step="5" value="100" aria-label="整體介面縮放"><button id="uiz-v" title="回到 100%">100%</button></div></footer>
 
 <div id="tip"></div>
 <div id="ctx" class="menu" hidden></div>
@@ -468,6 +484,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
         <button data-tab="io">輸入／輸出表</button>
         <button data-tab="cables">線材清單</button>
         <button data-tab="gear">器材清單</button>
+        <button data-tab="hs" title="演出途中要插拔、換接的線與裝置">演中插拔</button>
         <button data-tab="issues">檢查</button>
       </div>
       <div class="grow"></div>
@@ -488,7 +505,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <ul>
         <li><b>新增裝置</b>：從左側裝置庫點選或拖曳；也可以在畫布空白處<b>雙擊</b>或按 <kbd>A</kbd> 開啟快速新增。</li>
         <li><b>設定 I/O</b>：選取裝置後，在右側面板用「輸入／輸出」數量調整 In／Out 數，並可統一設定接頭與訊號類型；「＋ 加入接口」可加 USB、Dante、ADAT、MIDI、耳機輸出等。</li>
-        <li><b>拉線</b>：從接口圓點拖曳到另一個接口；或<b>點一下</b>接口，線會跟著游標，再點一下要接的接口即可（點空白處會開快速新增，<kbd>Esc</kbd> 或右鍵取消）。場地配置也一樣：點一下裝置外圈，再點另一台裝置。輸出可以接到多個輸入（會提示需要 Y 線）；輸入只能有一個來源，接新的會取代舊的。</li>
+        <li><b>拉線</b>：從接口圓點拖曳到另一個接口；或<b>點一下</b>接口，線會跟著游標，再點一下要接的接口即可（點空白處會開快速新增，<kbd>Esc</kbd> 或右鍵取消）。場地配置也一樣：點一下裝置外圈，再點另一台裝置。輸出可以接到多個輸入（會提示需要 Y 線）；輸入只能有一個來源，接新的會取代舊的（標成「演中插拔」的線例外，見下方）。</li>
         <li><b>改接／拔線</b>：從已接線的「輸入端」拖曳即可把線拔起來改接，放到空白處就是拔除。</li>
         <li><b>拉到空白處</b>：從輸出拉線放開在空白處，會跳出快速新增，選好裝置後自動接上最適合的接口。</li>
         <li><b>雙向接口</b>（USB、網路、AES50 等）兩側都有接點，線會自動走較近的一邊。</li>
@@ -502,6 +519,15 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
         <li>「同編號一對一」會一次加入 In 1 → Out 1、In 2 → Out 2…；「全部清除」回到未設定。可以用 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原。</li>
         <li>主畫面上的路由線用工具列 <b>⇄ 路由／半透明／不顯示</b> 切換。畫面線很多時用半透明或不顯示比較清楚。</li>
         <li>沒有設定內部路由的裝置，訊號追蹤時視為「所有輸入都通往所有輸出」。</li>
+      </ul>
+      <h3>演中插拔（演出途中換接）</h3>
+      <ul>
+        <li>演出途中要插拔或換接的線，例如介面這段演完要改接下一台電腦：<b>右鍵那條線 →「⇆ 標示為演中插拔」</b>（或在右側面板勾選），線會變成橘色虛線並標上「第 1 段」。</li>
+        <li>接著從下一台電腦<b>拉另一條線到同一個接口</b>：因為原本的線是演中插拔，不會被取代，兩條線並存，新的自動標成「第 2 段」。依此類推可以有第 3、4 段。</li>
+        <li>段落文字可以在右側面板改成自己的說法，例如「A 團」「20:10 換場」「Mac B」。面板也會列出同一個接口的其他段，點一下就能跳過去。</li>
+        <li>裝置也可以標示：選取裝置，右側面板勾「⇆ 演中插拔」並填時機（例如「第二段才上場」），方框上方會出現橘色標籤；右鍵選單也有同樣的選項。</li>
+        <li><b>📋 報表 →「演中插拔」</b>列出每個切換點、每一段接到哪裡與線材編號，可匯出 CSV 或列印給現場人員；「列印全部」也會附上這張切換表。檢查清單會用「提示」列出有幾個切換對象。</li>
+        <li>線材數量會把每一段的線都算進去（各自備一條線）。</li>
       </ul>
       <h3>Channel List（軌道表）</h3>
       <ul>
@@ -525,7 +551,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
         <li>左側「TSL 器材」分頁是臺灣聲響實驗室器材清單（2025.12.31 版）；「園區器材」依場地列出各展演空間的現有設備（手冊 202408 版）。右邊數字是「已用／數量」，用超過會變紅；把某場地的設備拿到別的場地用也會提醒。</li>
         <li>「品牌型號」分頁的接口依原廠規格建立（例如 X32、WING、dLive、MIPRO 無線系統）；無線發射器和接收機不同系列會被標成不相容。</li>
         <li>標示「型號待確認」的品項（Focusrite Red、MOTU MK5）是依名稱推測的型號，接口可在右側面板自行修改。</li>
-        <li>TSL 器材也有 DAD CORE256（Thunderbolt／Dante／MADI 介面路由器）；它的內部路由可以雙擊設定。</li>
+        <li>TSL 器材也有 DAD CORE256：Thunderbolt 3 ×2（256 ch）、Dante NET 1／NET 2（48 kHz 256 ch、96 kHz 128 ch、192 kHz 64 ch）、MADI BNC 進出（64 ch）、ADAT 2 進 2 出（16 ch）、WC／VBB 進、WC 出、Expansion SFP ×2（MADI 或 DADLink 模組，選配）。它的內部路由可以雙擊設定。舊專案裡已放好的 CORE256 要按右側面板「重設為預設接口」才會換成新的接口。</li>
       </ul>
       <h3>活動臨時器材、自訂器材、來源標註</h3>
       <ul>
@@ -552,6 +578,17 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
         <li>在空白處拖曳可框選；<kbd>Shift</kbd>＋點擊可加選。</li>
         <li><b>物件對齊</b>：拖曳時會自動對齊其他裝置、區域框或家具的邊緣與中心，並顯示粉紅色參考線；按住 <kbd>Alt</kbd> 暫時關閉，或用工具列的「物件對齊」切換。</li>
         <li><b>區域框</b>可標示舞台、FOH、機櫃等位置；拖曳框的標題列會連同框內裝置一起移動（按住 <kbd>Alt</kbd> 只移動框）。</li>
+      </ul>
+      <h3>匯出與圖面資訊</h3>
+      <ul>
+        <li><b>檔案 → 圖面資訊…</b>（或沒選取物件時右側面板的「圖面資訊」）可填活動名稱、節目／演出者、主辦單位、場地、演出日期與時間、進場／彩排、音控／技術負責、製圖人、聯絡方式、版本、製圖日期與備註。</li>
+        <li>沒填的欄位會自動帶入：活動名稱與日期取自 Channel List，場地取自場地選單，製圖日期是匯出當天。製圖人與聯絡方式會記在這台電腦，下一個專案自動帶入。</li>
+        <li>匯出 PNG／SVG 與列印時，圖上方會有標題（活動名稱）與副標（節目・場地・日期時間），下方有<b>圖面資訊欄</b>與<b>圖例</b>（用到的線色、演中插拔、器材來源）。兩者都可以在視窗裡關掉；按「預覽」可以先看匯出的樣子。</li>
+      </ul>
+      <h3>介面縮放</h3>
+      <ul>
+        <li>畫面右下角狀態列的 <b>介面</b> 滑桿可以把整個介面放大或縮小（60%–160%）：工具列、左右側欄、面板、Channel List、選單與畫布一起縮放。點百分比數字回到 100%。設定會記在這台電腦。</li>
+        <li>只想放大畫布內容時，用畫布右下角的 − ＋ 或滾輪即可。</li>
       </ul>
       <h3>快捷鍵</h3>
       <p><kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原　<kbd>Ctrl</kbd>+<kbd>Y</kbd> 重做　<kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> 複製貼上　<kbd>Ctrl</kbd>+<kbd>D</kbd> 再製　<kbd>Ctrl</kbd>+<kbd>A</kbd> 全選　<kbd>Del</kbd> 刪除　<kbd>方向鍵</kbd> 微調（<kbd>Shift</kbd> ×10）　<kbd>F</kbd> 顯示全部　<kbd>T</kbd> 訊號追蹤　<kbd>雙擊裝置</kbd> 內部路由　<kbd>Ctrl</kbd>+<kbd>S</kbd> 儲存檔案</p>
@@ -581,6 +618,13 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   <div class="modal">
     <div class="m-head"><b id="cust-t">新增自訂器材</b><div class="grow"></div><button class="x" data-close>✕</button></div>
     <div class="m-body" id="cust-body"></div>
+  </div>
+</div>
+
+<div id="meta" class="modal-wrap" hidden>
+  <div class="modal">
+    <div class="m-head"><b>圖面資訊（匯出標示）</b><div class="grow"></div><button class="x" data-close title="關閉 (Esc)">✕</button></div>
+    <div class="m-body" id="meta-body"></div>
   </div>
 </div>
 
@@ -657,11 +701,11 @@ const CONN={
   MIDI:{l:'MIDI 5-pin',s:'DIN'}, DB25:{l:'DB25',s:'DB25'}, RF:{l:'無線 RF',s:'RF'}, BT:{l:'藍牙',s:'BT'},
   HDMI:{l:'HDMI',s:'HDMI'}, SDI:{l:'SDI',s:'SDI'},
   TNC:{l:'TNC 天線',s:'TNC'}, MXLR4:{l:'Mini XLR 4-pin',s:'mXLR4'}, TA3:{l:'TA3 (Mini XLR 3)',s:'TA3'}, MDOT:{l:'DPA MicroDot',s:'μDot'},
-  EURO:{l:'歐式端子 Phoenix',s:'Euro'}, DIN6:{l:'6-pin DIN',s:'DIN6'}, DB9:{l:'DB9 (RS-232)',s:'DB9'}, DP:{l:'DisplayPort',s:'DP'}, XLR5:{l:'XLR 5-pin (DMX)',s:'XLR5'}, SLOT:{l:'擴充卡槽',s:'SLOT'},
+  EURO:{l:'歐式端子 Phoenix',s:'Euro'}, DIN6:{l:'6-pin DIN',s:'DIN6'}, DB9:{l:'DB9 (RS-232)',s:'DB9'}, DP:{l:'DisplayPort',s:'DP'}, XLR5:{l:'XLR 5-pin (DMX)',s:'XLR5'}, SLOT:{l:'擴充卡槽',s:'SLOT'}, SFP:{l:'SFP 模組（LC 光纖／HD-BNC）',s:'SFP'},
 };
 const CABLE_NAME={XLR:'XLR 線',TRS:'TRS 線',TS:'TS 導線',MINI:'3.5mm 線',RCA:'RCA 線',SPK:'speakON 喇叭線',BIND:'喇叭線',
   USBC:'USB-C 線',USBB:'USB-B 線',USBA:'USB-A 線',TB:'Thunderbolt 線',RJ45:'網路線 (CAT)',ECON:'etherCON 網路線',OPT:'光纖線',
-  BNC:'BNC 同軸線',MIDI:'MIDI 線',DB25:'DB25 多芯線',HDMI:'HDMI 線',SDI:'SDI 線'};
+  BNC:'BNC 同軸線',SFP:'SFP 光纖／同軸線（依模組）',MIDI:'MIDI 線',DB25:'DB25 多芯線',HDMI:'HDMI 線',SDI:'SDI 線'};
 // 接頭不同但只是「一條對應的線」，不需提示
 const CABLE_EQ=[['USBC','USBB','USBA','TB'],['RJ45','ECON'],['SPK','BIND']];
 // 不需要實體線材的連接（無線、藍牙、插卡）
@@ -833,7 +877,7 @@ const MODELS=[
   ['midas_dl16','mix','🧰','Midas','DL16','數位舞台箱','','in|16*In|XLR|micline;out|8*Out|XLR|line;io|AES50 A,AES50 B|ECON|aes50;out|ADAT Out 1,ADAT Out 2|OPT|adat;out|ULTRANET|RJ45|ultranet;'+MIDI_IO,'dl16 midas stagebox aes50'],
   ['kt_dn100','mix','📦','Klark Teknik','DN100','主動 DI','need','in|Input|TS|inst;out|Link|TS|inst;out|Out|XLR|mic','dn100 di box active'],
   // ── 錄音介面 ──
-  ['dad_core256','mix','🔌','DAD (Digital Audio Denmark)','CORE256','Thunderbolt／Dante／MADI 介面路由器','','io|Thunderbolt 1,Thunderbolt 2|TB|tb|ch=256×256;io|Dante Pri,Dante Sec|RJ45|net|ch=256×256;in|MADI In|BNC|madi|ch=64;out|MADI Out|BNC|madi|ch=64;in|ADAT In 1,ADAT In 2|OPT|adat;out|ADAT Out 1,ADAT Out 2|OPT|adat;in|Word Clock In|BNC|clock;out|Word Clock Out|BNC|clock;io|擴充模組（MADI SFP／DADLink）|SLOT|card','dad core256 core 256 digital audio denmark ntp dadman thunderbolt dante madi atmos 介面 路由'],
+  ['dad_core256','mix','🔌','DAD (Digital Audio Denmark)','CORE256','Thunderbolt／Dante／MADI／ADAT 介面路由器（內部矩陣、SPQ 喇叭 EQ、64 bus Summing）','','io|Thunderbolt 1,Thunderbolt 2|TB|tb|ch=256×256;io|NET 1 Dante Pri,NET 2 Dante Sec|RJ45|net|ch=256×256;in|MADI In|BNC|madi|ch=64;out|MADI Out|BNC|madi|ch=64;in|ADAT In 1,ADAT In 2|OPT|adat|ch=8;out|ADAT Out 1,ADAT Out 2|OPT|adat|ch=8;in|WC/VBB In|BNC|clock;out|WC Out|BNC|clock;io|Expansion SFP 1,Expansion SFP 2|SFP|madi|ch=64×64','dad core256 core 256 digital audio denmark ntp dadman thunderbolt dante madi adat sfp dadlink pro mon spq atmos 介面 路由'],
   ['ssl_2p','mix','🔌','Solid State Logic','SSL 2+','錄音介面','','in|In 1,In 2|COMBO|micline;out|Out 1 L,Out 2 R|TRS|line;out|Out 1 RCA,Out 2 RCA,Out 3 RCA,Out 4 RCA|RCA|line;out|Phones A,Phones B|TRS|hp;'+MIDI_IO+';io|USB-C|USBC|usb|ch=2×4','ssl2+ ssl 2 plus interface 介面'],
   ['focus_red8','mix','🔌','Focusrite','Red 8Pre（Red Pre Dante，型號待確認）','錄音介面','','in|8*Mic In|XLR|micline;in|Inst 1,Inst 2|TS|inst;in|Line In 1-8,Line In 9-16|DB25|line;out|Line Out 1-8,Line Out 9-16|DB25|line;out|Monitor L,Monitor R|TRS|line;out|Phones 1,Phones 2|TRS|hp;in|ADAT In 1,ADAT In 2|OPT|adat;out|ADAT Out 1,ADAT Out 2|OPT|adat;in|S/PDIF In|RCA|spdif;out|S/PDIF Out|RCA|spdif;io|Dante Pri,Dante Sec|RJ45|net|ch=32×32;io|Thunderbolt|TB|tb;in|WC In|BNC|clock;out|WC Out|BNC|clock','focusrite red dante interface'],
   ['ant_orion32','mix','🔌','Antelope Audio','Orion 32+','錄音介面','','in|In 1-8,In 9-16,In 17-24,In 25-32|DB25|line;out|Out 1-8,Out 9-16,Out 17-24,Out 25-32|DB25|line;out|Monitor L,Monitor R|TRS|line;in|ADAT In 1,ADAT In 2|OPT|adat;out|ADAT Out 1,ADAT Out 2|OPT|adat;in|MADI In|OPT|madi;out|MADI Out|OPT|madi;in|S/PDIF In|RCA|spdif;out|S/PDIF Out|RCA|spdif;io|USB|USBB|usb|ch=32×32;io|Thunderbolt|TB|tb|ch=64×64;in|WC In|BNC|clock;out|WC Out|BNC|clock','orion antelope madi interface'],
@@ -1061,7 +1105,7 @@ const INV=[
   ['tsl-ssl2p','tsl','SSL 錄音介面','SSL 2+',1,'ssl_2p'],
   ['tsl-red','tsl','Focusrite 錄音介面','Red Pre Dante',1,'focus_red8','','型號待確認'],
   ['tsl-orion','tsl','Orion 錄音介面','Orion 32+',1,'ant_orion32'],
-  ['tsl-dadcore','tsl','DAD 介面路由器','DAD CORE256',1,'dad_core256','','使用者 2026-10-08 補充；ADAT 埠數與選配模組待確認'],
+  ['tsl-dadcore','tsl','DAD 介面路由器','DAD CORE256',1,'dad_core256','','使用者 2026-10-08 補充；接口依原廠背板照片（ADAT 2 進 2 出）；Expansion SFP 是否裝了 MADI／DADLink 模組待確認'],
   ['tsl-mixpre','tsl','Sound Devices 錄音介面','MixPre 10 II',1,'sd_mixpre10'],
   ['tsl-motu','tsl','MOTU 錄音介面','MK5',2,'motu_ul5','','其中一台家輝；型號待確認'],
   ['tsl-oxy25','tsl','MIDI 鍵盤','M-AUDIO Oxygen25',1,'maudio_oxy25'],
@@ -1378,9 +1422,11 @@ const TH={
 const SRC={tsl:{l:'TSL',full:'TSL 器材',c:'#3b82f6'},venue:{l:'場地',full:'場地設備',c:'#10b981'},byo:{l:'自備',full:'來者自備',c:'#f59e0b'}};
 const srcBadge=k=>SRC[k]?`<span class="srcb" style="background:${SRC[k].c}2e;color:${SRC[k].c}">${SRC[k].l}</span>`:'';
 const KEY='audioRouting.v1';
+const META_F=[['event','活動名稱','例如 2026 跨維論壇'],['program','節目／演出者','例如 樂團、講者、場次'],['org','主辦／製作單位',''],['venue','場地',''],['date','演出日期','例如 2026/10/10（六）'],['time','演出時間','例如 19:30–21:00'],
+  ['loadin','進場／彩排','例如 13:00 進場、17:00 彩排'],['engineer','音控／技術負責',''],['author','製圖人',''],['contact','聯絡方式','電話或 Email'],['rev','版本','例如 v1、Rev.A'],['drawn','製圖日期','']];
 let doc=sanitize({name:'未命名專案'});
 let view={x:60,y:60,k:1};
-const settings={wire:'curve',snap:true,osnap:true,libW:236,labels:true,arrows:true,trace:false,rtView:'dim',theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv'};
+const settings={wire:'curve',snap:true,osnap:true,libW:236,labels:true,arrows:true,trace:false,rtView:'dim',theme:'',mode:'flow',vroute:'manhattan',measure:false,libTab:'inv',uiZ:100};
 let sel={n:new Set(),w:new Set(),z:new Set(),f:new Set(),i:new Set()};
 let undoS=[],redoS=[],pendingSnap=null;
 let compatCache=new Map(), issues=[], cablePlan={rows:[],summary:[]};
@@ -1575,6 +1621,35 @@ function rtNorm(n,list){
   }
   return out;
 }
+// 圖面資訊（匯出 PNG／SVG／列印時的標題與資訊欄）
+function cleanMeta(m){ m=m&&typeof m==='object'?m:{}; const o={}; META_F.forEach(([k])=>o[k]=String(m[k]??'')); o.note=String(m.note??''); o.block=m.block!==false; o.legend=m.legend!==false; return o; }
+function metaDef(k){
+  const cl=CL()||{};
+  if(k==='event') return cl.event||(doc.name&&doc.name!=='未命名專案'?doc.name:'');
+  if(k==='program') return cl.band||'';
+  if(k==='date') return cl.date||'';
+  if(k==='venue') return doc.venues.map(venueName).join('、');
+  if(k==='drawn') return new Date().toLocaleDateString('zh-TW');
+  return '';
+}
+const metaV=k=>String(doc.meta[k]||'').trim()||metaDef(k);
+// 演中插拔：w.hs／n.hs 標示演出途中會插拔、換接；同一個接口可以並存多條演中插拔的線（第 1 段、第 2 段…）
+const HS_C='#f97316', HS_DASH='10 4 2 4';
+const onEnd=(w,e)=>(w.a.n===e.n&&w.a.p===e.p)||(w.b.n===e.n&&w.b.p===e.p);
+function hsPortWires(n,p){ return doc.wires.filter(w=>w.hs&&onEnd(w,{n,p})); }
+// 切換點：和其他演中插拔線共用的那一端（沒有共用時算目的端）
+function hsPoint(w){ for(const e of [w.b,w.a]) if(doc.wires.some(x=>x!==w&&x.hs&&onEnd(x,e))) return e; return w.b; }
+function hsAutoLabel(w){ const e=hsPoint(w); return '第 '+Math.max(1,hsPortWires(e.n,e.p).filter(x=>x!==w).length+1)+' 段'; }
+function hsGroups(){
+  const m=new Map();
+  for(const w of doc.wires){
+    if(!w.hs) continue; const E=ends(w); if(!E) continue;
+    const e=hsPoint(w), k=e.n+'|'+e.p, n=getNode(e.n);
+    const g=m.get(k)||{n,p:getPort(n,e.p),ws:[]};
+    g.ws.push({w,on:e===w.b?E.na:E.nb,op:e===w.b?E.pa:E.pb,lab:w.hsl||'未標段落'}); m.set(k,g);
+  }
+  const L=[...m.values()]; L.forEach(g=>g.ws.sort((a,b)=>a.lab.localeCompare(b.lab,'zh-Hant',{numeric:true}))); return L;
+}
 function sanitize(d){
   const out={name:String(d.name||'未命名專案'),nodes:[],wires:[],zones:[],furn:[],images:[],venue:String(d.venue||''),vcal:(d.vcal&&typeof d.vcal==='object')?d.vcal:{},
     vopt:Object.assign({slack:10,ends:1},d.vopt||{}),customVenue:d.customVenue&&d.customVenue.img?d.customVenue:null,
@@ -1585,12 +1660,12 @@ function sanitize(d){
     if(!n||!n.id) continue;
     const T=TYPES[n.type]?n.type:'custom';
     out.nodes.push({id:String(n.id),type:T,icon:(n.icon==='📡'&&TYPES[T].icon==='🎤')?'🎤':(n.icon||TYPES[T].icon),src:SRC[n.src]?n.src:'',name:String(n.name??''),model:String(n.model??''),loc:String(n.loc??''),ph:n.ph||'',color:n.color||'',
-      w:clamp(+n.w||210,140,480),notes:String(n.notes??''),flip:!!n.flip,x:+n.x||0,y:+n.y||0,inv:INVM.has(n.inv)?n.inv:'',vx:num(n.vx),vy:num(n.vy),vz:num(n.vz),vv:n.vv?String(n.vv):(num(n.vx)!=null?out.venue:''),
+      w:clamp(+n.w||210,140,480),notes:String(n.notes??''),flip:!!n.flip,hs:!!n.hs,hsl:String(n.hsl??''),x:+n.x||0,y:+n.y||0,inv:INVM.has(n.inv)?n.inv:'',vx:num(n.vx),vy:num(n.vy),vz:num(n.vz),vv:n.vv?String(n.vv):(num(n.vx)!=null?out.venue:''),
       ports:(Array.isArray(n.ports)?n.ports:[]).filter(p=>p&&p.id).map(p=>({id:String(p.id),dir:['in','out','io'].includes(p.dir)?p.dir:'in',name:String(p.name??''),conn:CONN[p.conn]?p.conn:'XLR',sig:SIG[p.sig]?p.sig:'line',ch:String(p.ch??''),p48:!!p.p48,grp:p.grp||'',sys:p.sys?String(p.sys):''}))});
     const x=out.nodes[out.nodes.length-1]; x.rt=rtNorm(x,n.rt);
   }
   const has=(r)=>{ const n=out.nodes.find(x=>x.id===r?.n); return n&&n.ports.some(p=>p.id===r.p); };
-  for(const w of (Array.isArray(d.wires)?d.wires:[])) if(w&&has(w.a)&&has(w.b)) out.wires.push({id:String(w.id||uid()),a:{n:w.a.n,p:w.a.p},b:{n:w.b.n,p:w.b.p},label:String(w.label??''),len:String(w.len??''),cable:String(w.cable??''),color:w.color||'',note:String(w.note??'')});
+  for(const w of (Array.isArray(d.wires)?d.wires:[])) if(w&&has(w.a)&&has(w.b)) out.wires.push({id:String(w.id||uid()),a:{n:w.a.n,p:w.a.p},b:{n:w.b.n,p:w.b.p},label:String(w.label??''),len:String(w.len??''),cable:String(w.cable??''),color:w.color||'',note:String(w.note??''),hs:!!w.hs,hsl:String(w.hsl??'')});
   for(const z of (Array.isArray(d.zones)?d.zones:[])) if(z) out.zones.push({id:String(z.id||uid()),kind:z.kind==='text'?'text':'frame',title:String(z.title??''),x:+z.x||0,y:+z.y||0,w:+z.w||400,h:+z.h||300,color:z.color||'',fs:+z.fs||18,note:String(z.note??'')});
   for(const im of (Array.isArray(d.images)?d.images:[])) if(im&&im.a) out.images.push({id:String(im.id||uid()),m:im.m==='venue'?'venue':'flow',vv:String(im.vv||''),x:+im.x||0,y:+im.y||0,w:Math.max(.05,+im.w||1),h:Math.max(.05,+im.h||1),ar:+im.ar||((+im.w||1)/(+im.h||1)),a:String(im.a),name:String(im.name??''),op:clamp(+(im.op??1),.05,1),lock:!!im.lock,front:!!im.front,crop:cropOf(im.crop)});
   const okN=id=>!!id&&out.nodes.some(n=>n.id===id);
@@ -1602,6 +1677,7 @@ function sanitize(d){
   if(!out.cls.length) out.cls=[cleanCL({})];
   out.clI=clamp(Math.round(+d.clI||0),0,out.cls.length-1);
   out.main=okN(d.main)?String(d.main):(d.main===''?'':out.cls[0].console);
+  out.meta=cleanMeta(d.meta);
   for(const f of (Array.isArray(d.furn)?d.furn:[])) if(f&&FURN[f.k]) out.furn.push({id:String(f.id||uid()),k:f.k,vv:String(f.vv||''),x:+f.x||0,y:+f.y||0,w:clamp(+f.w||FURN[f.k].w,.05,30),d:clamp(+f.d||FURN[f.k].d,.05,30),h:clamp(+f.h||0,0,20),rot:+f.rot||0,label:String(f.label??''),inv:INVM.has(f.inv)?f.inv:''});
   return out;
 }
@@ -1748,6 +1824,7 @@ function analyze(){
   const away=new Map();
   [...doc.nodes,...doc.furn].forEach(x=>{ const it=x.inv&&INVM.get(x.inv); if(it&&it.owner&&x.vv&&!it.owner.includes(x.vv)){ const k=it.id+'|'+x.vv; const a=away.get(k)||{it,vv:x.vv,c:0,n:x.ports?x.id:null}; a.c++; away.set(k,a); } });
   for(const a of away.values()) issues.push({lv:2,n:a.n,where:`${a.it.item}・${venueShort(a.vv)}`,m:`「${a.it.item}」是${venueShort(a.it.owner[0])}的場地設備，目前有 ${a.c} 件放在${venueShort(a.vv)}，需要先跟場地借用`});
+  for(const g of hsGroups()) if(g.ws.length>1) issues.push({lv:1,w:g.ws[0].w.id,where:`${g.n.name}・${g.p.name}`,m:`演中插拔：這個接口有 ${g.ws.length} 個切換對象（${g.ws.map(x=>x.lab+' '+x.on.name).join('、')}），演出中需要換線`});
   cablePlan=planCables();
   cablePlan.summary.filter(s=>s.short).forEach(s=>issues.push({lv:1,where:'線材庫存',m:`${s.name} ${s.len}m 需要 ${s.need} 條，庫存 ${s.stock} 條（缺 ${s.short}）`}));
   const noStock=cablePlan.rows.filter(r=>r.need!=null&&!r.kind);
@@ -1802,6 +1879,7 @@ function nodeSVG(n,T,o){
   s+=rtSVG(n,T,o,Ly);
   const cb=conBadge(n);
   if(cb){ const bw=tw(cb.t,'700 10px')+14; s+=`<g transform="translate(0 -21)"><rect width="${bw}" height="16" rx="5" fill="${cb.c}" fill-opacity="${cb.main?1:.18}"/><text x="7" y="11.6" font-size="10" font-weight="700" fill="${cb.main?'#fff':cb.c}">${esc(cb.t)}</text></g>`; }
+  if(n.hs){ const t=ell('⇆ 演中插拔'+(n.hsl?'：'+n.hsl:''),Math.max(120,w+40),'700 10px'), x0=cb?tw(cb.t,'700 10px')+18:0, bw=tw(t,'700 10px')+14; s+=`<g transform="translate(${x0} -21)"><rect width="${bw}" height="16" rx="5" fill="${HS_C}"/><text x="7" y="11.6" font-size="10" font-weight="700" fill="#fff">${esc(t)}</text></g>`; }
   s+=`<rect width="${w}" height="${h}" rx="8" fill="none" stroke="${isSel?T.sel:T.stroke}" stroke-width="${isSel?1.6:1}"/>`;
   s+=`<text x="12" y="30" font-size="18">${esc(n.icon||'⬜')}</text>`;
   const sk=srcOf(n), sT=SRC[sk], sW=sT?tw(sT.l,'700 9.5px')+10:0;
@@ -1827,19 +1905,24 @@ function wireSVG(w,T,o){
   const E=ends(w); if(!E) return '';
   const P=pathOf(E.A,E.B,settings.wire), fam=(SIG[E.pa.sig]||SIG.line).fam;
   const cn=[E.pa.conn,E.pb.conn], col=w.color||sc(E.pa.sig,T);
-  const dash=cn.includes('RF')||cn.includes('BT')?' stroke-dasharray="7 5"':cn.includes('SLOT')?' stroke-dasharray="2 4"':'';
+  const dash=w.hs?` stroke-dasharray="${HS_DASH}"`:cn.includes('RF')||cn.includes('BT')?' stroke-dasharray="7 5"':cn.includes('SLOT')?' stroke-dasharray="2 4"':'';
   const isSel=!o.exp&&sel.w.has(w.id), dim=o.tr&&!o.tr.w.has(w.id), cp=compatCache.get(w.id)||{lv:0};
-  let s=`<g class="wire" data-w="${w.id}"${dim?' opacity="0.12"':''}>`;
+  let s=`<g class="wire${w.hs?' hs':''}" data-w="${w.id}"${dim?' opacity="0.12"':''}>`;
   if(!o.exp) s+=`<path class="whit" d="${P.d}" fill="none" stroke="transparent" stroke-width="14"/>`;
   if(isSel) s+=`<path d="${P.d}" fill="none" stroke="${T.sel}" stroke-width="8" stroke-opacity=".3" stroke-linecap="round"/>`;
   s+=`<path class="wvis" d="${P.d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="round"${dash}/>`;
   const txt=settings.labels?[w.label,w.len?w.len+'m':''].filter(Boolean).join(' · '):'';
   const bad=cp.lv>=2;
-  if(settings.arrows&&!isIoWire(E)){ const m=P.at(txt||bad?.78:.5); s+=`<path d="M-5 -4.5L4.5 0L-5 4.5Z" fill="${col}" transform="translate(${m.x} ${m.y}) rotate(${m.a*180/Math.PI})"/>`; }
+  if(settings.arrows&&!isIoWire(E)){ const m=P.at(txt||bad||w.hs?.78:.5); s+=`<path d="M-5 -4.5L4.5 0L-5 4.5Z" fill="${col}" transform="translate(${m.x} ${m.y}) rotate(${m.a*180/Math.PI})"/>`; }
   let tW=0;
   if(txt){ const m=P.at(.5); tW=tw(txt,'600 10.5px')+14; s+=`<g transform="translate(${m.x} ${m.y})"><rect x="${-tW/2}" y="-9" width="${tW}" height="18" rx="9" fill="${T.pill}" stroke="${col}"/><text y="3.6" text-anchor="middle" font-size="10.5" font-weight="600" fill="${T.text}">${esc(txt)}</text></g>`; }
   if(bad){ const m=P.at(.5), bx=m.x-(txt?tW/2+11:0); const bc=cp.lv>=3?T.danger:T.warn; s+=`<g transform="translate(${bx} ${m.y})"><circle r="8" fill="${bc}"/><text y="4" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">!</text></g>`; }
+  if(w.hs) s+=hsPill(P.at(txt||bad?.26:.5),w);
   return s+'</g>';
+}
+function hsPill(m,w,sm){
+  const t=ell('⇆ '+(w.hsl||'演中插拔'),150,'700 10px'), bw=tw(t,'700 10px')+12, h=sm?15:17;
+  return `<g transform="translate(${m.x} ${m.y})"><rect x="${-bw/2}" y="${-h/2}" width="${bw}" height="${h}" rx="${h/2}" fill="${HS_C}"/><text y="3.5" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${esc(t)}</text></g>`;
 }
 function zoneSVG(z,T,o){
   const isSel=!o.exp&&sel.z.has(z.id);
@@ -1929,6 +2012,7 @@ function markerSVG(n,T,o){
   const col=nodeColor(n), isSel=!o.exp&&sel.n.has(n.id), dim=o.tr&&!o.tr.n.has(n.id), r=13;
   let s=`<g class="node vnode" data-node="${n.id}" transform="translate(${n.vx*VS},${n.vy*VS})"${dim?' opacity=".2"':''}>`;
   if(!o.exp) s+=`<circle class="vh" r="${r+8}" fill="transparent" stroke="${isSel?T.sel:'transparent'}" stroke-width="2" stroke-dasharray="3 3"/>`;
+  if(n.hs) s+=`<circle r="${r+4.5}" fill="none" stroke="${HS_C}" stroke-width="1.8" stroke-dasharray="4 3"><title>演中插拔${n.hsl?'：'+esc(n.hsl):''}</title></circle>`;
   s+=`<circle r="${r}" fill="${T.node}" stroke="${isSel?T.sel:col}" stroke-width="${isSel?3:2.2}"/>`;
   s+=`<text y="5.5" text-anchor="middle" font-size="14">${esc(n.icon)}</text>`;
   const sT=SRC[srcOf(n)]; if(sT) s+=`<circle cx="${r*.78}" cy="${-r*.78}" r="4.5" fill="${sT.c}" stroke="${T.node}" stroke-width="1.5"><title>${sT.full}</title></circle>`;
@@ -1947,9 +2031,9 @@ function vwireLayer(T,o){
     const pts=settings.vroute==='direct'?[A,B]:[A,{x:B.x,y:A.y},B];
     const d='M'+pts.map(p=>p.x+' '+p.y).join('L');
     const col=w.color||sc(E.pa.sig,T), cn=[E.pa.conn,E.pb.conn];
-    const dash=cn.includes('RF')||cn.includes('BT')?' stroke-dasharray="7 5"':cn.includes('SLOT')?' stroke-dasharray="2 4"':'';
+    const dash=w.hs?` stroke-dasharray="${HS_DASH}"`:cn.includes('RF')||cn.includes('BT')?' stroke-dasharray="7 5"':cn.includes('SLOT')?' stroke-dasharray="2 4"':'';
     const isSel=!o.exp&&sel.w.has(w.id), dim=o.tr&&!o.tr.w.has(w.id), cp=compatCache.get(w.id)||{lv:0};
-    s+=`<g class="wire" data-w="${w.id}"${dim?' opacity=".12"':''}>`;
+    s+=`<g class="wire${w.hs?' hs':''}" data-w="${w.id}"${dim?' opacity=".12"':''}>`;
     if(!o.exp) s+=`<path class="whit" d="${d}" fill="none" stroke="transparent" stroke-width="12"/>`;
     if(isSel) s+=`<path d="${d}" fill="none" stroke="${T.sel}" stroke-width="7" stroke-opacity=".3"/>`;
     s+=`<path class="wvis" d="${d}" fill="none" stroke="${col}" stroke-width="2"${dash}/>`;
@@ -1960,6 +2044,7 @@ function vwireLayer(T,o){
       const tW=tw(txt,'600 10px')+12, bc=r.short?T.danger:col;
       s+=`<g transform="translate(${m.x} ${m.y})"><rect x="${-tW/2}" y="-8.5" width="${tW}" height="17" rx="8.5" fill="${T.pill}" stroke="${bc}"/><text y="3.5" text-anchor="middle" font-size="10" font-weight="600" fill="${r.short?T.danger:T.text}">${esc(txt)}</text></g>`;
     } else if(cp.lv>=2){ const m=polyAt(pts,.5); s+=`<g transform="translate(${m.x} ${m.y})"><circle r="7" fill="${cp.lv>=3?T.danger:T.warn}"/><text y="3.5" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">!</text></g>`; }
+    if(w.hs) s+=hsPill(polyAt(pts,.22),w,true);
     s+='</g>';
   });
   return s;
@@ -2305,8 +2390,8 @@ function pairCands(aId,bId){
     const o=orient({n:x.id,p:p.id},{n:y.id,p:q.id}); if(!o||o[0].n!==x.id||o[0].p!==p.id) continue;
     if(doc.wires.some(w=>w.a.n===x.id&&w.a.p===p.id&&w.b.n===y.id&&w.b.p===q.id)) continue;
     const r=compat(p,q,x,y,null); if(r.lv>=3) continue;
-    const busy=wiresOfPort(y.id,q.id).length>0&&q.dir!=='out', srcUsed=wiresOfPort(x.id,p.id).length>0;
-    out.push({src:{n:x.id,p:p.id},dst:{n:y.id,p:q.id},lv:r.lv,busy,srcUsed,label:`${p.name} → ${y.name}・${q.name}`});
+    const qw=wiresOfPort(y.id,q.id), busy=qw.length>0&&q.dir!=='out'&&!qw.every(w=>w.hs), hsAlt=qw.length>0&&q.dir!=='out'&&!busy, srcUsed=wiresOfPort(x.id,p.id).length>0;
+    out.push({src:{n:x.id,p:p.id},dst:{n:y.id,p:q.id},lv:r.lv,busy,hsAlt,srcUsed,label:`${p.name} → ${y.name}・${q.name}`});
   }
   out.sort((p,q)=>(p.busy-q.busy)||(p.srcUsed-q.srcUsed)||(p.lv-q.lv));
   return out;
@@ -2316,7 +2401,7 @@ function showPairMenu(aId,bId,cx,cy){
   if(!c.length){ toast(`「${a.name}」和「${b.name}」之間沒有可以相接的接口`); return; }
   const dot=['','·提示','·注意'];
   const items=[['#'+a.name+' ⇄ '+b.name+'：選擇要接的接口']];
-  c.slice(0,18).forEach(x=>items.push([`${getNode(x.src.n).name}・${x.label}${x.busy?'（取代原連線）':''}${dot[x.lv]||''}`,'',()=>{ pushUndo(snapshot()); connectRaw(x.src,x.dst); renderAll(); }]));
+  c.slice(0,18).forEach(x=>items.push([`${getNode(x.src.n).name}・${x.label}${x.busy?'（取代原連線）':x.hsAlt?'（演中插拔：下一段）':''}${dot[x.lv]||''}`,'',()=>{ pushUndo(snapshot()); connectRaw(x.src,x.dst); renderAll(); }]));
   if(c.length>18) items.push(['#還有 '+(c.length-18)+' 組，請到訊號流程畫面接線']);
   showMenu(cx,cy,items);
 }
@@ -2346,15 +2431,18 @@ function dirOk(a,b){ if(a.dir==='out') return b.dir!=='out'; if(a.dir==='in') re
 function connectRaw(s,t){
   const sp=getPort(getNode(s.n),s.p), tp=getPort(getNode(t.n),t.p);
   if(doc.wires.some(w=>w.a.n===s.n&&w.a.p===s.p&&w.b.n===t.n&&w.b.p===t.p)) return null;
-  let rep=0;
+  let rep=0, kept=null;
   doc.wires=doc.wires.filter(w=>{
     const hitT=(w.b.n===t.n&&w.b.p===t.p)||(tp.dir==='io'&&w.a.n===t.n&&w.a.p===t.p);
     const hitS=sp.dir==='io'&&((w.a.n===s.n&&w.a.p===s.p)||(w.b.n===s.n&&w.b.p===s.p));
-    if(hitT||hitS){ rep++; return false; } return true;
+    // 演中插拔的線不取代：新的線並存，成為下一段
+    if(hitT||hitS){ if(w.hs){ kept=kept||(hitT?t:s); return true; } rep++; return false; } return true;
   });
-  const w={id:uid(),a:{n:s.n,p:s.p},b:{n:t.n,p:t.p},label:'',len:'',cable:'',color:'',note:''};
+  const w={id:uid(),a:{n:s.n,p:s.p},b:{n:t.n,p:t.p},label:'',len:'',cable:'',color:'',note:'',hs:false,hsl:''};
+  if(kept){ w.hs=true; w.hsl='第 '+(hsPortWires(kept.n,kept.p).length+1)+' 段'; }
   doc.wires.push(w);
-  if(rep) toast('已取代原本的連線');
+  if(kept) toast(`已加入演中插拔的切換連線（${w.hsl}），原本的線保留`);
+  else if(rep) toast('已取代原本的連線');
   return w;
 }
 function setCount(n,g,val){
@@ -2645,7 +2733,8 @@ function startWire(ph,e,pt){
   const before=snapshot(); let anchor={n:nid,p:pid,side:ph.dataset.s}, picked=null;
   if(p.dir!=='out'&&!e.altKey){
     const ex=wiresOfPort(nid,pid);
-    if(ex.length){ picked=ex[0]; const other=(picked.a.n===nid&&picked.a.p===pid)?picked.b:picked.a; doc.wires=doc.wires.filter(w=>w!==picked); anchor={n:other.n,p:other.p,side:null}; }
+    // 切換點（接口上都是演中插拔的線）：從這裡拖曳是再拉一條新的，不拔起原本的線
+    if(ex.length&&!ex.every(w=>w.hs)){ picked=ex.find(w=>!w.hs); const other=(picked.a.n===nid&&picked.a.p===pid)?picked.b:picked.a; doc.wires=doc.wires.filter(w=>w!==picked); anchor={n:other.n,p:other.p,side:null}; }
   }
   const an=getNode(anchor.n), ap=getPort(an,anchor.p);
   const cand=new Set();
@@ -2690,7 +2779,7 @@ function finishWire(d,e){
   $('#Lt').innerHTML=''; hideTip();
   if(d.target){
     const o=orient(d.anchor,d.target);
-    if(o){ connectRaw(o[0],o[1]); pushUndo(d.before); }
+    if(o){ const nw=connectRaw(o[0],o[1]); if(nw&&d.picked&&d.picked.hs){ nw.hs=true; nw.hsl=d.picked.hsl; } pushUndo(d.before); }
     else if(d.picked) pushUndo(d.before);
   } else if(d.picked){ pushUndo(d.before); toast('已拔除連線'); }
   else {
@@ -2789,7 +2878,7 @@ cv.addEventListener('contextmenu',e=>{
     items=[['編輯','',()=>{ openSide(); focusField('[data-ff="label"]'); }],['再製','Ctrl+D',dupSel],['旋轉 90°','R',()=>rotSel(90)],['-'],['刪除','Del',delSel,'danger']];
   } else if(isVenue()&&ng){
     const id=ng.dataset.node; if(!sel.n.has(id)){ selectOnly('n',id); renderAll(); }
-    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],['複製一台並放在旁邊','Ctrl+D',dupSel],['從場地移除（保留在流程圖）','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)){ n.vx=null; n.vy=null; n.vv=''; } }))],['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['-'],['刪除裝置','Del',delSel,'danger']];
+    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],[getNode(id).hs?'取消演中插拔標示':'⇆ 標示為演中插拔','',()=>hsToggleNodes(id)],['複製一台並放在旁邊','Ctrl+D',dupSel],['從場地移除（保留在流程圖）','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)){ n.vx=null; n.vy=null; n.vv=''; } }))],['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['-'],['刪除裝置','Del',delSel,'danger']];
   } else if(isVenue()&&!wg){
     items=[['在這裡新增裝置…','雙擊',()=>openQA(e.clientX,e.clientY,pt,null)],['顯示全部','F',fitView]];
   } else if(ng){
@@ -2797,12 +2886,13 @@ cv.addEventListener('contextmenu',e=>{
     const nn=getNode(id), extra=[];
     if(rtAble(nn)) extra.push(['⇄ 內部路由…','雙擊',()=>openRt(id)]);
     if(nn.ports.some(p=>p.dir==='in')&&doc.main!==id) extra.push(['★ 設為主控台','',()=>setMain(id)]);
+    extra.push([nn.hs?'取消演中插拔標示':'⇆ 標示為演中插拔','',()=>hsToggleNodes(id)]);
     items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],...extra,['再製','Ctrl+D',dupSel],['複製','Ctrl+C',()=>copySel()],['左右翻轉','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)) n.flip=!n.flip; }))],
       ['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['用區域框框住','',()=>addZone('frame')],['-'],
       ['移除所有接線','',()=>edit(()=>{ doc.wires=doc.wires.filter(w=>!sel.n.has(w.a.n)&&!sel.n.has(w.b.n)); })],['刪除','Del',delSel,'danger']];
   } else if(wg){
     const id=wg.dataset.w; if(!sel.w.has(id)){ selectOnly('w',id); renderAll(); }
-    items=[['編輯線材','',()=>{ openSide(); focusField('[data-wf="label"]'); }],['選取來源裝置','',()=>{ const w=getWire(id); selectOnly('n',w.a.n); renderAll(); }],['選取目的裝置','',()=>{ const w=getWire(id); selectOnly('n',w.b.n); renderAll(); }],['-'],['刪除連線','Del',delSel,'danger']];
+    items=[['編輯線材','',()=>{ openSide(); focusField('[data-wf="label"]'); }],[getWire(id).hs?'取消演中插拔標示':'⇆ 標示為演中插拔','',()=>hsToggleWire(id)],['選取來源裝置','',()=>{ const w=getWire(id); selectOnly('n',w.a.n); renderAll(); }],['選取目的裝置','',()=>{ const w=getWire(id); selectOnly('n',w.b.n); renderAll(); }],['-'],['刪除連線','Del',delSel,'danger']];
   } else if(zg&&(t.closest('.zhit')||t.closest('.zres'))){
     const id=zg.dataset.z; if(!sel.z.has(id)){ selectOnly('z',id); renderAll(); }
     items=[['編輯','',()=>{ openSide(); focusField('[data-zf="title"]'); }],['移到最底層','',()=>edit(()=>{ const z=getZone(id); doc.zones=[z,...doc.zones.filter(x=>x!==z)]; })],['-'],['刪除','Del',delSel,'danger']];
@@ -2815,7 +2905,17 @@ cv.addEventListener('contextmenu',e=>{
 });
 
 /* ── tooltip ── */
-function showTip(e,h){ const t=$('#tip'); t.innerHTML=h; t.style.display='block'; const r=t.getBoundingClientRect(); let x=e.clientX+16, y=e.clientY+16; if(x+r.width>innerWidth-8) x=e.clientX-r.width-12; if(y+r.height>innerHeight-8) y=e.clientY-r.height-12; t.style.left=x+'px'; t.style.top=y+'px'; }
+function hsToggleWire(id){
+  const w=getWire(id); if(!w) return;
+  edit(()=>{ w.hs=!w.hs; if(w.hs&&!w.hsl) w.hsl=hsAutoLabel(w); });
+  toast(w.hs?`已標示為演中插拔（${w.hsl}）。再拉另一條線到同一個接口，會並存成下一段`:'已取消演中插拔標示');
+}
+function hsToggleNodes(id){
+  const on=!getNode(id).hs;
+  edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)||n.id===id) n.hs=on; }));
+  toast(on?'已標示為演中插拔；可在右側面板填寫時機（例如 第二段上場）':'已取消演中插拔標示');
+}
+function showTip(e,h){ const t=$('#tip'); t.innerHTML=h; t.style.display='block'; const r=t.getBoundingClientRect(); let x=e.clientX+16, y=e.clientY+16; if(x+r.width>innerWidth-8) x=e.clientX-r.width-12; if(y+r.height>innerHeight-8) y=e.clientY-r.height-12; t.style.left=x/UZ()+'px'; t.style.top=y/UZ()+'px'; }
 function hideTip(){ $('#tip').style.display='none'; cv.querySelectorAll('.wire.hl').forEach(x=>x.classList.remove('hl')); }
 function hoverTip(e){
   const t=e.target; if(!(t instanceof Element)) return hideTip();
@@ -2848,8 +2948,8 @@ function showMenu(x,y,items){
   m.innerHTML=items.map((it,i)=>it[0]==='-'?'<div class="msep"></div>':it[0].startsWith('#')?`<div class="mhead">${esc(it[0].slice(1))}</div>`:`<button class="mi${it[3]?' '+it[3]:''}" data-i="${i}"><span>${esc(it[0])}</span>${it[1]?`<kbd>${esc(it[1])}</kbd>`:''}</button>`).join('');
   m.hidden=false; m._items=items;
   const r=m.getBoundingClientRect();
-  m.style.left=Math.max(6,Math.min(x,innerWidth-r.width-6))+'px';
-  m.style.top=Math.max(6,Math.min(y,innerHeight-r.height-6))+'px';
+  m.style.left=Math.max(6,Math.min(x,innerWidth-r.width-6))/UZ()+'px';
+  m.style.top=Math.max(6,Math.min(y,innerHeight-r.height-6))/UZ()+'px';
 }
 $('#ctx').addEventListener('click',e=>{ const b=e.target.closest('.mi'); if(!b) return; const it=$('#ctx')._items[+b.dataset.i]; $('#ctx').hidden=true; it[2](); });
 function closeFloating(){ $('#ctx').hidden=true; closeQA(); }
@@ -2872,8 +2972,8 @@ function openQA(cx,cy,wpt,pending){
   const el=$('#qa'); el.hidden=false; $('#qa-in').value='';
   $('#qa-hint').textContent=pending?'選擇要接上的裝置（依相容性排序）':'在這裡新增裝置';
   renderQA();
-  el.style.left=Math.max(6,Math.min(cx,innerWidth-300))+'px';
-  el.style.top=Math.max(6,Math.min(cy,innerHeight-390))+'px';
+  const z=UZ(); el.style.left=Math.max(6,Math.min(cx,innerWidth-300*z))/z+'px';
+  el.style.top=Math.max(6,Math.min(cy,innerHeight-390*z))/z+'px';
   setTimeout(()=>$('#qa-in').focus(),0);
 }
 function closeQA(){ $('#qa').hidden=true; qa=null; }
@@ -2882,8 +2982,8 @@ function openPick(el,o){
   const r=el.getBoundingClientRect(); qa={wx:0,wy:0,pending:null,...o}; qaIdx=0;
   const q=$('#qa'); q.hidden=false; $('#qa-in').value=''; $('#qa-hint').textContent=o.title||'選擇裝置';
   renderQA();
-  q.style.left=Math.max(6,Math.min(r.left,innerWidth-300))+'px';
-  q.style.top=Math.max(6,Math.min(r.bottom+4,innerHeight-390))+'px';
+  const z=UZ(); q.style.left=Math.max(6,Math.min(r.left,innerWidth-300*z))/z+'px';
+  q.style.top=Math.max(6,Math.min(r.bottom+4,innerHeight-390*z))/z+'px';
   setTimeout(()=>$('#qa-in').focus(),0);
 }
 function renderQA(){
@@ -2997,6 +3097,8 @@ function panelNode(n){
   h+=fld('寬度',`<input type="range" min="150" max="420" step="10" data-nf="w" value="${n.w}">`);
   h+=`<label class="chk"><input type="checkbox" data-nf="flip"${n.flip?' checked':''}> 左右翻轉（輸入在右、輸出在左）</label>`;
   h+=fld('備註',`<textarea data-nf="notes" rows="2" placeholder="設定、場地備註…">${esc(n.notes)}</textarea>`);
+  h+=`<label class="chk"><input type="checkbox" data-nf="hs"${n.hs?' checked':''}> ⇆ 演中插拔（演出途中才接上、換下或改接）</label>`;
+  if(n.hs) h+=fld('時機',`<input data-nf="hsl" value="${esc(n.hsl)}" placeholder="例如 第二段上場、A 團演完換 B">`);
   if(n.inv){ const it=INVM.get(n.inv), u=invUsed(n.inv), sec=INV_SECS.find(s=>s.id===it?.sec); if(it) h+=`<div class="msg ${u>it.qty?'lv2':'lv1'}">${it.owner?'園區器材':sec&&sec.ev?(it.custom?'自訂器材':'活動臨時器材'):'TSL 器材'}：${esc(INV_SECS.find(s=>s.id===it.sec)?.name||'')}・${esc(it.item)}　共 ${it.qty}，已用 ${u}${u>it.qty?'（不足）':''}${it.owner&&n.vv&&!it.owner.includes(n.vv)?`<br>⚠ 這是${esc(venueShort(it.owner[0]))}的設備，目前放在${esc(venueShort(n.vv))}`:''}</div>`; }
   if(doc.venue||isVenue()){
     h+=secH('場地擺放');
@@ -3049,6 +3151,13 @@ function panelWire(w){
     h+=`<div class="kv">${pr.est!=null?`<b>估算</b><span>${fmtM(pr.est)}</span>`:''}${pr.manual?`<b>指定</b><span>${esc(w.len)} m</span>`:''}<b>庫存線材</b><span>${sk?esc(sk.name):'庫存中沒有這種線'}</span>${pr.pieces.length?`<b>建議使用</b><span class="${pr.short?'red':''}">${pieceTxt(pr)}${pr.pieces.length>1?'（需串接）':''}${pr.short?'・庫存不足':''}</span>`:''}</div>`;
     if(pr.est!=null&&pr.pieces.length&&!pr.manual) h+=`<div class="btns"><button class="btn" data-act="applylen" data-v="${pr.pieces.reduce((a,b)=>a+b,0)}">套用為線長 ${pr.pieces.reduce((a,b)=>a+b,0)} m</button></div>`;
   }
+  h+=secH('演中插拔');
+  h+=`<label class="chk"><input type="checkbox" data-wf="hs"${w.hs?' checked':''}> 這條線會在演出途中插拔／換接</label>`;
+  if(w.hs){
+    const e=hsPoint(w), en=getNode(e.n), ep=getPort(en,e.p), sib=hsPortWires(e.n,e.p).filter(x=>x!==w);
+    h+=fld('段落',`<input data-wf="hsl" value="${esc(w.hsl)}" placeholder="例如 第 1 段、A 團、20:10 換場">`);
+    h+=`<div class="hint">切換點：${esc(en.name)}・${esc(ep.name)}<br>${sib.length?'同一個接口的其他段：'+sib.map(x=>{ const o=onEnd(x,e)&&x.a.n===e.n&&x.a.p===e.p?x.b:x.a, on=getNode(o.n); return `<a data-act="selw" data-w="${x.id}">${esc(x.hsl||'未標段落')}・${esc(on?on.name:'')}</a>`; }).join('、'):'再從下一台裝置拉一條線到這個接口，兩條線會並存，新的自動標成下一段。'}</div>`;
+  } else h+=`<div class="hint">例如介面這段演完要改接下一台電腦：勾選後，再拉另一條線到同一個接口，原本的線不會被取代。</div>`;
   h+=secH('檢查');
   h+=r.msgs.length?r.msgs.map(m=>`<div class="msg lv${m.lv}">${['','提示','注意','錯誤'][m.lv]?`<b>${['','提示','注意','錯誤'][m.lv]}</b>　`:''}${esc(m.m)}</div>`).join(''):'<div class="msg lv0">✓ 訊號電平與接頭相容</div>';
   h+=`<div class="btns"><button class="btn danger" data-act="del">刪除連線</button></div>`;
@@ -3181,7 +3290,7 @@ function panelProject(){
   h+=`<div class="hint" style="margin-top:10px">接點形狀：● 類比　■ 數位／網路　◆ 無線</div>`;
   h+=secH('快速上手');
   h+=`<div class="keys">• 左側點選或拖曳裝置到畫布<br>• 從接口圓點<b>拖曳</b>到另一個接口即可拉線<br>• 拉線放在空白處 → 快速新增並自動接上<br>• 從已接線的輸入端拖曳 → 拔線改接<br>• 空白處<b>雙擊</b>或按 <kbd>A</kbd> 快速新增<br>• 滾輪縮放，<kbd>空白鍵</kbd>＋拖曳平移<br>• <kbd>Del</kbd> 刪除　<kbd>Ctrl</kbd>+<kbd>D</kbd> 再製　<kbd>F</kbd> 顯示全部</div>`;
-  h+=`<div class="btns" style="margin-top:12px"><button class="btn" data-act="help">完整說明</button><button class="btn" data-act="openrep" data-tab="patch">📋 報表</button></div>`;
+  h+=`<div class="btns" style="margin-top:12px"><button class="btn" data-act="help">完整說明</button><button class="btn" data-act="openrep" data-tab="patch">📋 報表</button><button class="btn" data-act="meta">🏷 圖面資訊</button></div>`;
   return h;
 }
 
@@ -3205,6 +3314,7 @@ function applyField(el){
     else p[f]=v;
   } else if(el.dataset.wf){
     const w=selWire(); if(!w) return; takeSnap(); w[el.dataset.wf]=v;
+    if(el.dataset.wf==='hs'&&v&&!w.hsl) w.hsl=hsAutoLabel(w);
     if(el.dataset.wf==='label'){ const t=$('#side .ph-title'); if(t) t.textContent=v||'連線'; }
   } else if(el.dataset.ff){
     const f=sel.f.size===1&&getFurn([...sel.f][0]); if(!f) return; takeSnap(); const k=el.dataset.ff;
@@ -3266,6 +3376,7 @@ side.addEventListener('click',e=>{
     case 'rtedit': openRt(n.id); break;
     case 'rtclear': edit(()=>{ n.rt=[]; }); break;
     case 'setmain': setMain(n.id); break;
+    case 'meta': openMeta(); break;
     case 'unmain': edit(()=>{ doc.main=''; }); break;
     case 'clopen': { let i=doc.cls.findIndex(c=>c.console===n.id); if(i<0){ edit(()=>{ i=clListFor(n.id,true); }); } openCList(i); break; }
     case 'iolist': repDev=n.id; openReports('io'); break;
@@ -3323,12 +3434,13 @@ function renderToolbar(){
 function renderStatus(){
   const warn=issues.filter(i=>i.lv===2).length, err=issues.filter(i=>i.lv===3).length;
   const chk=err||warn?`<button class="st-btn" data-st="issues">${err?`<span class="c-err">● ${err} 個錯誤</span> `:''}${warn?`<span class="c-warn">● ${warn} 個注意</span>`:''}</button>`:`<span class="c-ok">✓ 連線檢查正常</span>`;
-  if(isCList()){ const cl=CL(), c=clCon(); $('#status').innerHTML=`<span>Channel List ${cl.rows.length} 軌</span><span>控台：${c?esc(c.name)+(c.id===doc.main?' ★ 主控台':''):'未指定'}${doc.cls.length>1?`（共 ${doc.cls.length} 份清單）`:''}</span><span>同步：${CL_SYNC[cl.sync]}</span>${chk}<span class="grow"></span><span class="hide-m">⌖ 可以到訊號流程找出這一軌的裝置 · Ctrl+Z 復原</span>`; return; }
+  if(isCList()){ const cl=CL(), c=clCon(); $('#st').innerHTML=`<span>Channel List ${cl.rows.length} 軌</span><span>控台：${c?esc(c.name)+(c.id===doc.main?' ★ 主控台':''):'未指定'}${doc.cls.length>1?`（共 ${doc.cls.length} 份清單）`:''}</span><span>同步：${CL_SYNC[cl.sync]}</span>${chk}<span class="grow"></span><span class="hide-m">⌖ 可以到訊號流程找出這一軌的裝置 · Ctrl+Z 復原</span>`; return; }
   const v=isVenue()?`<span>本場地 ${doc.nodes.filter(placed).length} 台 · 已擺放 ${doc.nodes.filter(placedAny).length}/${doc.nodes.length}</span>`:`<span>裝置 ${doc.nodes.length}</span>`;
   const hint=isVenue()?'<span id="mread" class="hide-m"></span><span class="hide-m">拖曳或點一下裝置外圈，再到另一台裝置即可拉線 · 滾輪縮放 · 空白鍵＋拖曳平移</span>':'<span class="hide-m">拖曳或點一下接口拉線 · 雙擊空白處新增 · 滾輪縮放 · 空白鍵＋拖曳平移</span>';
-  $('#status').innerHTML=`${v}<span>連線 ${doc.wires.length}</span>${chk}<span class="grow"></span>${hint}`;
+  const hsN=doc.wires.filter(w=>w.hs).length+doc.nodes.filter(n=>n.hs).length;
+  $('#st').innerHTML=`${v}<span>連線 ${doc.wires.length}</span>${hsN?`<button class="st-btn" data-st="hs" style="color:${HS_C}">⇆ 演中插拔 ${hsN}</button>`:''}${chk}<span class="grow"></span>${hint}`;
 }
-$('#status').addEventListener('click',e=>{ if(e.target.closest('[data-st]')) openReports('issues'); });
+$('#st').addEventListener('click',e=>{ const b=e.target.closest('[data-st]'); if(b) openReports(b.dataset.st==='hs'?'hs':'issues'); });
 $('#projname').addEventListener('focus',()=>{ pendingSnap=snapshot(); });
 $('#projname').addEventListener('input',e=>{ takeSnap(); doc.name=e.target.value; save(); });
 $('#projname').addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
@@ -3371,7 +3483,7 @@ $('#top').addEventListener('click',e=>{
 $('#zoombar').addEventListener('click',e=>{ const b=e.target.closest('[data-cmd]'); if(b) cmd(b.dataset.cmd); });
 function fileMenu(){
   return [['新專案','',newProject],['開啟 JSON…','',()=>$('#fileIn').click()],['儲存 JSON','Ctrl+S',saveJSON],['-'],
-    ['匯出 PNG（目前配色）','',()=>exportPNG(themeName())],['匯出 PNG（白底）','',()=>exportPNG('light')],['匯出 SVG','',exportSVG],['匯出連線表 CSV','',()=>downloadCSV('patch')],['-'],['列印／存成 PDF','',printAll]];
+    ['🏷 圖面資訊（匯出標示）…','',openMeta],['匯出 PNG（目前配色）','',()=>exportPNG(themeName())],['匯出 PNG（白底）','',()=>exportPNG('light')],['匯出 SVG','',exportSVG],['匯出連線表 CSV','',()=>downloadCSV('patch')],['-'],['列印／存成 PDF','',printAll]];
 }
 function tplMenu(){ return [['#載入範例（會取代目前畫布，可復原）'],['🎸 樂團現場','',()=>loadTpl('band')],['🎙️ Podcast／直播','',()=>loadTpl('podcast')],['🏠 家用錄音室','',()=>loadTpl('home')]]; }
 
@@ -3492,7 +3604,7 @@ function patchRows(){
 function repPatch(print){
   const rows=patchRows(); if(!rows.length) return '<div class="rep-empty">還沒有任何連線</div>';
   return (print?'':`<div class="rep-tools"><button class="btn" data-ract="autonum">自動編號線材</button><span class="dim">共 ${rows.length} 條連線，點一列可在畫布上定位</span></div>`)+
-  `<table class="tbl"><thead><tr><th>#</th><th>編號</th><th>來源裝置</th><th>來源接口</th><th></th><th>目的裝置</th><th>目的接口</th><th>訊號</th><th>線材</th><th>長度</th><th>狀態</th><th>備註</th></tr></thead><tbody>${rows.map((r,i)=>{ const c=compatCache.get(r.w.id)||{lv:0}; return `<tr class="click" data-w="${r.w.id}"><td>${i+1}</td><td><b>${esc(r.w.label)}</b></td><td>${esc(r.E.na.name)}</td><td>${esc(r.E.pa.name)}</td><td class="dim">${isIoWire(r.E)?'⇄':'→'}</td><td>${esc(r.E.nb.name)}</td><td>${esc(r.E.pb.name)}</td><td>${sigChip(r.E.pa.sig)}</td><td>${esc(cableName(r.w,r.E))}</td><td class="num">${r.w.len?esc(r.w.len)+' m':''}</td><td>${lvChip(c.lv)}</td><td>${esc(r.w.note)}</td></tr>`; }).join('')}</tbody></table>`;
+  `<table class="tbl"><thead><tr><th>#</th><th>編號</th><th>來源裝置</th><th>來源接口</th><th></th><th>目的裝置</th><th>目的接口</th><th>訊號</th><th>線材</th><th>長度</th><th>狀態</th><th>備註</th></tr></thead><tbody>${rows.map((r,i)=>{ const c=compatCache.get(r.w.id)||{lv:0}; return `<tr class="click" data-w="${r.w.id}"><td>${i+1}</td><td><b>${esc(r.w.label)}</b></td><td>${esc(r.E.na.name)}</td><td>${esc(r.E.pa.name)}</td><td class="dim">${isIoWire(r.E)?'⇄':'→'}</td><td>${esc(r.E.nb.name)}</td><td>${esc(r.E.pb.name)}</td><td>${sigChip(r.E.pa.sig)}</td><td>${esc(cableName(r.w,r.E))}</td><td class="num">${r.w.len?esc(r.w.len)+' m':''}</td><td>${lvChip(c.lv)}</td><td>${r.w.hs?`<b style="color:${HS_C}">⇆ ${esc(r.w.hsl||'演中插拔')}</b> `:''}${esc(r.w.note)}</td></tr>`; }).join('')}</tbody></table>`;
 }
 function ioTables(n){
   const ins=n.ports.filter(p=>p.dir==='in'), outs=n.ports.filter(p=>p.dir==='out'), ios=n.ports.filter(p=>p.dir==='io');
@@ -3563,7 +3675,15 @@ function repIssues(){
   if(!issues.length) return '<div class="rep-empty">✓ 沒有發現問題</div>';
   return `<table class="tbl"><thead><tr><th>等級</th><th>說明</th><th>位置</th></tr></thead><tbody>${issues.map(i=>`<tr class="click"${i.w?` data-w="${i.w}"`:` data-n="${i.n}"`}><td>${lvChip(i.lv)}</td><td>${esc(i.m)}</td><td class="dim">${esc(i.where)}</td></tr>`).join('')}</tbody></table>`;
 }
-const REP={patch:repPatch,io:repIO,cables:repCables,gear:repGear,issues:repIssues};
+function repHS(){
+  const G=hsGroups(), ns=doc.nodes.filter(n=>n.hs);
+  if(!G.length&&!ns.length) return '<div class="rep-empty">還沒有標示演中插拔的連線或裝置<br><small>右鍵連線 →「⇆ 標示為演中插拔」，再從下一台裝置拉一條線到同一個接口，就會並存成第 2 段。</small></div>';
+  let h='';
+  if(G.length) h+=`<div class="rep-h">演中切換表（依切換點）</div><table class="tbl"><thead><tr><th>切換點（裝置・接口）</th><th>段落／時機</th><th>接到</th><th>線材編號</th><th>線材</th><th>備註</th></tr></thead><tbody>${G.map(g=>g.ws.map(x=>`<tr class="click" data-w="${x.w.id}"><td><b>${esc(g.n.name)}</b>・${esc(g.p.name)}</td><td><b style="color:${HS_C}">${esc(x.lab)}</b></td><td>${esc(x.on.name)}・${esc(x.op.name)}</td><td>${esc(x.w.label)}</td><td>${esc(cableName(x.w,ends(x.w)))}</td><td>${esc(x.w.note)}</td></tr>`).join('')).join('')}</tbody></table>`;
+  if(ns.length) h+=`<div class="rep-h">演中插拔的裝置</div><table class="tbl"><thead><tr><th></th><th>裝置</th><th>型號</th><th>時機／說明</th><th>位置</th><th>連線</th></tr></thead><tbody>${ns.map(n=>`<tr class="click" data-n="${n.id}"><td>${n.icon}</td><td><b>${esc(n.name)}</b></td><td>${esc(n.model)}</td><td>${esc(n.hsl)}</td><td>${esc(n.loc)}</td><td class="num">${doc.wires.filter(w=>w.a.n===n.id||w.b.n===n.id).length}</td></tr>`).join('')}</tbody></table>`;
+  return h;
+}
+const REP={patch:repPatch,io:repIO,cables:repCables,gear:repGear,hs:repHS,issues:repIssues};
 function openReports(tab){ if(tab) repTab=tab; analyze(); $('#rep').hidden=false; renderReports(); }
 function renderReports(){
   const ic=issues.filter(i=>i.lv>=2).length;
@@ -3611,7 +3731,7 @@ function downloadCSV(tab){
   const box=document.createElement('div'); box.style.cssText='position:fixed;left:-9999px;top:0'; box.innerHTML=html; document.body.appendChild(box);
   const csv=tablesToCSV(box.innerHTML); box.remove();
   if(!csv.trim()){ toast('沒有可匯出的資料'); return; }
-  const nm={patch:'連線表',io:'輸入輸出表',cables:'線材清單',gear:'器材清單',issues:'檢查'}[tab]||tab;
+  const nm={patch:'連線表',io:'輸入輸出表',cables:'線材清單',gear:'器材清單',hs:'演中插拔',issues:'檢查'}[tab]||tab;
   download(`${fname()}_${nm}.csv`,new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
 }
 
@@ -3645,21 +3765,70 @@ async function exportSVGString(th){
 }
 async function exportVenueSVG(th){
   const T=TH[th], v=curVenue(), b=venueBounds(), pad=30, top=10;
-  const W=Math.ceil(b.w+pad*2), H=Math.ceil(b.h+pad*2+top);
   const o={tr:null,conn:connSet(),cand:null,exp:true};
   const href=await venueHref(v);
   const vi=imgsOf('venue'), inner=venueBgSVG(v,T,true,href)+vi.filter(im=>!im.front).map(im=>imgSVG(im,T,o)).join('')+doc.furn.filter(f=>f.vv===doc.venue).map(f=>furnSVG(f,T,o)).join('')+vwireLayer(T,o)+doc.nodes.filter(placed).map(n=>markerSVG(n,T,o)).join('')+vi.filter(im=>im.front).map(im=>imgSVG(im,T,o)).join('');
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><rect width="${W}" height="${H}" fill="${T.bg}"/><g transform="translate(${pad-b.x},${pad+top-b.y})">${inner}</g></svg>`;
-  return {svg,W,H};
+  const ws=doc.wires.filter(w=>{ const E=ends(w); return E&&placed(E.na)&&placed(E.nb); });
+  return sheetSVG(T,b,inner,{pad,top,kind:'場地配置圖'+(v?'・'+venueName(v.id):''),nodes:doc.nodes.filter(placed),wires:ws,xlink:true});
 }
 function exportFlowSVG(th){
   const T=TH[th], b=bounds(); if(!b) return null;
-  const pad=40, top=46, W=Math.ceil(b.w+pad*2), H=Math.ceil(b.h+pad*2+top);
   const o={tr:null,conn:connSet(),cand:null,exp:true};
   const zs=[...doc.zones.filter(z=>z.kind!=='text'),...doc.zones.filter(z=>z.kind==='text')];
   const fi=imgsOf('flow'), inner=fi.filter(im=>!im.front).map(im=>imgSVG(im,T,o)).join('')+zs.map(z=>zoneSVG(z,T,o)).join('')+doc.wires.map(w=>wireSVG(w,T,o)).join('')+doc.nodes.map(n=>nodeSVG(n,T,o)).join('')+fi.filter(im=>im.front).map(im=>imgSVG(im,T,o)).join('');
-  const date=new Date().toLocaleDateString('zh-TW');
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><rect width="${W}" height="${H}" fill="${T.bg}"/><text x="${pad}" y="38" font-size="20" font-weight="700" fill="${T.text}">${esc(doc.name)}</text><text x="${W-pad}" y="38" font-size="12" fill="${T.dim}" text-anchor="end">${date} · ${doc.nodes.length} 台裝置 · ${doc.wires.length} 條連線</text><g transform="translate(${pad-b.x},${pad+top-b.y})">${inner}</g></svg>`;
+  return sheetSVG(T,b,inner,{pad:40,top:24,kind:'訊號流程圖 Signal Flow',nodes:doc.nodes,wires:doc.wires});
+}
+// 匯出用的圖框：上方標題（活動名稱）與副標，下方圖例與圖面資訊欄
+function legendItems(T,nodes,wires){
+  const L=[], seen=new Set();
+  for(const w of wires){ const E=ends(w); if(!E) continue; const k=E.pa.sig; if(seen.has(k)) continue; seen.add(k); L.push({t:'line',c:sc(k,T),d:['rf','bt'].includes(k)?'7 5':'',l:SIG[k]?.l||k}); }
+  if(wires.some(w=>w.hs)) L.push({t:'line',c:HS_C,d:HS_DASH,l:'⇆ 演中插拔（演出途中換接）'});
+  if(nodes.some(n=>n.hs)) L.push({t:'tag',c:HS_C,l:'⇆ 演中插拔的裝置'});
+  const ss=new Set(nodes.map(srcOf)); Object.entries(SRC).forEach(([k,v])=>{ if(ss.has(k)) L.push({t:'src',c:v.c,s:v.l,l:v.full}); });
+  return L;
+}
+function sheetSVG(T,b,inner,o){
+  const m=doc.meta, pad=o.pad, F=11.5;
+  const title=metaV('event')||doc.name||'Routing';
+  const sub=[metaV('program'),metaV('venue'),[metaV('date'),metaV('time')].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+  const bodyW=Math.ceil(b.w+pad*2), W=Math.max(bodyW,m.block?960:560), offX=Math.round((W-bodyW)/2);
+  const headH=sub?78:58, bodyH=Math.ceil(b.h+pad*2+(o.top||0));
+  const right2=[metaV('rev')?'版本 '+metaV('rev'):'',`${o.nodes.length} 台裝置 · ${o.wires.length} 條連線`].filter(Boolean).join(' · ');
+  let h=`<text x="${pad}" y="38" font-size="22" font-weight="700" fill="${T.text}">${esc(ell(title,W-pad*2-320,'700 22px'))}</text>`;
+  if(sub) h+=`<text x="${pad}" y="62" font-size="13" fill="${T.dim}">${esc(ell(sub,W-pad*2-320,'13px'))}</text>`;
+  h+=`<text x="${W-pad}" y="34" font-size="13" font-weight="700" fill="${T.text}" text-anchor="end">${esc(o.kind)}</text><text x="${W-pad}" y="54" font-size="${F}" fill="${T.dim}" text-anchor="end">${esc(right2)}</text>`;
+  h+=`<line x1="${pad}" x2="${W-pad}" y1="${headH-6}" y2="${headH-6}" stroke="${T.stroke}"/>`;
+  let y=headH+bodyH, ft='';
+  const leg=m.legend?legendItems(T,o.nodes,o.wires):[];
+  if(leg.length){
+    let x=pad; y+=4; ft+=`<text x="${pad}" y="${y+12}" font-size="10.5" font-weight="700" fill="${T.dim}">圖例</text>`; x+=38;
+    for(const it of leg){
+      const iw=(it.t==='src'?tw(it.s,'700 9.5px')+10:30)+8+tw(it.l,F+'px')+22;
+      if(x+iw>W-pad){ x=pad+38; y+=22; }
+      if(it.t==='line') ft+=`<line x1="${x}" x2="${x+30}" y1="${y+8}" y2="${y+8}" stroke="${it.c}" stroke-width="2.4"${it.d?` stroke-dasharray="${it.d}"`:''}/>`;
+      else if(it.t==='tag') ft+=`<rect x="${x}" y="${y+1}" width="30" height="14" rx="4" fill="${it.c}"/><text x="${x+15}" y="${y+11.5}" font-size="9.5" font-weight="700" fill="#fff" text-anchor="middle">⇆</text>`;
+      else { const sw=tw(it.s,'700 9.5px')+10; ft+=`<rect x="${x}" y="${y+1}" width="${sw}" height="15" rx="4" fill="${it.c}" fill-opacity=".2"/><text x="${x+sw/2}" y="${y+12}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${it.c}">${esc(it.s)}</text>`; }
+      const lx=x+(it.t==='src'?tw(it.s,'700 9.5px')+10:30)+8;
+      ft+=`<text x="${lx}" y="${y+12.5}" font-size="${F}" fill="${T.text}">${esc(it.l)}</text>`;
+      x+=iw;
+    }
+    y+=30;
+  }
+  if(m.block){
+    const cells=META_F.map(([k,l])=>[l,metaV(k)]).filter(c=>c[1]);
+    cells.push(['圖面',o.kind]);
+    const cols=Math.max(2,Math.min(4,Math.floor((W-pad*2)/250))), cw=(W-pad*2)/cols, ch=42, rows=Math.ceil(cells.length/cols);
+    const nl=m.note.trim()?m.note.trim().split(/\r?\n/).slice(0,4):[], nh=nl.length?24+nl.length*17:0, bh=rows*ch+nh;
+    ft+=`<rect x="${pad}" y="${y}" width="${W-pad*2}" height="${bh}" fill="${T.node}" stroke="${T.text}" stroke-opacity=".55"/>`;
+    cells.forEach(([l,v],i)=>{ const cx=pad+(i%cols)*cw, cy=y+Math.floor(i/cols)*ch;
+      if(i%cols) ft+=`<line x1="${cx}" x2="${cx}" y1="${cy}" y2="${cy+ch}" stroke="${T.stroke}"/>`;
+      if(i>=cols) ft+=`<line x1="${cx}" x2="${cx+cw}" y1="${cy}" y2="${cy}" stroke="${T.stroke}"/>`;
+      ft+=`<text x="${cx+10}" y="${cy+15}" font-size="10" fill="${T.dim}">${esc(l)}</text><text x="${cx+10}" y="${cy+33}" font-size="13" font-weight="600" fill="${T.text}">${esc(ell(v,cw-20,'600 13px'))}</text>`; });
+    if(nl.length){ const ny=y+rows*ch; ft+=`<line x1="${pad}" x2="${W-pad}" y1="${ny}" y2="${ny}" stroke="${T.stroke}"/><text x="${pad+10}" y="${ny+16}" font-size="10" fill="${T.dim}">備註</text>`+nl.map((t,i)=>`<text x="${pad+10}" y="${ny+33+i*17}" font-size="12" fill="${T.text}">${esc(ell(t,W-pad*2-20,'12px'))}</text>`).join(''); }
+    y+=bh+pad*.6;
+  } else y+=leg.length?pad*.4:0;
+  const H=Math.ceil(Math.max(y,headH+bodyH)+(m.block||leg.length?0:4));
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg"${o.xlink?' xmlns:xlink="http://www.w3.org/1999/xlink"':''} width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><rect width="${W}" height="${H}" fill="${T.bg}"/>${h}<g transform="translate(${offX+pad-b.x},${headH+pad+(o.top||0)-b.y})">${inner}</g>${ft}</svg>`;
   return {svg,W,H};
 }
 async function exportSVG(){ const r=await exportSVGString(themeName()); if(!r){ toast('畫布是空的'); return; } download(fname()+(isVenue()?'_場地':'')+'.svg',new Blob([r.svg],{type:'image/svg+xml'})); }
@@ -3673,9 +3842,17 @@ async function renderToCanvas(th,maxScale,src){
     img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(r.svg);
   });
 }
+function metaNudge(){ if(!META_F.some(([k])=>doc.meta[k])&&!metaNudge.done){ metaNudge.done=1; setTimeout(()=>toast('可在「檔案 → 圖面資訊…」填活動、場地、時間、製圖人，匯出時會印在圖上'),2000); } }
 async function exportPNG(th){
+  metaNudge();
   try{ const c=await renderToCanvas(th,2); c.toBlob(b=>download(fname()+(isVenue()?'_場地':'')+'.png',b),'image/png'); }
   catch(e){ toast(e==='empty'?'畫布是空的':'匯出失敗'); }
+}
+function metaTableHTML(){
+  const c=META_F.map(([k,l])=>[l,metaV(k)]).filter(x=>x[1]); if(doc.meta.note.trim()) c.push(['備註',doc.meta.note.trim()]);
+  if(!c.length) return '';
+  let r=''; for(let i=0;i<c.length;i+=2) r+=`<tr>${c.slice(i,i+2).map(([l,v])=>`<td class="k">${esc(l)}</td><td>${esc(v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`;
+  return `<table class="meta-t">${r}</table>`;
 }
 async function printAll(){
   analyze();
@@ -3689,7 +3866,9 @@ async function printAll(){
   }
   doc.venue=keep; analyze();
   const pa=$('#print-area');
-  let h=`<h1>${esc(doc.name)}</h1><div class="pdate">${new Date().toLocaleString('zh-TW')} · ${doc.nodes.length} 台裝置 · ${doc.wires.length} 條連線${doc.venues.length?' · 場地：'+doc.venues.map(v=>esc(venueShort(v))).join('、'):''}</div>`;
+  const sub=[metaV('program'),metaV('venue'),[metaV('date'),metaV('time')].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+  let h=`<h1>${esc(metaV('event')||doc.name)}</h1><div class="pdate">${sub?esc(sub)+' · ':''}${doc.nodes.length} 台裝置 · ${doc.wires.length} 條連線 · 列印 ${new Date().toLocaleString('zh-TW')}</div>`;
+  if(doc.meta.block) h+=metaTableHTML();
   if(img) h+=`<img src="${img}">`;
   { const k0=doc.clI; doc.cls.forEach((c,k)=>{ if(!c.rows.length) return; doc.clI=k; const cn=clCon(); h+=`<h2 class="pb">${esc((c.band?c.band+' ':'')+'Stage Channel List'+(doc.cls.length>1&&cn?' — '+cn.name+(cn.id===doc.main?'（主控台）':''):''))}</h2>`+clPrintHTML(); }); doc.clI=k0; }
   vimgs.forEach(([id,src])=>{ h+=`<h2 class="pb">場地配置：${esc(venueName(id))}</h2><img src="${src}">`; });
@@ -3697,6 +3876,7 @@ async function printAll(){
   if(doc.wires.length) h+=`<h2 class="pb">連線表</h2>`+repPatch(true);
   const devs=doc.nodes.filter(n=>n.ports.filter(p=>p.dir==='in').length>=4||(n.ports.filter(p=>p.dir==='in').length&&doc.wires.some(w=>w.b.n===n.id)&&['mix','rec'].includes(catOf(n))));
   devs.forEach(n=>{ h+=`<h2>${esc(n.icon+' '+n.name)}${n.model?'（'+esc(n.model)+'）':''} 輸入／輸出表</h2>`+ioTables(n); });
+  if(doc.wires.some(w=>w.hs)||doc.nodes.some(n=>n.hs)) h+=`<h2>演中插拔／切換表</h2>`+repHS();
   if(doc.wires.length) h+=`<h2>線材清單</h2>`+repCables();
   if(doc.nodes.length||doc.furn.length) h+=`<h2>器材清單</h2>`+repGear();
   if(issues.length) h+=`<h2>檢查結果</h2>`+repIssues();
@@ -3789,7 +3969,7 @@ function clApply(){
     if(hasWire(k)) continue;
     const pa=getPort(getNode(x.a.n),x.a.p), pb=getPort(getNode(x.b.n),x.b.p);
     // 輸入只能有一個來源：原本接在這個輸入的線會被取代
-    doc.wires=doc.wires.filter(w=>!((w.b.n===x.b.n&&w.b.p===x.b.p)||(pb.dir==='io'&&on(w,x.b))||(pa.dir==='io'&&on(w,x.a))));
+    doc.wires=doc.wires.filter(w=>w.hs||!((w.b.n===x.b.n&&w.b.p===x.b.p)||(pb.dir==='io'&&on(w,x.b))||(pa.dir==='io'&&on(w,x.a))));
     doc.wires.push({id:uid(),a:{...x.a},b:{...x.b},label:'',len:'',cable:'',color:'',note:''});
   }
   // 內部路由：補上清單需要的，拔掉清單之前建立但已不需要的
@@ -4131,12 +4311,66 @@ $('#cust').addEventListener('click',e=>{
 });
 $('#cust-new').addEventListener('click',()=>openCustom(null));
 
+/* ── 圖面資訊（匯出標示） ── */
+let metaSnap=null, metaPvT=0;
+const MEKEY='audioRouting.v1.me';
+function openMeta(){
+  closeFloating(); metaSnap=snapshot();
+  try{ const me=JSON.parse(localStorage.getItem(MEKEY)||'{}')||{}; ['author','contact'].forEach(k=>{ if(!doc.meta[k]&&me[k]) doc.meta[k]=String(me[k]); }); }catch(e){}
+  renderMeta(); $('#meta').hidden=false; setTimeout(()=>$('#meta [data-mf="event"]')?.focus(),0); metaPreview();
+}
+function renderMeta(){
+  const m=doc.meta, row=(l,inner)=>`<div class="cust-row"><span>${l}</span>${inner}</div>`;
+  let h=`<div class="hint" style="margin-top:0">匯出 PNG／SVG 與列印時，會印在圖的標題、副標與下方的圖面資訊欄。灰字是自動帶入的值（活動名稱與日期取自 Channel List、場地取自場地選單、製圖日期是今天），不填就用灰字。</div><div class="meta-grid">`;
+  META_F.forEach(([k,l,ph])=>{ h+=row(l,`<input data-mf="${k}" value="${esc(m[k])}" placeholder="${esc(metaDef(k)||ph)}">`); });
+  h+=`</div>`+row('備註',`<textarea data-mf="note" rows="2" placeholder="例如 需要的電源、換場注意事項">${esc(m.note)}</textarea>`);
+  h+=`<label class="chk"><input type="checkbox" data-mf="block"${m.block?' checked':''}> 匯出時加上圖面資訊欄</label><label class="chk"><input type="checkbox" data-mf="legend"${m.legend?' checked':''}> 匯出時加上圖例（線色、演中插拔、器材來源）</label>`;
+  h+=`<div class="btns"><button class="btn pri" data-ma="png">匯出 PNG（白底）</button><button class="btn" data-ma="svg">匯出 SVG</button><button class="btn" data-ma="print">列印／PDF</button><button class="btn" data-close>完成</button></div>`;
+  h+=`<div class="hint">預覽（${isVenue()?'目前場地的配置圖':'訊號流程圖'}）：</div><div id="meta-pv"></div>`;
+  $('#meta-body').innerHTML=h;
+}
+async function metaPreview(){
+  const pv=$('#meta-pv'); if(!pv) return;
+  let r=null; try{ r=await exportSVGString('light'); }catch(e){}
+  pv.innerHTML=r?`<img alt="匯出預覽" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(r.svg)}">`:'<div class="hint">畫布是空的</div>';
+}
+function metaField(el){
+  const k=el.dataset.mf; if(!k) return;
+  if(metaSnap){ pushUndo(metaSnap); metaSnap=null; }
+  doc.meta[k]=el.type==='checkbox'?el.checked:el.value;
+  if(k==='author'||k==='contact'){ try{ const me=JSON.parse(localStorage.getItem(MEKEY)||'{}')||{}; me[k]=el.value; localStorage.setItem(MEKEY,JSON.stringify(me)); }catch(e){} }
+  save(); renderToolbar(); clearTimeout(metaPvT); metaPvT=setTimeout(metaPreview,350);
+}
+$('#meta').addEventListener('input',e=>metaField(e.target));
+$('#meta').addEventListener('change',e=>{ if(e.target.type==='checkbox') metaField(e.target); });
+$('#meta').addEventListener('click',e=>{
+  if(e.target===$('#meta')||e.target.closest('[data-close]')){ $('#meta').hidden=true; return; }
+  const b=e.target.closest('[data-ma]'); if(!b) return;
+  const a=b.dataset.ma;
+  if(a==='png') exportPNG('light'); else if(a==='svg') exportSVG(); else if(a==='print'){ $('#meta').hidden=true; printAll(); }
+});
+
+/* ── 整體介面縮放（工具列、側欄、面板等用 CSS zoom；畫布改 view.k 一起縮放） ── */
+const UZ=()=>clamp((+settings.uiZ||100)/100,.6,1.6);
+function applyUiZ(){
+  const z=UZ(); document.documentElement.style.setProperty('--uiz',z);
+  const r=$('#uiz-r'); if(document.activeElement!==r) r.value=Math.round(z*100);
+  $('#uiz-v').textContent=Math.round(z*100)+'%';
+}
+function setUiZ(v){
+  const old=UZ(); settings.uiZ=clamp(Math.round(+v||100),60,160); applyUiZ();
+  const z=UZ(), r=stageRect(); if(z!==old&&r.width>0) zoomAt(r.width/2,r.height/2,z/old);
+  save(); if(!$('#tour').hidden) showTourStep();
+}
+$('#uiz-r').addEventListener('input',e=>setUiZ(e.target.value));
+$('#uiz-v').addEventListener('click',()=>setUiZ(100));
+
 /* ── 左側欄拖曳調寬 ── */
 function applyLibW(){ document.documentElement.style.setProperty('--libw',clamp(+settings.libW||236,200,560)+'px'); }
 (()=>{
   const rz=$('#lib-rz'); let st=null;
   rz.addEventListener('pointerdown',e=>{ if(e.button!==0) return; e.preventDefault(); st={x:e.clientX,w:$('#lib').getBoundingClientRect().width}; rz.classList.add('on'); try{ rz.setPointerCapture(e.pointerId); }catch(_){} });
-  rz.addEventListener('pointermove',e=>{ if(!st) return; settings.libW=Math.round(clamp(st.w+e.clientX-st.x,200,560)); applyLibW(); });
+  rz.addEventListener('pointermove',e=>{ if(!st) return; settings.libW=Math.round(clamp((st.w+e.clientX-st.x)/UZ(),200,560)); applyLibW(); });
   const end=()=>{ if(!st) return; st=null; rz.classList.remove('on'); save(); };
   rz.addEventListener('pointerup',end); rz.addEventListener('pointercancel',end);
   rz.addEventListener('dblclick',()=>{ settings.libW=236; applyLibW(); save(); });
@@ -4262,9 +4496,12 @@ const TOUR=[
   {el:'#rvseg',t:'內部路由的顯示方式',b:'主畫面上，裝置方框裡的路由線可以選「正常」「半透明」或「不顯示」。畫面線很多時，切成半透明或不顯示會比較清楚。'},
   {el:'[data-tog="trace"]',t:'訊號追蹤',b:'開啟後選一台裝置、一條線，或點一下某個接口，只會亮起真正走得到的那一路。有設定內部路由的裝置會照路由追，不會整台全亮。快捷鍵 T。'},
   {el:'#side',t:'屬性面板',b:'選取裝置後，在這裡改名稱、型號、I/O 數量與來源；也可以「★ 設為主控台」、開它的 Channel List，或編輯內部路由。'},
+  {el:()=>$('#Lw .wire.hs')||$('#stage'),t:'演中插拔',b:'演出途中要換接的線（例如介面這段演完改接下一台電腦）：右鍵那條線 →「⇆ 標示為演中插拔」，再從下一台電腦拉一條線到同一個接口，兩條線會並存，標成「第 1 段」「第 2 段」。裝置也能在屬性面板標示；📋 報表的「演中插拔」分頁是切換表。'},
   {el:'[data-mode="clist"]',t:'Channel List 與主控台',b:'Channel List 預設顯示主控台的清單。FOH、Monitor 等多台控台可以各有一份清單，用清單上方的分頁切換；清單和訊號流程（含內部路由）會同步。'},
   {el:'[data-mode="venue"]',t:'場地配置',b:'選 C-LAB 場地平面圖，把裝置擺上去，就會依距離與高度估算每條線的長度，並對照線材庫存。'},
   {el:'[data-cmd="reports"]',t:'報表與存檔',b:'📋 報表有連線表、輸入／輸出表、線材與器材清單。內容會自動存在這台電腦的瀏覽器；要備份或給別人，用「檔案 → 儲存 JSON」。'},
+  {el:'[data-menu="file"]',t:'圖面資訊與匯出',b:'「檔案 → 圖面資訊…」填活動名稱、場地、演出日期與時間、製圖人、版本等。匯出 PNG／SVG 或列印時，圖上會有標題、圖面資訊欄與線色圖例；視窗裡可以先預覽。'},
+  {el:'#uiz',t:'介面縮放',b:'狀態列右邊的滑桿可以把整個介面放大或縮小（60%–160%），工具列、側欄、面板與畫布一起縮放；點百分比回到 100%。'},
   {el:'[data-cmd="tour"]',t:'導覽結束',b:'想再看一次就按這個「教學」按鈕。'},
 ];
 let tourI=-1;
@@ -4290,14 +4527,14 @@ function showTourStep(){
   let R=null;
   if(r){ const x=Math.max(4,r.left-pad), y=Math.max(4,r.top-pad); R={x,y,w:Math.min(innerWidth-4,r.right+pad)-x,h:Math.min(innerHeight-4,r.bottom+pad)-y}; Object.assign(sp.style,{left:R.x+'px',top:R.y+'px',width:R.w+'px',height:R.h+'px'}); }
   else Object.assign(sp.style,{left:innerWidth/2+'px',top:innerHeight/2+'px',width:'0px',height:'0px'});
-  const cw=cd.offsetWidth, ch=cd.offsetHeight; let cx,cy;
+  const cr=cd.getBoundingClientRect(), cw=cr.width, ch=cr.height; let cx,cy;
   if(!R||(R.w>innerWidth*.55&&R.h>innerHeight*.55)){ cx=(innerWidth-cw)/2; cy=R?R.y+R.h/2-ch/2:(innerHeight-ch)/2; }
   else if(R.y+R.h+M+ch<innerHeight-8){ cx=R.x; cy=R.y+R.h+M; }
   else if(R.y-M-ch>8){ cx=R.x; cy=R.y-M-ch; }
   else if(R.x+R.w+M+cw<innerWidth-8){ cx=R.x+R.w+M; cy=R.y+16; }
   else if(R.x-M-cw>8){ cx=R.x-M-cw; cy=R.y+16; }
   else { cx=(innerWidth-cw)/2; cy=innerHeight-ch-16; }
-  cd.style.left=clamp(cx,8,Math.max(8,innerWidth-cw-8))+'px'; cd.style.top=clamp(cy,8,Math.max(8,innerHeight-ch-8))+'px';
+  cd.style.left=clamp(cx,8,Math.max(8,innerWidth-cw-8))/UZ()+'px'; cd.style.top=clamp(cy,8,Math.max(8,innerHeight-ch-8))/UZ()+'px';
   cd.querySelector('[data-tr="next"]').focus({preventScroll:true});
 }
 $('#tour').addEventListener('click',e=>{ const b=e.target.closest('[data-tr]'); if(!b) return; const a=b.dataset.tr; if(a==='skip') endTour(); else tourGo(a==='next'?1:-1); });
@@ -4410,7 +4647,7 @@ function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show')
     }
   }catch(e){}
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{ if(!settings.theme){ applyTheme(); renderAll(); } });
-  applyLibW(); applyTheme(); renderLib(); renderAll();
+  applyLibW(); applyUiZ(); applyTheme(); renderLib(); renderAll();
   const origCanvas=renderCanvas;
   // 「從空白開始」後不再顯示歡迎卡
   renderCanvas=function(){ origCanvas(); if($('#empty').dataset.dismissed) $('#empty').hidden=true; };
