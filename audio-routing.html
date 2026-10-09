@@ -225,6 +225,58 @@ kbd{font-family:inherit;font-size:10.5px;padding:1px 5px;border:1px solid var(--
 .rtm td:hover{background:var(--accent-bg)}
 .rtm td.on{background:var(--accent-bg);font-weight:700}
 .rtm td.x{cursor:default;color:var(--dim2);background:transparent}
+.modal.rte.wide{width:min(1180px,100%)}
+.mx-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px}
+.mx-nb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
+.mx-nb input{width:64px}
+.mx-msg{font-size:12px;line-height:1.6;border:1px solid var(--ok);border-radius:8px;padding:6px 10px;margin-bottom:8px}
+.mx-msg.bad,.mx-msg:has(li){border-color:var(--warn)}
+.mx-msg ul{margin:4px 0 0 18px;padding:0}
+.mx-sec{margin:16px 0 6px;font-size:13px;font-weight:700;display:flex;align-items:baseline;gap:8px}
+.mx-sec .dim{font-weight:400;font-size:11.5px}
+.mx-wrap{overflow:auto;max-height:50vh;border:1px solid var(--line);border-radius:10px}
+.mxt{border-collapse:collapse;font-size:12px;width:max-content;min-width:100%}
+.mxt th,.mxt td{border:1px solid var(--line);padding:2px 4px;white-space:nowrap}
+.mxt thead th{position:sticky;top:0;background:var(--panel2);z-index:2;font-weight:600;font-size:11.5px}
+.mxt thead th.v{height:92px;vertical-align:bottom;width:30px;min-width:30px}
+.mxt thead th.v span{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;max-height:88px;overflow:hidden;text-overflow:ellipsis}
+.mxt tbody th{position:sticky;left:0;background:var(--panel2);z-index:1;font-weight:600}
+.mxt .c{text-align:center}
+.mxt td.dim{color:var(--dim)}
+.mxt td.s{width:30px;min-width:30px;text-align:center;cursor:pointer;color:var(--accent);font-size:11px;font-variant-numeric:tabular-nums}
+.mxt td.s:hover{background:var(--hover)}
+.mxt td.s.on{background:var(--accent-bg);font-weight:700}
+.mxt input.mx-in{width:118px;padding:3px 6px}
+.mxt input.mx-in.s{width:84px}
+.mxt input[type=checkbox]{width:auto}
+.mx-sel{width:auto;max-width:190px;padding:3px 6px}
+.mx-src{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:12px;padding:3px 7px;border:1px solid var(--line2);border-radius:6px;background:var(--input);color:var(--text);cursor:pointer;text-align:left}
+.mx-src:hover{border-color:var(--accent)}
+.mx-src.auto{color:var(--dim)}
+.mx-more{margin-top:6px}
+.mx-out{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 14px}
+.mx-out label{display:flex;align-items:center;gap:8px;font-size:12px}
+.mx-out label span{flex:0 0 108px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mx-out label select{flex:1;max-width:none}
+.mx-grp{margin-top:8px}
+.mx-gh{border:0;background:transparent;color:var(--text);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:3px 0;margin-bottom:4px}
+.mx-fixed{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px}
+.mx-names{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 12px}
+.mx-names label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--dim)}
+#mxpop{position:fixed;z-index:96;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:var(--shadow);padding:8px 10px 10px;max-height:70vh;overflow:auto;min-width:240px;max-width:min(440px,92vw);font-size:12.5px}
+#mxpop:has(.mp-g){width:400px}
+#mxpop .mp-t{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;margin-bottom:6px}
+#mxpop .mp-t .x{width:24px;height:24px}
+#mxpop .mp-sel{width:100%;font-size:12.5px}
+#mxpop .mp-h{font-size:11.5px;color:var(--dim);margin:6px 0}
+#mxpop .mp-l{display:flex;align-items:center;gap:6px}
+#mxpop .mp-l input{width:90px}
+#mxpop .mp-b{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#mxpop .mp-s{font-size:11px;color:var(--dim);font-weight:700;margin:8px 0 3px}
+#mxpop .mp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:2px 8px}
+#mxpop .mp-c{display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+#mxpop .mp-c input{width:auto}
+.cl-tbl td.cl-mxc .cl-pick{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;text-align:left}
 
 /* ── 多份 Channel List ── */
 .cl-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;max-width:1400px}
@@ -357,7 +409,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
 .cust-row>span{color:var(--dim);font-size:12px}
 
 /* ── 整體介面縮放（畫布用自己的縮放，不套 CSS zoom） ── */
-#top,#lib,#side,#clv,#zoombar,#st,.modal-wrap,#ctx,#qa,#tip,#toast,#tour-card{zoom:var(--uiz,1)}
+#top,#lib,#side,#clv,#zoombar,#st,.modal-wrap,#ctx,#qa,#tip,#toast,#tour-card,#mxpop{zoom:var(--uiz,1)}
 #status{height:calc(26px*var(--uiz,1))}
 #st{display:flex;align-items:center;gap:16px;flex:1;min-width:0;overflow:hidden}
 #uiz{display:flex;align-items:center;gap:5px;flex-shrink:0;color:var(--dim);font-size:11.5px}
@@ -514,6 +566,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <h3>內部路由（裝置內部的訊號走向）</h3>
       <ul>
         <li>介面、混音器、Stage Box 等裝置，哪個輸入走到哪個輸出，在流程圖的接線上看不出來。<b>雙擊裝置</b>（或右鍵 →「⇄ 內部路由…」、右側面板「編輯內部路由」）就能設定。</li>
+        <li><b>控台的混音、Send 與輸出 Patch</b>：X32、WING、X AIR／MR18、dLive、TouchMix、MG16XU 等控台，在內部路由視窗切到「混音／Send」分頁：每個輸入軌道的來源（沒指定時依 Channel List 推算）、送到哪些 Bus 與 Main、Bus 送 Matrix、DCA 與 Mute Group，以及每個輸出接口送出哪個訊號。Channel List 也多一欄「Send／DCA」可以快速勾選。X32 可匯出 <b>.scn 場景</b>（X32-Edit 或控台 USB 載入；可用你自己的場景當範本，保留 EQ 等設定），X AIR／MR18 匯出 .scn，WING 匯出 <b>.snip Snippet</b>（只改設定到的參數）；其他控台可匯出 CSV。</li>
         <li><b>接線圖</b>：放大的裝置方框，左邊是訊號進來的接口、右邊是出去的接口（雙向接口兩邊都有）。從左邊拖曳到右邊，或先點一邊再點另一邊即可建立；點一下路由線刪除。</li>
         <li><b>矩陣</b>：每列是進來的接口、每欄是出去的接口，點格子打勾或取消，適合幾十軌的控台。</li>
         <li>「同編號一對一」會一次加入 In 1 → Out 1、In 2 → Out 2…；「全部清除」回到未設定。可以用 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原。</li>
@@ -600,11 +653,13 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
 
 <div id="rte" class="modal-wrap" hidden>
   <div class="modal rte">
-    <div class="m-head"><b id="rte-t">內部路由</b><div class="tabs" id="rte-tabs"><button data-rtv="box" title="放大的裝置方框：拖曳拉線">接線圖</button><button data-rtv="mx" title="輸入 × 輸出的格子，點一下打勾">矩陣</button></div><div class="grow"></div>
+    <div class="m-head"><b id="rte-t">內部路由</b><div class="tabs" id="rte-tabs"><button data-rtv="box" title="放大的裝置方框：拖曳拉線">接線圖</button><button data-rtv="mx" title="輸入 × 輸出的格子，點一下打勾">矩陣</button><button data-rtv="mix" id="rte-mixtab" title="控台的輸入軌道、Send、Bus、Matrix、DCA 與輸出 Patch；可匯出 X32／WING 檔案">混音／Send</button></div><div class="grow"></div>
       <button class="btn" data-ra="same" title="In 1 → Out 1、In 2 → Out 2…">同編號一對一</button><button class="btn danger" data-ra="clear">全部清除</button><button class="x" data-close title="關閉 (Esc)">✕</button></div>
     <div class="m-body" id="rte-body"></div>
   </div>
 </div>
+<div id="mxpop" hidden></div>
+<input type="file" id="mx-tpl" accept=".scn,.txt" hidden>
 
 <div id="tour" hidden>
   <div id="tour-spot"></div>
@@ -871,6 +926,8 @@ const MODELS=[
   ['bx_x32c','mix','🎚️','Behringer','X32 Compact','數位混音器','','in|16*In|XLR|micline;out|8*Out|XLR|line;in|6*Aux In|TRS|line;out|6*Aux Out|TRS|line;in|Talkback|XLR|mic;out|Monitor L,Monitor R|TRS|line;out|Phones 1,Phones 2|TRS|hp;out|AES Out|XLR|aes;'+MIDI_IO+';io|AES50 A,AES50 B|ECON|aes50|ch=48ch;out|ULTRANET|RJ45|ultranet;io|X-USB (USB)|USBB|usb|ch=32×32;io|擴充卡槽|SLOT|card;io|Remote LAN|RJ45|net','x32 compact behringer digital mixer'],
   ['bx_wing','mix','🎚️','Behringer','WING','數位混音器','','in|8*Local In|XLR|micline;out|8*Local Out|XLR|line;in|8*Aux In|TRS|line;out|8*Aux Out|TRS|line;in|AES In|XLR|aes;out|AES Out|XLR|aes;io|AES50 A,AES50 B,AES50 C|ECON|aes50|ch=48ch;io|StageConnect|XLR|stageconnect|ch=32ch;io|USB Audio|USBB|usb|ch=48×48;io|擴充卡槽|SLOT|card|ch=64×64;'+MIDI_IO+';out|Phones 1,Phones 2|TRS|hp;io|Ethernet|RJ45|net','wing behringer digital mixer'],
   ['bx_wingrack','mix','🎚️','Behringer','WING Rack','數位混音器','','in|24*Local In|XLR|micline;out|8*Local Out|XLR|line;in|8*Aux In|TRS|line;out|8*Aux Out|TRS|line;in|AES In|XLR|aes;out|AES Out|XLR|aes;io|AES50 A,AES50 B,AES50 C|ECON|aes50|ch=48ch;io|StageConnect|XLR|stageconnect|ch=32ch;io|USB Audio|USBB|usb|ch=48×48;io|擴充卡槽|SLOT|card|ch=64×64;'+MIDI_IO+';out|Phones|TRS|hp;io|Ethernet|RJ45|net','wing rack behringer digital mixer'],
+  ['midas_mr18','mix','🎚️','Midas','MR18','數位混音器（機架）','','in|16*In|COMBO|micline;in|Aux In L,Aux In R|TRS|line;out|Main L,Main R|XLR|line;out|6*Aux Out|XLR|line;out|Phones|TRS|hp;out|ULTRANET|RJ45|ultranet;io|USB|USBB|usb|ch=18×18;io|Ethernet|RJ45|net;'+MIDI_IO,'mr18 midas x air xair mixer 混音器'],
+  ['bx_xr18','mix','🎚️','Behringer','X AIR XR18','數位混音器（機架）','','in|16*In|COMBO|micline;in|Aux In L,Aux In R|TRS|line;out|Main L,Main R|XLR|line;out|6*Aux Out|XLR|line;out|Phones|TRS|hp;out|ULTRANET|RJ45|ultranet;io|USB|USBB|usb|ch=18×18;io|Ethernet|RJ45|net','xr18 x air xair behringer mixer 混音器'],
   ['kt_dn32','mix','🃏','Klark Teknik','DN32-DANTE','X32 Dante 擴充卡','','io|擴充卡槽|SLOT|card;io|Dante Pri,Dante Sec|RJ45|net|ch=32×32','dn32 dante x32 card 擴充卡'],
   ['bx_sd8','mix','🧰','Behringer','SD8','數位舞台箱','','in|8*In|XLR|micline;out|8*Out|XLR|line;io|AES50 A,AES50 B|ECON|aes50','sd8 stagebox aes50'],
   ['bx_s32','mix','🧰','Behringer','S32 / SD32','數位舞台箱','','in|32*In|XLR|micline;out|16*Out|XLR|line;io|AES50 A,AES50 B|ECON|aes50;out|AES Out 1/2,AES Out 3/4|XLR|aes;out|ADAT Out 1,ADAT Out 2|OPT|adat;out|ULTRANET|RJ45|ultranet;'+MIDI_IO,'s32 sd32 stagebox aes50'],
@@ -1422,6 +1479,408 @@ const TH={
 const SRC={tsl:{l:'TSL',full:'TSL 器材',c:'#3b82f6'},venue:{l:'場地',full:'場地設備',c:'#10b981'},byo:{l:'自備',full:'來者自備',c:'#f59e0b'}};
 const srcBadge=k=>SRC[k]?`<span class="srcb" style="background:${SRC[k].c}2e;color:${SRC[k].c}">${SRC[k].l}</span>`:'';
 const KEY='audioRouting.v1';
+/* =========================================================
+   控台混音：Channel 來源 → Send → Bus／Main → Matrix → 輸出 Patch，以及 X32／X Air／WING 匯出
+   n.mx = {nb, ch:{k:{src,nm,lr,s:{bus:dB},d:[DCA],m:[Mute]}}, bus:{b:{nm,lr,tap,st,mt:{mtx:dB}}}, main:{mt:{}}, mtx:{j:{nm}}, dca:{i:名稱}, mg:{i:名稱}, out:{目的:訊號}}
+   來源／目的的 key：單軌接口用接口 id，多軌數位接口用「接口 id#軌號」；訊號：M:L、M:1L（WING）、M:C、B:3、B:3L、X:2、D:5（Direct Out）
+   n.mxr：由混音設定推導、寫進 n.rt 的內部路由（重新推導時先拿掉）
+   ========================================================= */
+const MX_DIGI={aes:2,adat:8,ultranet:16,aes50:48,madi:64,stageconnect:32};
+const mxRange=(a,b)=>{ const r=[]; for(let i=a;i<=b;i++) r.push(i); return r; };
+const P2=i=>String(i).padStart(2,'0');
+function mxChN(p,dir){ const m=String(p.ch||'').match(/(\d+)\s*(?:[×xX]\s*(\d+))?/); if(m) return +(dir==='out'&&m[2]?m[2]:m[1]); return MX_DIGI[p.sig]||1; }
+const mxAud=p=>p.sig!=='hp'&&p.sig!=='spk'&&((SIG[p.sig]||SIG.line).fam==='a'||!!p.ch||!!MX_DIGI[p.sig]);
+const mxNum=nm=>+((String(nm).match(/(\d+)\s*$/)||[])[1])||0;
+// 固定接法的小台混音器：每個軌道（strip）對應的輸入接口名稱、固定輸出
+const mxStrip=(n,list)=>list.map(([l,names])=>({l,ps:names.map(nm=>n.ports.find(p=>p.dir!=='out'&&p.name===nm)).filter(Boolean).map(p=>p.id)}));
+const mxFout=(n,map)=>{ const o={}; for(const [nm,s] of Object.entries(map)){ const p=n.ports.find(q=>q.dir!=='in'&&q.name===nm); if(p) o[p.id]=s; } return o; };
+const mxBus=(i,nm,kind,st2)=>({i,dn:nm,kind:kind||'mix',st2:!!st2});
+const MAIN_LR=[{k:'M:L',l:'Main L'},{k:'M:R',l:'Main R'}];
+const MXP={
+  x32:{fam:'x32',name:'Behringer X32',ch:()=>32,bus:()=>mxRange(1,16).map(i=>mxBus(i,'Mix '+i)),mtx:6,dca:8,mg:6,link:true,busLR:true,direct:true,exp:'x32',
+    mains:[...MAIN_LR,{k:'M:C',l:'Mono／Center'}],
+    pm:(p)=>{ const nm=p.name, k=mxNum(nm);
+      if(/^In \d+$/.test(nm)) return {g:'AN',gi:k}; if(/^Out \d+$/.test(nm)) return {g:'LOUT',gi:k};
+      if(/^Aux In \d+$/.test(nm)) return {g:'AUXIN',gi:k}; if(/^Aux Out \d+$/.test(nm)) return {g:'AUXO',gi:k};
+      if(nm==='AES50 A') return {g:'A',n:48}; if(nm==='AES50 B') return {g:'B',n:48};
+      if(/X-USB|擴充卡/.test(nm)) return {g:'CARD',n:32}; if(nm==='AES Out') return {g:'AES',n:2};
+      if(p.sig==='ultranet') return {g:'P16',n:16}; return null; },
+    spec:'32 個輸入軌道、8 個 Aux 輸入、16 個 Mix Bus、6 個 Matrix、Main LR＋Mono、8 個 DCA、6 個 Mute Group。輸入以 8 軌為一組 patch（最多 4 組），輸出 1–16、P16 1–16 再分配到本機輸出、AES50、Card'},
+  wing:{fam:'wing',name:'Behringer WING',ch:()=>40,bus:()=>mxRange(1,16).map(i=>mxBus(i,'Bus '+i)),mtx:8,dca:16,mg:8,stBus:true,busLR:true,exp:'wing',
+    mains:mxRange(1,4).flatMap(m=>[{k:`M:${m}L`,l:`Main ${m} L`},{k:`M:${m}R`,l:`Main ${m} R`}]),
+    pm:(p)=>{ const nm=p.name, k=mxNum(nm);
+      if(/^Local (In|Out) \d+$/.test(nm)) return {g:'LCL',gi:k}; if(/^Aux (In|Out) \d+$/.test(nm)) return {g:'AUX',gi:k};
+      if(/^AES (In|Out)$/.test(nm)) return {g:'AES',n:2}; const a=nm.match(/^AES50 ([ABC])$/); if(a) return {g:a[1],n:48};
+      if(p.sig==='stageconnect') return {g:'SC',n:32}; if(/USB Audio/.test(nm)) return {g:'USB',n:48}; if(/擴充卡/.test(nm)) return {g:'CRD',n:64}; return null; },
+    spec:'40 個輸入軌道、16 個 Bus、4 個 Main、8 個 Matrix（皆可立體聲）、16 個 DCA、8 個 Mute Group。每個輸入軌道可直接選任何來源，每個輸出接口也可直接選訊號'},
+  xair:{fam:'xair',name:'Behringer X AIR／Midas MR',ch:()=>16,bus:()=>[...mxRange(1,6).map(i=>mxBus(i,'Bus '+i)),...mxRange(1,4).map(i=>mxBus(6+i,'FX '+i,'fx'))],mtx:0,dca:4,mg:4,link:true,linkN:6,busLR:true,exp:'xair',
+    mains:MAIN_LR,fixedMain:true,
+    pm:(p,dir)=>{ const nm=p.name, k=mxNum(nm);
+      if(/^In \d+$/.test(nm)) return {g:'IN',gi:k}; if(/^Aux Out \d+$/.test(nm)) return {g:'AUXO',gi:k}; return null; },
+    fout:n=>mxFout(n,{'Main L':'M:L','Main R':'M:R'}),
+    spec:'16 個輸入軌道（另有 Aux In 17/18 與 4 個 FX Return）、6 個 Bus、4 個 FX Send、Main LR、4 個 DCA、4 個 Mute Group。Main 輸出固定是 LR，Aux Out 1–6 可選 Bus'},
+  dlive:{fam:'gen',name:'Allen & Heath dLive',ch:()=>128,cfgBus:64,nbDef:16,bus:n=>mxRange(1,mxNB(n)).map(i=>mxBus(i,'Mix '+i)),mtx:8,dca:24,mg:8,busLR:true,direct:true,
+    mains:MAIN_LR,spec:'128 個輸入軌道、64 個可自訂的 Bus（Aux、Group、Matrix 共用，這裡預設 16 個 Mix＋8 個 Matrix）、24 個 DCA、8 個 Mute Group。沒有可匯入的檔案格式，可匯出 CSV'},
+  tm16:{fam:'fixed',name:'QSC TouchMix-16',ch:n=>mxStrips(n).length,bus:()=>[...mxRange(1,6).map(i=>mxBus(i,'Aux '+i)),mxBus(7,'Aux 7/8','mix',1),mxBus(8,'Aux 9/10','mix',1),...mxRange(1,4).map(i=>mxBus(8+i,'FX '+i,'fx'))],mtx:0,dca:8,mg:8,
+    mains:MAIN_LR,strips:n=>mxStrip(n,[...mxRange(1,16).map(i=>['In '+i,['In '+i]]),['St 17/18',['St 17/18 L','St 17/18 R']],['St 19/20',['St 19/20 L','St 19/20 R']]]),
+    fout:n=>mxFout(n,{'Main L':'M:L','Main R':'M:R',...Object.fromEntries(mxRange(1,6).map(i=>['Aux '+i,'B:'+i])),'IEM 7/8':'B:7','IEM 9/10':'B:8'}),
+    spec:'16 個單聲道＋2 個立體聲輸入、6 個單聲道 Aux＋2 個立體聲 Aux（7/8、9/10）、4 個 FX、8 個 DCA、8 個 Mute Group。輸入與輸出的接法固定'},
+  mg16:{fam:'fixed',name:'Yamaha MG16XU',ch:n=>mxStrips(n).length,bus:()=>[...mxRange(1,4).map(i=>mxBus(i,i===4?'Aux 4（FX）':'Aux '+i)),mxBus(5,'Group 1-2','grp',1),mxBus(6,'Group 3-4','grp',1)],mtx:0,dca:0,mg:0,busLR:true,
+    mains:MAIN_LR,strips:n=>mxStrip(n,[...mxRange(1,8).map(i=>['Ch '+i,['Ch '+i]]),['Ch 9/10',['Ch 9/10 Mic','Ch 9 L','Ch 10 R']],['Ch 11/12',['Ch 11/12 Mic','Ch 11 L','Ch 12 R']],['Ch 13/14',['Ch 13 L','Ch 14 R']],['Ch 15/16',['Ch 15 L','Ch 16 R']]]),
+    fout:n=>mxFout(n,{'Stereo L':'M:L','Stereo R':'M:R',...Object.fromEntries(mxRange(1,4).map(i=>['Aux '+i,'B:'+i])),'Group 1':'B:5L','Group 2':'B:5R','Group 3':'B:6L','Group 4':'B:6R'}),
+    spec:'8 個單聲道＋4 個立體聲軌道、4 個 Aux（含 FX）、2 組立體聲 Group（1-2、3-4）、Stereo Bus。類比混音器，接法固定；Aux 4 與內建效果器共用（依 Yamaha 規格「4 AUX incl. FX」，待確認）'},
+  np12:{fam:'fixed',name:'Soundcraft Notepad-12FX',ch:n=>mxStrips(n).length,bus:()=>[mxBus(1,'Aux'),mxBus(2,'FX（內建）','fx')],mtx:0,dca:0,mg:0,
+    mains:MAIN_LR,strips:n=>mxStrip(n,[...mxRange(1,4).map(i=>['Ch '+i,['Ch '+i]]),['Ch 5/6',['Ch 5 L','Ch 6 R']],['Ch 7/8',['Ch 7 L','Ch 8 R']],['Ch 9/10',['Ch 9 L','Ch 10 R']],['Ch 11/12',['Ch 11 L','Ch 12 R']]]),
+    fout:n=>mxFout(n,{'Mix L':'M:L','Mix R':'M:R','Aux Send':'B:1'}),
+    spec:'4 個單聲道＋4 個立體聲軌道、1 個 Aux Send、1 個內建效果 Send、Mix LR。類比混音器，接法固定'},
+  gend:{fam:'gen',name:'通用數位混音器',ch:n=>Math.max(16,mxSrcs(n).filter(s=>!s.j).length),cfgBus:32,nbDef:8,bus:n=>mxRange(1,mxNB(n)).map(i=>mxBus(i,'Aux '+i)),mtx:0,dca:8,mg:4,busLR:true,direct:true,
+    mains:MAIN_LR,spec:'通用設定：Bus 數量可自訂（最多 32）、8 個 DCA、4 個 Mute Group。換成實際型號後會套用該型號的規格'},
+  gena:{fam:'fixed',name:'通用類比混音器',ch:n=>mxStrips(n).length,bus:n=>mxRange(1,Math.max(1,n.ports.filter(p=>p.dir==='out'&&/^Aux \d+$/.test(p.name)).length)).map(i=>mxBus(i,'Aux '+i)),mtx:0,dca:0,mg:0,
+    mains:MAIN_LR,strips:n=>n.ports.filter(p=>p.dir==='in'&&mxAud(p)).map(p=>({l:p.name,ps:[p.id]})),
+    fout:n=>mxFout(n,{'Main L':'M:L','Main R':'M:R',...Object.fromEntries(mxRange(1,8).map(i=>['Aux '+i,'B:'+i]))}),
+    spec:'通用類比混音器：輸入、Aux 依接口數量，接法固定'},
+};
+const MXPT={bx_x32c:'x32',bx_x32rack:'x32',bx_wing:'wing',bx_wingrack:'wing',midas_mr18:'xair',bx_xr18:'xair',ah_cdm32:'dlive',ah_c1500:'dlive',qsc_tm16:'tm16',yamaha_mg16xu:'mg16',sc_notepad12fx:'np12',mixer_d:'gend',mixer_a:'gena'};
+const MXP_of=n=>n&&MXPT[n.type]?MXP[MXPT[n.type]]:null;
+const mxFixed=n=>MXP_of(n).fam==='fixed';
+const mxNB=n=>{ const P=MXP_of(n); return P.cfgBus?clamp(Math.round(+(n.mx&&n.mx.nb)||P.nbDef),1,P.cfgBus):0; };
+const mxStrips=n=>MXP_of(n).strips(n);
+const mxBuses=n=>MXP_of(n).bus(n).map(b=>({...b,nm:(n.mx&&n.mx.bus&&n.mx.bus[b.i]&&n.mx.bus[b.i].nm)||b.dn}));
+const mxNCh=n=>MXP_of(n).ch(n);
+const mxC=(n,k)=>(n.mx&&n.mx.ch&&n.mx.ch[k])||{};
+const mxB=(n,b)=>(n.mx&&n.mx.bus&&n.mx.bus[b])||{};
+const mxTap=(n,b)=>{ const x=mxB(n,b).tap; if(x) return x; const d=MXP_of(n).bus(n).find(q=>q.i===b); return d&&d.kind==='mix'?'PRE':'POST'; };
+// 可以當軌道來源／可以送出訊號的接口（多軌數位接口展開成一軌一軌）
+function mxIO(n,side){
+  const P=MXP_of(n), out=[];
+  for(const p of n.ports){
+    if(side==='in'?p.dir==='out':p.dir==='in') continue;
+    const m=P.pm?P.pm(p,side):(mxAud(p)?{g:p.id,n:mxChN(p,side)}:null); if(!m) continue;
+    if(m.n>1) for(let j=1;j<=m.n;j++) out.push({k:p.id+'#'+j,l:p.name+' '+j,p:p.id,j,g:m.g,gi:j,pn:p.name});
+    else out.push({k:p.id,l:p.name,p:p.id,j:0,g:m.g,gi:m.gi||mxNum(p.name)||1,pn:p.name});
+  }
+  return out;
+}
+const mxSrcs=n=>mxIO(n,'in'), mxDsts=n=>mxIO(n,'out');
+const mxKeyOf=(n,pid,j)=>{ const P=MXP_of(n), p=getPort(n,pid); if(!p) return ''; const m=P.pm?P.pm(p,'in'):{n:mxChN(p,'in')}; return m&&m.n>1?pid+'#'+Math.max(1,j):pid; };
+function withCL(cl,fn){ const i=doc.clI, j=doc.cls.indexOf(cl); if(j<0) return fn(); doc.clI=j; try{ return fn(); } finally{ doc.clI=i; } }
+// 從 Stage Box 沿數位接線找回控台，回傳控台這一端的接口
+function mxLinkPort(n,box){
+  if(!box) return null; const seen=new Set([box.id]), q=[box.id];
+  while(q.length){ const x=q.shift();
+    for(const w of doc.wires){ const o=w.a.n===x?w.b:w.b.n===x?w.a:null; if(!o) continue; const E=ends(w); if(!E) continue;
+      if((SIG[E.pa.sig]||SIG.line).fam==='a'||(SIG[E.pb.sig]||SIG.line).fam==='a') continue;
+      if(o.n===n.id) return getPort(n,o.p); if(!seen.has(o.n)){ seen.add(o.n); q.push(o.n); } } }
+  return null;
+}
+// 沒手動指定來源時：依這台控台的 Channel List 推算（直接進控台、或 Stage Box 的第幾個輸入經數位線進來），沒有清單就照出廠預設 CH k ← 第 k 個本機輸入
+// how：'cl' 依清單推算、'def' 出廠預設（匯出時不改範本裡的來源）
+function mxAutoX(n,k){
+  const cl=doc.cls.find(c=>c.console===n.id), r=cl&&cl.rows[k-1];
+  if(r){ const t=withCL(cl,()=>clTerminal(r,k-1));
+    if(t){ if(t.n===n.id) return {k:mxKeyOf(n,t.p,1),how:'cl'};
+      const box=getNode(t.n), q=mxLinkPort(n,box);
+      if(box&&q){ const j=box.ports.filter(p=>p.dir==='in').findIndex(p=>p.id===t.p)+1; if(j>0) return {k:mxKeyOf(n,q.id,j),how:'cl'}; } } }
+  const all=mxSrcs(n).filter(s=>!s.j), pre=s=>s.pn.replace(/\d+$/,''), loc=all.filter(s=>all[0]&&pre(s)===pre(all[0])); return {k:loc[k-1]?loc[k-1].k:'',how:'def'};
+}
+const mxAuto=(n,k)=>mxAutoX(n,k).k;
+// 匯出用：手動指定或依清單推算的來源；出廠預設回傳 null（保留範本）
+const mxSrcExp=(n,k)=>{ const c=mxC(n,k); if(c.src) return c.src==='off'?'':c.src; const a=mxAutoX(n,k); return a.how==='cl'?a.k:null; };
+const mxSrcOf=(n,k)=>{ const c=mxC(n,k); return c.src==='off'?'':(c.src||mxAuto(n,k)); };
+const mxSrcPorts=(n,k)=>mxFixed(n)?((mxStrips(n)[k-1]||{}).ps||[]):[mxSrcOf(n,k).split('#')[0]].filter(Boolean);
+const mxClName=(n,k)=>{ const cl=doc.cls.find(c=>c.console===n.id), r=cl&&cl.rows[k-1]; return r?r.name:''; };
+const mxName=(n,k)=>mxC(n,k).nm||mxClName(n,k);
+const mxSrcLabel=(n,key)=>{ if(!key) return '（無）'; const s=mxSrcs(n).find(x=>x.k===key); return s?s.l:'（接口已移除）'; };
+function mxSigs(n){
+  const P=MXP_of(n), s=[...P.mains];
+  for(const b of mxBuses(n)){ if(b.kind==='fx'&&P.fam!=='x32') continue; if(P.stBus||b.st2) s.push({k:`B:${b.i}L`,l:b.nm+' L'},{k:`B:${b.i}R`,l:b.nm+' R'}); else s.push({k:'B:'+b.i,l:b.nm}); }
+  for(let j=1;j<=P.mtx;j++){ const nm=(n.mx&&n.mx.mtx&&n.mx.mtx[j]&&n.mx.mtx[j].nm)||'Matrix '+j; if(P.stBus) s.push({k:`X:${j}L`,l:nm+' L'},{k:`X:${j}R`,l:nm+' R'}); else s.push({k:'X:'+j,l:nm}); }
+  if(P.direct) for(let k=1;k<=Math.min(mxNCh(n),P.fam==='x32'?32:128);k++) s.push({k:'D:'+k,l:`CH ${P2(k)} Direct Out`+(mxName(n,k)?'（'+mxName(n,k)+'）':'')});
+  return s;
+}
+const mxSigLabel=(n,k)=>{ const s=mxSigs(n).find(x=>x.k===k); return s?s.l:k; };
+const mxOutMap=n=>{ const P=MXP_of(n); return {...(P.fout?P.fout(n):{}),...(P.fam==='fixed'?{}:((n.mx&&n.mx.out)||{}))}; };
+// 哪些輸入軌道的訊號會流到這個訊號（Bus、Main、Matrix、Direct Out）
+function mxFeeds(n,sg){
+  const m=/^([MBXD]):(\d+|C|L|R)?([LR])?$/.exec(sg||''); if(!m) return [];
+  const P=MXP_of(n), t=m[1], i=+m[2]||0, N=mxNCh(n), ks=mxRange(1,N);
+  const byBus=b=>ks.filter(k=>{ const s=mxC(n,k).s; return s&&s[b]!=null; });
+  const main=()=>[...new Set([...ks.filter(k=>mxC(n,k).lr!==false),...mxBuses(n).filter(b=>mxB(n,b.i).lr).flatMap(b=>byBus(b.i))])];
+  if(t==='D') return i<=N?[i]:[];
+  if(t==='B') return byBus(i);
+  if(t==='M') return P.fam==='wing'&&i>1?[]:main();
+  const r=new Set(); mxBuses(n).forEach(b=>{ const x=mxB(n,b.i); if(x.mt&&x.mt[i]!=null) byBus(b.i).forEach(k=>r.add(k)); });
+  if(n.mx&&n.mx.main&&n.mx.main.mt&&n.mx.main.mt[i]!=null) main().forEach(k=>r.add(k));
+  return [...r];
+}
+// 混音設定 → 接口層級的內部路由（訊號追蹤、方框裡的路由線用）
+function mxRt(n){
+  if(!MXP_of(n)) return [];
+  const res=new Map();
+  for(const [dk,sg] of Object.entries(mxOutMap(n))){
+    const dp=dk.split('#')[0], pd=getPort(n,dp); if(!pd) continue;
+    for(const k of mxFeeds(n,sg)) for(const sp of mxSrcPorts(n,k)){ const ps=getPort(n,sp); if(ps&&(ps!==pd||ps.dir==='io')) res.set(sp+'>'+dp,[sp,dp]); }
+  }
+  return [...res.values()];
+}
+function mxSync(n){
+  if(!n||!MXP_of(n)||!n.mx) return;
+  const want=mxRt(n), wk=new Set(want.map(r=>rtKey(n.id,r[0],r[1]))), old=new Set(n.mxr||[]), had=new Set((n.rt||[]).map(r=>rtKey(n.id,r[0],r[1])));
+  n.rt=(n.rt||[]).filter(r=>{ const k=rtKey(n.id,r[0],r[1]); return wk.has(k)||!old.has(k); });
+  for(const r of want) if(!rtHas(n,r[0],r[1])) n.rt.push(r);
+  n.mxr=[...wk].filter(k=>old.has(k)||!had.has(k));
+}
+function mxSyncAll(){ for(const n of doc.nodes) if(n.mx) mxSync(n); }
+function cleanMx(n,m){
+  if(!m||typeof m!=='object'||!MXP_of(n)) return undefined;
+  const num=v=>isFinite(+v)?clamp(Math.round(+v*10)/10,-90,10):0, ints=a=>Array.isArray(a)?[...new Set(a.map(x=>Math.round(+x)).filter(x=>x>0&&x<=64))].sort((a,b)=>a-b):[];
+  const obj=v=>v&&typeof v==='object'?v:{}, str=v=>String(v??'').slice(0,32), o={ch:{},bus:{},main:{mt:{}},mtx:{},dca:{},mg:{},out:{}};
+  if(m.nb) o.nb=clamp(Math.round(+m.nb)||1,1,64);
+  for(const [k,c] of Object.entries(obj(m.ch))){ if(!(+k>0)||!c||typeof c!=='object') continue; const x={};
+    if(c.src) x.src=String(c.src); if(c.nm) x.nm=str(c.nm); if(c.lr===false) x.lr=false;
+    if(c.s&&typeof c.s==='object'){ x.s={}; for(const [b,l] of Object.entries(c.s)) if(+b>0) x.s[b]=num(l); }
+    const d=ints(c.d), g=ints(c.m); if(d.length) x.d=d; if(g.length) x.m=g; if(Object.keys(x).length) o.ch[k]=x; }
+  for(const [k,b] of Object.entries(obj(m.bus))){ if(!(+k>0)||!b||typeof b!=='object') continue; const x={};
+    if(b.nm) x.nm=str(b.nm); if(b.lr) x.lr=true; if(b.tap==='PRE'||b.tap==='POST') x.tap=b.tap; if(b.st) x.st=true;
+    if(b.mt&&typeof b.mt==='object'){ x.mt={}; for(const [j,l] of Object.entries(b.mt)) if(+j>0) x.mt[j]=num(l); } if(Object.keys(x).length) o.bus[k]=x; }
+  for(const [j,l] of Object.entries(obj(obj(m.main).mt))) if(+j>0) o.main.mt[j]=num(l);
+  for(const [k,x] of Object.entries(obj(m.mtx))) if(+k>0&&x&&x.nm) o.mtx[k]={nm:str(x.nm)};
+  for(const f of ['dca','mg']) for(const [k,v] of Object.entries(obj(m[f]))) if(+k>0&&v) o[f][k]=str(v);
+  for(const [k,v] of Object.entries(obj(m.out))) if(/^[MBXD]:/.test(String(v))) o.out[String(k)]=String(v);
+  return o;
+}
+// 貼上時接口 id 會換新：混音設定裡的接口 id 跟著換
+function mxRemap(m,f){
+  if(!m) return m; const mk=k=>{ const [p,j]=String(k).split('#'), q=f(p); return q?(j?q+'#'+j:q):''; };
+  for(const c of Object.values(m.ch||{})) if(c.src&&c.src!=='off'){ const k=mk(c.src); if(k) c.src=k; else delete c.src; }
+  const o={}; for(const [k,v] of Object.entries(m.out||{})){ const kk=mk(k); if(kk) o[kk]=v; } m.out=o; return m;
+}
+const mxD=n=>n.mx||(n.mx={ch:{},bus:{},main:{mt:{}},mtx:{},dca:{},mg:{},out:{}});
+const mxDc=(n,k)=>{ const m=mxD(n); m.ch||(m.ch={}); return m.ch[k]||(m.ch[k]={}); };
+const mxDb=(n,b)=>{ const m=mxD(n); m.bus||(m.bus={}); return m.bus[b]||(m.bus[b]={}); };
+function mxEdit(n,fn){ return edit(()=>{ const r=fn(); mxSync(n); return r; }); }
+const fmtDb=v=>v==null?'':(v<=-90?'-∞':(v>0?'+':'')+(Math.round(v*10)/10));
+function mxChText(n,k){
+  const c=mxC(n,k), P=MXP_of(n), bs=mxBuses(n), t=[];
+  if(c.lr!==false) t.push(P.fam==='wing'?'Main 1':'LR');
+  for(const [b,l] of Object.entries(c.s||{})){ const B=bs.find(x=>x.i===+b); if(B) t.push(B.nm+(l?' '+fmtDb(l):'')); }
+  (c.d||[]).forEach(i=>t.push(((n.mx&&n.mx.dca&&n.mx.dca[i])||'DCA '+i)));
+  (c.m||[]).forEach(i=>t.push(((n.mx&&n.mx.mg&&n.mx.mg[i])||'Mute '+i)));
+  return t.join('、');
+}
+
+/* ── X32／X Air 預設場景（結構依實際存檔：X32 韌體 4.x 2118 行、X Air 693 行） ── */
+function x32Tpl(){
+  const L=['#4.0# "Routing" "" %000000000 1'], rep=(s,n)=>Array(n).fill(s).join(' '),
+    eq4=p=>[`${p}/eq/1 PEQ 124.7 +0.00 2.0`,`${p}/eq/2 PEQ 496.6 +0.00 2.0`,`${p}/eq/3 PEQ 1k97 +0.00 2.0`,`${p}/eq/4 HShv 10k02 +0.00 2.0`],
+    eq6=p=>[`${p}/eq/1 LShv 79.6 +0.00 2.0`,`${p}/eq/2 PEQ 158.9 +0.00 2.0`,`${p}/eq/3 PEQ 496.6 +0.00 2.0`,`${p}/eq/4 PEQ 1k97 +0.00 2.0`,`${p}/eq/5 PEQ 5k02 +0.00 2.0`,`${p}/eq/6 HShv 10k02 +0.00 2.0`],
+    sends=(p,n,pan,tap)=>mxRange(1,n).map(m=>`${p}/mix/${P2(m)} ON   -oo`+(m%2?` ${pan} ${typeof tap==='function'?tap(m):tap} 0`:'')),
+    chTap=m=>m<=8?'EQ->':'POST';
+  L.push('/config/chlink '+rep('OFF',16),'/config/auxlink OFF OFF OFF ON','/config/fxlink ON ON ON ON','/config/buslink '+rep('OFF',8),'/config/mtxlink OFF OFF OFF','/config/mute '+rep('OFF',6),
+    '/config/linkcfg ON ON ON ON','/config/mono LR+M OFF','/config/solo   0.0 LRAFL 0.0 PFL PFL PFL OFF OFF OFF -20 OFF OFF OFF   0.3 OFF OFF OFF','/config/talk ON EXT',
+    '/config/talk/A -12.0 OFF OFF %000000000000000000','/config/talk/B -12.0 OFF ON %000000000000000000','/config/osc -40.0 100.2 1k00 F1 PINK 0',
+    '/config/userrout/out '+rep('0',48),'/config/userrout/in '+rep('0',32),'/config/routing REC','/config/routing/IN AN1-8 AN9-16 AN17-24 AN25-32 AUX1-4',
+    '/config/routing/AES50A OUT1-8 OUT9-16 OUT1-8 OUT9-16 P161-8 P169-16','/config/routing/AES50B OUT1-8 OUT9-16 OUT1-8 OUT9-16 P161-8 P169-16',
+    '/config/routing/CARD AN1-8 AN9-16 AN17-24 AN25-32','/config/routing/OUT OUT1-4 OUT5-8 OUT9-12 OUT13-16','/config/routing/PLAY CARD1-8 CARD9-16 CARD17-24 CARD25-32 AUX1-4',
+    ...['A','B','C'].flatMap((u,i)=>[`/config/userctrl/${u} ${['CY','GN','YE'][i]}`,`/config/userctrl/${u}/enc ${rep('"-"',4)}`,`/config/userctrl/${u}/btn ${rep('"-"',8)}`]),
+    '/config/tape 0.0 0.0 ON','/config/amixenable OFF OFF','/config/dp48 %0000 0 AESA','/config/dp48/assign '+rep('0',48),'/config/dp48/link '+rep('0',24),'/config/dp48/grpname '+rep('""',12));
+  for(const k of mxRange(1,32)){ const p='/ch/'+P2(k);
+    L.push(`${p}/config "" 1 YE ${k}`,`${p}/delay OFF   0.3`,`${p}/preamp +0.0 OFF OFF 24  20`,`${p}/gate OFF GATE -80.0 60.0 10 50.2  258 0`,`${p}/gate/filter OFF 3.0 990.9`,
+      `${p}/dyn OFF COMP PEAK LOG 0.0 3.0 1 0.00 10 10.0  151 POST 0 100 OFF`,`${p}/dyn/filter OFF 3.0 990.9`,`${p}/insert OFF POST OFF`,`${p}/eq OFF`,...eq4(p),
+      `${p}/mix ON   -oo ON +0 OFF   -oo`,...sends(p,16,'+0',chTap),`${p}/grp %00000000 %000000`,`${p}/automix OFF  +0.0`); }
+  for(const k of mxRange(1,8)){ const p='/auxin/'+P2(k), pan=k===7?'-100':k===8?'+100':'+0';
+    L.push(`${p}/config ${k<7?'""':k===7?'"USB L"':'"USB R"'} ${k<7?55:60} ${k<7?'GN':'YE'} ${32+k}`,`${p}/preamp +0.0 OFF`,`${p}/eq OFF`,...eq4(p),`${p}/mix ON   -oo ON ${pan} OFF   -oo`,...sends(p,16,pan,chTap),`${p}/grp %00000000 %000000`); }
+  for(const k of mxRange(1,8)){ const p='/fxrtn/'+P2(k), pan=k%2?'-100':'+100';
+    L.push(`${p}/config "" 61 MG`,`${p}/eq OFF`,...eq4(p),`${p}/mix ON   0.0 ON ${pan} OFF   -oo`,...sends(p,16,pan,'POST'),`${p}/grp %00000000 %000000`); }
+  const dyn6=(p,b)=>[`${p}/dyn OFF COMP RMS LOG 0.0 3.0 1 0.00 10 10.0  151 POST ${b?'0 ':''}100 OFF`,`${p}/dyn/filter OFF 3.0 990.9`,`${p}/insert OFF PRE OFF`,`${p}/eq OFF`,...eq6(p)];
+  for(const k of mxRange(1,16)){ const p='/bus/'+P2(k); L.push(`${p}/config "" 71 CY`,...dyn6(p,1),`${p}/mix ON   -oo OFF +0 OFF   -oo`,...sends(p,6,'+0','POST'),`${p}/grp %00000000 %000000`); }
+  for(const k of mxRange(1,6)){ const p='/mtx/'+P2(k); L.push(`${p}/config "" 72 MG`,`${p}/preamp OFF`,...dyn6(p,0),`${p}/mix ON   -oo`,`${p}/grp %00000000 %000000`); }
+  for(const [p,c] of [['/main/st',66],['/main/m',67]]) L.push(`${p}/config "" ${c} WH`,...dyn6(p,0),p==='/main/st'?`${p}/mix ON   -oo +0`:`${p}/mix ON   -oo`,...sends(p,6,'+0','POST'),`${p}/grp %00000000 %000000`);
+  for(const k of mxRange(1,8)) L.push(`/dca/${k} ON   0.0`,`/dca/${k}/config "" 70 WH`);
+  const pad=s=>{ const a=s.split(' '); while(a.length<64) a.push('0'); return a.join(' '); };
+  [['HALL','MIX13','20 1.57 60 5k74 25 0.0 83 7k2 0.95 25 50 30'],['AMBI','MIX14','12 0.40 20 200 10k0 0.0 100 0 0'],['DLY','MIX15','100 223 ST 1 1 13 10 20k0 97 30 30 20k0'],['CRS','MIX16','0.50 15 15 19.9 19.9 100 97 15k1 120 100 85']]
+    .forEach(([t,src,par],i)=>L.push(`/fx/${i+1} ${t}`,`/fx/${i+1}/source ${src} ${src}`,`/fx/${i+1}/par ${pad(par)}`));
+  for(const k of mxRange(5,8)) L.push(`/fx/${k} GEQ2`,`/fx/${k}/par ${rep('0.0',64)}`);
+  for(const k of mxRange(1,16)) L.push(`/outputs/main/${P2(k)} ${k<15?k+3:k-14} POST OFF`,`/outputs/main/${P2(k)}/delay OFF   0.3`);
+  for(const k of mxRange(1,6)) L.push(`/outputs/aux/${P2(k)} 0 POST OFF`);
+  for(const k of mxRange(1,16)) L.push(`/outputs/p16/${P2(k)} ${25+k} POST OFF`,`/outputs/p16/${P2(k)}/iQ OFF none Linear 0`);
+  L.push('/outputs/aes/01 1 POST OFF','/outputs/aes/02 2 POST OFF','/outputs/rec/01 1 <-EQ','/outputs/rec/02 2 <-EQ');
+  for(const k of mxRange(0,127)) L.push(`/headamp/${String(k).padStart(3,'0')} +0.0 OFF`);
+  return L;
+}
+function xairTpl(){
+  const L=[], z=n=>Array(n).fill('0').join(' '), eq4=p=>[`${p}/eq/1 PEQ 124.7 +0.00 2.0`,`${p}/eq/2 PEQ 496.6 +0.00 2.0`,`${p}/eq/3 PEQ 1k97 +0.00 2.0`,`${p}/eq/4 HShv 10k02 +0.00 2.0`],
+    sends=(p,tap)=>mxRange(1,10).map(m=>`${p}/mix/${P2(m)}   -oo OFF ${m>6?'POST':tap}`+(m<6&&m%2?' +0':''));
+  L.push('/config/chlink OFF OFF OFF OFF OFF OFF OFF OFF','/config/buslink OFF OFF OFF','/config/linkcfg ON ON ON ON','/config/solo   0.0 LRAFL 0.0 PFL PFL -20 OFF OFF OFF OFF',
+    '/config/amixenable OFF OFF','/config/amixlock OFF OFF','/config/mute OFF OFF OFF OFF');
+  for(const k of mxRange(1,16)){ const p='/ch/'+P2(k);
+    L.push(`${p}/config "" 0 In${P2(k)} U${P2(k)}`,`${p}/preamp +0.0 OFF OFF OFF  20`,`${p}/gate OFF GATE -80.0 60.0 1  502 983 SELF`,`${p}/gate/filter OFF 3.0 990.9`,
+      `${p}/dyn OFF COMP PEAK LOG 0.0 3.0 1 0.00 10 10.0 151 100 SELF OFF`,`${p}/dyn/filter OFF 3.0 990.9`,`${p}/insert OFF OFF`,`${p}/eq ON`,...eq4(p),
+      `${p}/mix ON   -oo ON +0`,...sends(p,'POSTEQ'),`${p}/grp %0000 %0000`,`${p}/automix OFF  +0.0`); }
+  L.push('/rtn/aux/config "" 1 U1718','/rtn/aux/preamp +0.0 OFF','/rtn/aux/eq ON',...eq4('/rtn/aux'),'/rtn/aux/mix ON   -oo ON +0',...sends('/rtn/aux','POSTEQ'),'/rtn/aux/grp %0000 %0000');
+  for(const k of mxRange(1,4)){ const p='/rtn/'+k; L.push(`${p}/config "" 2 U${P2(2*k-1)}${P2(2*k)}`,`${p}/preamp +0.0 OFF`,`${p}/eq ON`,...eq4(p),`${p}/mix ON   0.0 ON +0`,...sends(p,'POST'),`${p}/grp %0000 %0000`); }
+  const eq6=p=>[`${p}/eq/1 LShv 124.7 +0.00 2.0`,`${p}/eq/2 PEQ 496.6 +0.00 2.0`,`${p}/eq/3 PEQ 1k97 +0.00 2.0`,`${p}/eq/4 PEQ 10k02 +0.00 2.0`,`${p}/eq/5 PEQ 20.0 +0.00 2.0`,`${p}/eq/6 HShv 20.0 +0.00 2.0`,`${p}/geq ${Array(31).fill('0.0').join(' ')}`];
+  for(const k of mxRange(1,6)){ const p='/bus/'+k;
+    L.push(`${p}/config "" 3`,`${p}/dyn OFF COMP PEAK LOG 0.0 3.0 1 0.00 10 10.0 151 100 SELF OFF`,`${p}/dyn/filter OFF 3.0 990.9`,`${p}/insert OFF OFF`,`${p}/eq ON PEQ`,...eq6(p),`${p}/mix ON   0.0 OFF +0`,`${p}/grp %0000 %0000`); }
+  for(const k of mxRange(1,4)) L.push(`/fxsend/${k}/config "" 4`,`/fxsend/${k}/mix ON   0.0`,`/fxsend/${k}/grp %0000 %0000`);
+  L.push('/lr/config "" 6','/lr/dyn OFF COMP PEAK LOG 0.0 3.0 1 0.00 10 10.0 151 100 OFF','/lr/dyn/filter OFF 3.0 990.9','/lr/insert OFF OFF','/lr/eq ON PEQ',...eq6('/lr'),'/lr/mix ON   -oo +0');
+  for(const k of mxRange(1,4)) L.push(`/dca/${k} ON   0.0`,`/dca/${k}/config "" 8`);
+  L.push('/fx/1 VRM OFF','/fx/1/par 20 1.94 24 30 22 0.0 1.10 0.69 97 10k4 28 34 OFF '+z(51),'/fx/2 HALL OFF','/fx/2/par 20 1.57 60 5k74 25 0.0 83 7k2 0.95 25 50 30 '+z(52),
+    '/fx/3 MODD OFF','/fx/3/par 300 1 30.0 97 9k5 20 1.08 SER CLUB 5.0 5k6 +0 100 '+z(51),'/fx/4 DIMC OFF','/fx/4/par ON ST OFF ON OFF ON OFF '+z(57),
+    '/routing/main/01 LR','/routing/main/02 MON',...mxRange(1,6).map(k=>`/routing/aux/${P2(k)} Bus${k} POST`),...mxRange(1,16).map(k=>`/routing/p16/${P2(k)} Ch${P2(k)} IN+M`),
+    ...mxRange(1,16).map(k=>`/routing/usb/${P2(k)} Ch${P2(k)} AIN`),'/routing/usb/17 AuxL AIN','/routing/usb/18 AuxR AIN',...mxRange(1,24).map(k=>`/headamp/${P2(k)} +0.0`+(k<17?' OFF':'')));
+  return L;
+}
+// 場景檔：一行一個參數「/路徑 值 值…」，引號內可以有空白
+function scnDoc(lines){
+  const L=lines.slice(), idx=new Map(), warn=[];
+  L.forEach((s,i)=>{ if(s[0]==='/') idx.set(s.split(/\s/)[0],i); });
+  // 保留原本的空白對齊：拆成「前面的空白＋參數」
+  const parse=i=>{ const sep=[], tk=[], re=/(\s*)("[^"]*"|\S+)/g, rest=L[i].slice(L[i].search(/\s|$/)); let x; while((x=re.exec(rest))){ sep.push(x[1]); tk.push(x[2]); } return {sep,tk}; };
+  const tok=p=>{ const i=idx.get(p); return i==null?null:parse(i).tk; };
+  const set=(p,a)=>{ const i=idx.get(p); if(i==null){ if(!warn.includes('範本缺少 '+p)) warn.push('範本缺少 '+p); return; } const {sep}=parse(i); L[i]=p+a.map((t,j)=>(sep[j]||' ')+t).join(''); };
+  const upd=(p,f)=>{ const t=tok(p); if(t){ f(t); set(p,t); } else set(p,[]); };
+  return {L,tok,set,upd,warn};
+}
+const scnStr=(s,max,bad)=>{ const t=String(s||'').replace(/[^\x20-\x7e]/g,'').replace(/"/g,"'").trim().slice(0,max); if(s&&t!==String(s).trim().slice(0,max)) bad.push(s); return `"${t}"`; };
+const scnLvl=v=>v==null||v<=-90?'-oo':(v>0?'+':'')+(+v).toFixed(1);
+const x32Sig=s=>{ const m=/^([MBXD]):(\d+|L|R|C)$/.exec(s||''); if(!m) return null; const i=+m[2];
+  return m[1]==='M'?{L:1,R:2,C:3}[m[2]]||null:m[1]==='B'&&i<=16?3+i:m[1]==='X'&&i<=6?19+i:m[1]==='D'&&i<=32?25+i:null; };
+function x32Scene(n,tplText){
+  const lines=tplText?tplText.replace(/\r/g,'').split('\n').filter(s=>s.trim()):x32Tpl(), D=scnDoc(lines), warn=D.warn, bad=[];
+  if(!D.tok('/ch/01/config')||!D.tok('/bus/01/config')) return {err:'這不是 X32／M32 的場景檔（找不到 /ch/01、/bus/01）'};
+  const P=MXP_of(n), mx=n.mx||{}, S=new Map(mxSrcs(n).map(s=>[s.k,s])), bs=mxBuses(n);
+  const title=(doc.meta&&doc.meta.event)||doc.name||'Routing';
+  if(D.L[0][0]==='#') D.L[0]=D.L[0].replace(/^(#[^#]*#\s*)"[^"]*"/,(_,a)=>a+scnStr(title,24,[])).trimEnd().padEnd(127);
+  // 輸入：以 8 軌為一組放進 4 個 Input 區塊
+  const IN=D.tok('/config/routing/IN')||['AN1-8','AN9-16','AN17-24','AN25-32','AUX1-4'], need=new Map(), chs=[];
+  for(let k=1;k<=32;k++){
+    const sk=mxSrcExp(n,k), e=sk&&S.get(sk); if(!e){ chs[k]=sk===''?{idx:0}:null; continue; }
+    if(e.g==='AUXIN'){ chs[k]=e.gi<=6?{idx:32+e.gi}:null; continue; }
+    if(!['AN','A','B','CARD'].includes(e.g)){ chs[k]=null; continue; }
+    const b=Math.ceil(e.gi/8), t=`${e.g}${b*8-7}-${b*8}`; chs[k]={t,pos:(e.gi-1)%8}; if(!need.has(t)) need.set(t,k);
+  }
+  const slot=new Map(), used=new Set();
+  for(const t of need.keys()){ const s=IN.slice(0,4).indexOf(t); if(s>=0&&!used.has(s)){ slot.set(t,s); used.add(s); } }
+  // 換掉的區塊會影響仍沿用範本來源的軌道：優先用沒有軌道在用、或這台控台沒有實體接口的區塊（例如 X32 Rack 的 AN17-32）
+  const nAN=[...S.values()].filter(e=>e.g==='AN').length, alive=t=>{ const m=/^AN(\d+)-/.exec(t||''); return !m||+m[1]<=nAN; };
+  const refs=s=>{ if(!alive(IN[s])) return 0; let c=0; for(let k=1;k<=32;k++){ if(chs[k]) continue; const v=+((D.tok('/ch/'+P2(k)+'/config')||[])[3]); if(v>s*8&&v<=s*8+8) c++; } return c; };
+  for(const [t,k] of need){ if(slot.has(t)) continue; const free=[0,1,2,3].filter(x=>!used.has(x)); if(!free.length){ warn.push(`輸入區塊不夠：X32 只能同時 patch 4 組 8 軌，${t} 沒有放進去`); continue; }
+    const pref=Math.ceil(k/8)-1, s=free.sort((x,y)=>refs(x)-refs(y)||(y===pref)-(x===pref)||x-y)[0];
+    if(refs(s)) warn.push(`Input 區塊 ${s*8+1}-${s*8+8} 原本的 ${IN[s]} 改成 ${t}，還在用它的 ${refs(s)} 個軌道來源會跟著變`);
+    slot.set(t,s); used.add(s); IN[s]=t; }
+  D.set('/config/routing/IN',IN);
+  // 只有在工具裡設定過的軌道／Bus 才改 Send、Main、DCA；其他保留範本
+  const own=k=>!!(mx.ch&&mx.ch[k]), ownB=b=>!!(mx.bus&&mx.bus[b]);
+  for(let k=1;k<=32;k++){ const c=mxC(n,k), x=chs[k], p='/ch/'+P2(k);
+    D.upd(p+'/config',t=>{ const nm=mxName(n,k); if(nm) t[0]=scnStr(nm,12,bad); if(x){ t[3]=String(x.t!=null?(slot.has(x.t)?slot.get(x.t)*8+x.pos+1:t[3]):x.idx); } });
+    if(!own(k)) continue;
+    D.upd(p+'/mix',t=>{ t[2]=c.lr===false?'OFF':'ON'; });
+    for(let b=1;b<=16;b++) D.upd(`${p}/mix/${P2(b)}`,t=>{ const l=c.s&&c.s[b]; t[0]=l!=null?'ON':'OFF'; t[1]=scnLvl(l!=null?l:null); if(b%2&&t.length>3) t[3]=mxTap(n,b); });
+    const bits=(a,w)=>'%'+mxRange(1,w).reverse().map(i=>(a||[]).includes(i)?1:0).join('');
+    D.set(p+'/grp',[bits(c.d,8),bits(c.m,6)]);
+  }
+  for(const b of bs){ const x=mxB(n,b.i), p='/bus/'+P2(b.i);
+    if(x.nm) D.upd(p+'/config',t=>{ t[0]=scnStr(x.nm,12,bad); });
+    if(!ownB(b.i)) continue;
+    D.upd(p+'/mix',t=>{ t[2]=x.lr?'ON':'OFF'; });
+    for(let j=1;j<=6;j++) D.upd(`${p}/mix/${P2(j)}`,t=>{ const l=x.mt&&x.mt[j]; t[0]=l!=null?'ON':'OFF'; t[1]=scnLvl(l!=null?l:null); }); }
+  D.upd('/config/buslink',t=>{ for(let i=1;i<=8;i++) if(ownB(2*i-1)) t[i-1]=mxB(n,2*i-1).st?'ON':'OFF'; });
+  const mainOwn=mx.main&&mx.main.mt&&Object.keys(mx.main.mt).length;
+  for(let j=1;j<=6;j++){ const l=mx.main&&mx.main.mt&&mx.main.mt[j]; if(mainOwn) D.upd(`/main/st/mix/${P2(j)}`,t=>{ t[0]=l!=null?'ON':'OFF'; t[1]=scnLvl(l!=null?l:null); });
+    const nm=mx.mtx&&mx.mtx[j]&&mx.mtx[j].nm; if(nm) D.upd(`/mtx/${P2(j)}/config`,t=>{ t[0]=scnStr(nm,12,bad); }); }
+  for(let i=1;i<=8;i++){ const nm=mx.dca&&mx.dca[i]; if(nm) D.upd(`/dca/${i}/config`,t=>{ t[0]=scnStr(nm,12,bad); }); }
+  // 輸出：Aux Out、AES、P16 直接指定；本機輸出（4 個一組）、AES50 A／B、Card（8 個一組）要先放進 Output 1–16 或 P16 1–16 再整組送出
+  const Dm=new Map(mxDsts(n).map(s=>[s.k,s])), pool={OUT:Array(17).fill(null),P16:Array(17).fill(null)}, req=new Map();
+  for(const [dk,sg] of Object.entries(mx.out||{})){ const e=Dm.get(dk); if(!e) continue; const v=x32Sig(sg); if(v==null){ warn.push(`X32 沒有「${mxSigLabel(n,sg)}」這個訊號，${e.l} 沒有匯出`); continue; }
+    if(e.g==='AUXO'&&e.gi<=6) D.upd(`/outputs/aux/${P2(e.gi)}`,t=>{ t[0]=String(v); });
+    else if(e.g==='AES') D.upd(`/outputs/aes/${P2(e.gi)}`,t=>{ t[0]=String(v); });
+    else if(e.g==='P16') pool.P16[e.gi]=v;
+    else if(['LOUT','A','B','CARD'].includes(e.g)){ const sz=e.g==='LOUT'?4:8, b=Math.ceil(e.gi/sz), key=e.g+':'+b; if(!req.has(key)) req.set(key,{g:e.g,b,sz,pos:{}}); req.get(key).pos[(e.gi-1)%sz]=v; } }
+  const tokOf=(pl,s,sz)=>(pl==='OUT'?'OUT':'P16')+s+'-'+(s+sz-1), lines_={LOUT:['/config/routing/OUT',4],A:['/config/routing/AES50A',6],B:['/config/routing/AES50B',6],CARD:['/config/routing/CARD',4]};
+  const R={}; for(const g in lines_) R[g]=D.tok(lines_[g][0])||[];
+  for(const r of [...req.values()].sort((a,b)=>(a.g==='LOUT'?0:1)-(b.g==='LOUT'?0:1))){
+    if(r.b>lines_[r.g][1]) continue;
+    const cands=[]; for(const pl of ['OUT','P16']) for(let s=1;s<=16;s+=r.sz) cands.push([pl,s]);
+    if(r.g==='LOUT') cands.sort((x,y)=>(y[0]==='OUT'&&y[1]===r.b*4-3)-(x[0]==='OUT'&&x[1]===r.b*4-3));
+    let best=null, bs_=-1;
+    for(const [pl,s] of cands){ let ok=true, score=0;
+      for(let i=0;i<r.sz;i++){ const cur=pool[pl][s+i], want=r.pos[i]; if(want!=null){ if(cur!=null&&cur!==want){ ok=false; break; } if(cur===want) score+=2; } else if(cur!=null) score-=1; }
+      if(ok&&score>bs_){ best=[pl,s]; bs_=score; } }
+    if(!best){ warn.push(`輸出區塊不夠：${r.g==='LOUT'?'本機輸出':r.g==='CARD'?'Card':'AES50 '+r.g} 第 ${r.b} 組沒有空的 Output／P16 可用`); continue; }
+    const [pl,s]=best; for(const [i,v] of Object.entries(r.pos)) pool[pl][s+ +i]=v; R[r.g][r.b-1]=tokOf(pl,s,r.sz);
+  }
+  for(const g in lines_) if(R[g].length) D.set(lines_[g][0],R[g]);
+  for(let s=1;s<=16;s++){ if(pool.OUT[s]!=null) D.upd(`/outputs/main/${P2(s)}`,t=>{ t[0]=String(pool.OUT[s]); t[1]='POST'; }); if(pool.P16[s]!=null) D.upd(`/outputs/p16/${P2(s)}`,t=>{ t[0]=String(pool.P16[s]); t[1]='POST'; }); }
+  if(bad.length) warn.push(`X32 只能顯示英數字，${bad.length} 個名稱的中文已略過（例如「${bad[0]}」）`);
+  return {text:D.L.join('\n')+'\n',warn};
+}
+function xairScene(n,tplText){
+  const lines=tplText?tplText.replace(/\r/g,'').split('\n').filter(s=>s.trim()):xairTpl(), D=scnDoc(lines), warn=D.warn, bad=[];
+  if(!D.tok('/ch/01/config')||!D.tok('/bus/1/config')) return {err:'這不是 X AIR／MR 的場景檔（找不到 /ch/01、/bus/1）'};
+  const mx=n.mx||{}, S=new Map(mxSrcs(n).map(s=>[s.k,s]));
+  for(let k=1;k<=16;k++){ const c=mxC(n,k), sk=mxSrcExp(n,k), e=sk&&S.get(sk), p='/ch/'+P2(k);
+    D.upd(p+'/config',t=>{ const nm=mxName(n,k); if(nm) t[0]=scnStr(nm,12,bad); if(e&&e.g==='IN') t[2]='In'+P2(e.gi); });
+    if(!(mx.ch&&mx.ch[k])) continue;
+    D.upd(p+'/mix',t=>{ t[2]=c.lr===false?'OFF':'ON'; });
+    for(let b=1;b<=10;b++) D.upd(`${p}/mix/${P2(b)}`,t=>{ const l=c.s&&c.s[b]; t[0]=scnLvl(l!=null?l:null); t[2]=mxTap(n,b); });
+    const bits=a=>'%'+[4,3,2,1].map(i=>(a||[]).includes(i)?1:0).join('');
+    D.set(p+'/grp',[bits(c.d),bits(c.m)]); }
+  const ownB=b=>!!(mx.bus&&mx.bus[b]);
+  for(let b=1;b<=6;b++){ const x=mxB(n,b); if(x.nm) D.upd(`/bus/${b}/config`,t=>{ t[0]=scnStr(x.nm,12,bad); }); if(ownB(b)) D.upd(`/bus/${b}/mix`,t=>{ t[2]=x.lr?'ON':'OFF'; }); }
+  for(let b=7;b<=10;b++){ const x=mxB(n,b); if(x.nm) D.upd(`/fxsend/${b-6}/config`,t=>{ t[0]=scnStr(x.nm,12,bad); }); }
+  D.upd('/config/buslink',t=>{ [1,3,5].forEach((b,i)=>{ if(ownB(b)) t[i]=mxB(n,b).st?'ON':'OFF'; }); });
+  for(let i=1;i<=4;i++){ const nm=mx.dca&&mx.dca[i]; if(nm) D.upd(`/dca/${i}/config`,t=>{ t[0]=scnStr(nm,12,bad); }); }
+  const Dm=new Map(mxDsts(n).map(s=>[s.k,s]));
+  for(const [dk,sg] of Object.entries(mx.out||{})){ const e=Dm.get(dk), m=/^B:(\d)$/.exec(sg); if(!e||e.g!=='AUXO') continue;
+    if(!m||+m[1]>6){ warn.push(`X AIR 的 Aux Out 只能送 Bus 1–6：${e.l} 沒有匯出`); continue; } D.upd(`/routing/aux/${P2(e.gi)}`,t=>{ t[0]='Bus'+m[1]; }); }
+  if(bad.length) warn.push(`X AIR 只能顯示英數字，${bad.length} 個名稱的中文已略過（例如「${bad[0]}」）`);
+  return {text:D.L.join('\n')+'\n',warn};
+}
+// WING：匯出成 Snippet（.snip），載入時只改檔案裡有的參數（格式依 Maillot《WING Remote Protocols》FW 3.0.x）
+function wingSnip(n){
+  const ae={}, warn=[], mx=n.mx||{}, S=new Map(mxSrcs(n).map(s=>[s.k,s])), Dm=new Map(mxDsts(n).map(s=>[s.k,s])); let np=0;
+  const put=(path,v)=>{ let o=ae; const a=path.split('.'); for(const k of a.slice(0,-1)) o=o[k]||(o[k]={}); o[a[a.length-1]]=v; np++; };
+  const cl=doc.cls.find(c=>c.console===n.id), N=Math.max(cl?cl.rows.length:0,...Object.keys(mx.ch||{}).map(Number),0);
+  for(let k=1;k<=Math.min(40,N);k++){ const c=mxC(n,k), sk=mxSrcExp(n,k), e=sk&&S.get(sk), nm=mxName(n,k), p='ch.'+k;
+    if(e){ put(p+'.in.conn.grp',e.g); put(p+'.in.conn.in',e.gi); } else if(sk==='') put(p+'.in.conn.grp','OFF');
+    if(nm) put(p+'.name',String(nm).slice(0,16));
+    if(!(mx.ch&&mx.ch[k])) continue;
+    put(p+'.main.1.on',c.lr!==false);
+    for(let b=1;b<=16;b++){ const l=c.s&&c.s[b]; put(`${p}.send.${b}.on`,l!=null); put(`${p}.send.${b}.lvl`,l!=null?l:-144); put(`${p}.send.${b}.mode`,mxTap(n,b)); }
+    put(p+'.tags',[...(c.d||[]).map(i=>'#D'+i),...(c.m||[]).map(i=>'#M'+i)].join(',')); }
+  for(let b=1;b<=16;b++){ const x=mxB(n,b), p='bus.'+b; if(x.nm) put(p+'.name',x.nm.slice(0,16)); if(!(mx.bus&&mx.bus[b])) continue; put(p+'.main.1.on',!!x.lr);
+    for(let j=1;j<=8;j++){ const l=x.mt&&x.mt[j]; if(l!=null||(mx.bus&&mx.bus[b])){ put(`${p}.send.${j}.on`,l!=null); put(`${p}.send.${j}.lvl`,l!=null?l:-144); } } }
+  for(let j=1;j<=8;j++){ const l=mx.main&&mx.main.mt&&mx.main.mt[j]; if(l!=null){ put(`main.1.send.${j}.on`,true); put(`main.1.send.${j}.lvl`,l); } const nm=mx.mtx&&mx.mtx[j]&&mx.mtx[j].nm; if(nm) put(`mtx.${j}.name`,nm.slice(0,16)); }
+  for(let i=1;i<=16;i++){ const nm=mx.dca&&mx.dca[i]; if(nm) put(`dca.${i}.name`,nm.slice(0,16)); }
+  for(let i=1;i<=8;i++){ const nm=mx.mg&&mx.mg[i]; if(nm) put(`mgrp.${i}.name`,nm.slice(0,16)); }
+  for(const [dk,sg] of Object.entries(mx.out||{})){ const e=Dm.get(dk), m=/^([MBX]):(\d+)([LR])$/.exec(sg); if(!e) continue;
+    if(!m){ warn.push(`WING 的輸出 patch 不支援「${mxSigLabel(n,sg)}」：${e.l} 沒有匯出`); continue; }
+    put(`io.out.${e.g}.${e.gi}.grp`,{M:'MAIN',B:'BUS',X:'MTX'}[m[1]]); put(`io.out.${e.g}.${e.gi}.in`,(+m[2]-1)*2+(m[3]==='L'?1:2)); }
+  const now=new Date(), ts=now.getFullYear()+'-'+P2(now.getMonth()+1)+'-'+P2(now.getDate())+' '+P2(now.getHours())+':'+P2(now.getMinutes())+':'+P2(now.getSeconds());
+  const o={type:'snippet.10',creator_fw:'3.0.5',creator_sn:'NO_SERIAL',creator_model:'wing',creator_version:'',creator_name:'Audio Routing',created:ts,active_show:'',active_scene:'',num_pars:np,ae_data:ae,ce_data:{},ae_globals:{},ce_globals:{}};
+  return {text:JSON.stringify(o),warn};
+}
+function mxCSV(n){
+  const P=MXP_of(n), bs=mxBuses(n), N=Math.max(...[16,...Object.keys((n.mx&&n.mx.ch)||{}).map(Number),(doc.cls.find(c=>c.console===n.id)||{rows:[]}).rows.length].filter(x=>x)), out=[csvRow([n.name+(n.model?' ('+n.model+')':'')+' 混音與 Patch'])];
+  out.push('',csvRow(['CH','名稱','來源',P.fam==='wing'?'Main 1':'LR',...bs.map(b=>b.nm),'DCA','Mute Group']));
+  for(let k=1;k<=Math.min(N,mxNCh(n));k++){ const c=mxC(n,k);
+    out.push(csvRow(['CH '+P2(k),mxName(n,k),mxFixed(n)?(mxStrips(n)[k-1]||{}).l:mxSrcLabel(n,mxSrcOf(n,k)),c.lr===false?'':'●',...bs.map(b=>c.s&&c.s[b.i]!=null?fmtDb(c.s[b.i])+' dB':''),(c.d||[]).join(' '),(c.m||[]).join(' ')])); }
+  out.push('',csvRow(['Bus','名稱','送出點','→ Main',...mxRange(1,P.mtx).map(j=>'→ Mtx '+j)]));
+  for(const b of bs){ const x=mxB(n,b.i); out.push(csvRow([b.i,b.nm,mxTap(n,b.i),x.lr?'●':'',...mxRange(1,P.mtx).map(j=>x.mt&&x.mt[j]!=null?fmtDb(x.mt[j])+' dB':'')])); }
+  out.push('',csvRow(['輸出接口','訊號']));
+  const Dm=new Map(mxDsts(n).map(s=>[s.k,s])); for(const [dk,sg] of Object.entries(mxOutMap(n))){ const e=Dm.get(dk)||{l:(getPort(n,dk.split('#')[0])||{}).name||dk}; out.push(csvRow([e.l,mxSigLabel(n,sg)])); }
+  download(`${fname()}_${(n.name||'console').replace(/[\\/:*?"<>|]+/g,'_')}_Mix.csv`,new Blob(['﻿'+out.join('\r\n')],{type:'text/csv;charset=utf-8'}));
+}
+function mxExport(n,tplText){
+  const P=MXP_of(n); let r, ext;
+  if(P.exp==='x32'){ r=x32Scene(n,tplText); ext='scn'; } else if(P.exp==='xair'){ r=xairScene(n,tplText); ext='scn'; } else if(P.exp==='wing'){ r=wingSnip(n); ext='snip'; } else return;
+  if(r.err){ rte.mxMsg={err:true,t:[r.err]}; renderRt(); return; }
+  download(`${fname()}_${(n.name||'console').replace(/[\\/:*?"<>|]+/g,'_')}.${ext}`,new Blob([r.text],{type:ext==='snip'?'application/json':'text/plain'}));
+  rte.mxMsg={t:r.warn,ok:`已匯出 ${ext==='snip'?'WING Snippet':P.exp==='x32'?'X32 場景':'X AIR 場景'}${tplText?'（以你的場景檔為範本）':''}`}; renderRt();
+}
+
+
 const META_F=[['event','活動名稱','例如 2026 跨維論壇'],['program','節目／演出者','例如 樂團、講者、場次'],['org','主辦／製作單位',''],['venue','場地',''],['date','演出日期','例如 2026/10/10（六）'],['time','演出時間','例如 19:30–21:00'],
   ['loadin','進場／彩排','例如 13:00 進場、17:00 彩排'],['engineer','音控／技術負責',''],['author','製圖人',''],['contact','聯絡方式','電話或 Email'],['rev','版本','例如 v1、Rev.A'],['drawn','製圖日期','']];
 let doc=sanitize({name:'未命名專案'});
@@ -1663,6 +2122,7 @@ function sanitize(d){
       w:clamp(+n.w||210,140,480),notes:String(n.notes??''),flip:!!n.flip,hs:!!n.hs,hsl:String(n.hsl??''),x:+n.x||0,y:+n.y||0,inv:INVM.has(n.inv)?n.inv:'',vx:num(n.vx),vy:num(n.vy),vz:num(n.vz),vv:n.vv?String(n.vv):(num(n.vx)!=null?out.venue:''),
       ports:(Array.isArray(n.ports)?n.ports:[]).filter(p=>p&&p.id).map(p=>({id:String(p.id),dir:['in','out','io'].includes(p.dir)?p.dir:'in',name:String(p.name??''),conn:CONN[p.conn]?p.conn:'XLR',sig:SIG[p.sig]?p.sig:'line',ch:String(p.ch??''),p48:!!p.p48,grp:p.grp||'',sys:p.sys?String(p.sys):''}))});
     const x=out.nodes[out.nodes.length-1]; x.rt=rtNorm(x,n.rt);
+    const mx=cleanMx(x,n.mx); if(mx){ x.mx=mx; x.mxr=Array.isArray(n.mxr)?n.mxr.map(String):[]; }
   }
   const has=(r)=>{ const n=out.nodes.find(x=>x.id===r?.n); return n&&n.ports.some(p=>p.id===r.p); };
   for(const w of (Array.isArray(d.wires)?d.wires:[])) if(w&&has(w.a)&&has(w.b)) out.wires.push({id:String(w.id||uid()),a:{n:w.a.n,p:w.a.p},b:{n:w.b.n,p:w.b.p},label:String(w.label??''),len:String(w.len??''),cable:String(w.cable??''),color:w.color||'',note:String(w.note??''),hs:!!w.hs,hsl:String(w.hsl??'')});
@@ -2498,6 +2958,7 @@ function paste(at){
     if(placed(n)){ n.vx=snapM(n.vx+.6*pasteN); n.vy=snapM(n.vy+.6*pasteN); }
     for(const p of n.ports){ const op=p.id; p.id=uid(); pm.set(old+'|'+op,p.id); }
     n.rt=(n.rt||[]).map(r=>[pm.get(old+'|'+r[0]),pm.get(old+'|'+r[1])]).filter(r=>r[0]&&r[1]);
+    if(n.mx){ mxRemap(n.mx,p=>pm.get(old+'|'+p)); n.mxr=(n.mxr||[]).map(k=>{ const m=k.match(/^[^|]*\|(.*)>(.*)$/), a=m&&pm.get(old+'|'+m[1]), b=m&&pm.get(old+'|'+m[2]); return a&&b?rtKey(n.id,a,b):''; }).filter(Boolean); }
     doc.nodes.push(n); sel.n.add(n.id);
   }
   for(const w of c.wires){ const a={n:nm.get(w.a.n),p:pm.get(w.a.n+'|'+w.a.p)}, b={n:nm.get(w.b.n),p:pm.get(w.b.n+'|'+w.b.p)}; w.id=uid(); w.a=a; w.b=b; doc.wires.push(w); }
@@ -2885,6 +3346,7 @@ cv.addEventListener('contextmenu',e=>{
     const id=ng.dataset.node; if(!sel.n.has(id)){ selectOnly('n',id); renderAll(); }
     const nn=getNode(id), extra=[];
     if(rtAble(nn)) extra.push(['⇄ 內部路由…','雙擊',()=>openRt(id)]);
+    if(MXP_of(nn)) extra.push(['🎚 混音／Send…','',()=>openMix(id)]);
     if(nn.ports.some(p=>p.dir==='in')&&doc.main!==id) extra.push(['★ 設為主控台','',()=>setMain(id)]);
     extra.push([nn.hs?'取消演中插拔標示':'⇆ 標示為演中插拔','',()=>hsToggleNodes(id)]);
     items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],...extra,['再製','Ctrl+D',dupSel],['複製','Ctrl+C',()=>copySel()],['左右翻轉','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)) n.flip=!n.flip; }))],
@@ -3114,6 +3576,12 @@ function panelNode(n){
     h+=`<div class="hint">${rs.length?`已設定 ${rs.length} 條：${esc(rs.slice(0,4).join('、'))}${rs.length>4?'…':''}`:'尚未設定：訊號追蹤時視為所有輸入都通往所有輸出。'}</div>`;
     h+=`<div class="btns"><button class="btn" data-act="rtedit">⇄ 編輯內部路由（雙擊裝置）</button>${rs.length?'<button class="btn" data-act="rtclear">清除</button>':''}</div>`;
   } else h+=`<div class="hint">這台裝置只有輸入或只有輸出，不需要內部路由。</div>`;
+  if(MXP_of(n)){
+    const mx=n.mx||{}, nS=Object.values(mx.ch||{}).reduce((a,c)=>a+Object.keys(c.s||{}).length,0), nO=Object.keys(mx.out||{}).length, P=MXP_of(n);
+    h+=secH('混音、Send 與輸出 Patch');
+    h+=`<div class="hint">${esc(P.name)}：${nS||nO?`已設定 ${nS} 個 Send、${nO} 個輸出 Patch。`:'尚未設定。'}${P.exp==='x32'?'可匯出 X32 場景（.scn）。':P.exp==='xair'?'可匯出 X AIR 場景（.scn）。':P.exp==='wing'?'可匯出 WING Snippet（.snip）。':''}</div>`;
+    h+=`<div class="btns"><button class="btn" data-act="mxedit">🎚 混音／Send…</button></div>`;
+  }
   if(n.ports.some(p=>p.dir==='in')){
     const li=doc.cls.findIndex(c=>c.console===n.id);
     h+=secH('控台與 Channel List');
@@ -3374,6 +3842,7 @@ side.addEventListener('click',e=>{
     case 'del': delSel(); break;
     case 'trace': settings.trace=true; renderAll(); break;
     case 'rtedit': openRt(n.id); break;
+    case 'mxedit': openMix(n.id); break;
     case 'rtclear': edit(()=>{ n.rt=[]; }); break;
     case 'setmain': setMain(n.id); break;
     case 'meta': openMeta(); break;
@@ -3548,6 +4017,7 @@ window.addEventListener('keydown',e=>{
   const inField=e.target.matches&&e.target.matches('input,textarea,select,[contenteditable]');
   if(!$('#tour').hidden){ if(e.key==='Escape') endTour(); else if(e.key==='ArrowRight'||e.key==='Enter') tourGo(1); else if(e.key==='ArrowLeft') tourGo(-1); else return; e.preventDefault(); return; }
   if(!$('#rte').hidden&&(e.ctrlKey||e.metaKey)&&['z','y'].includes(e.key.toLowerCase())&&!inField){ e.preventDefault(); (e.key.toLowerCase()==='y'||e.shiftKey)?redo():undo(); return; }
+  if(e.key==='Escape'&&!$('#mxpop').hidden){ mxPopClose(); return; }
   if(!$('#rte').hidden&&e.key==='Escape'&&rte.arm){ rte.arm=null; renderRt(); return; }
   if(e.key==='Escape'&&wireArm){ cancelWireArm(); return; }
   if(e.key==='Escape'&&cropping){ endCrop(); return; }
@@ -3898,6 +4368,8 @@ const clRow=()=>({id:uid(),name:'',who:'',note:'',mic:'',mo:'',pts:[],ap:[]});
 const clEmpty=r=>!r.mic&&!r.pts.length&&!r.name&&!r.who&&!r.note;
 const CL=()=>doc.cls[doc.clI]||doc.cls[0];
 const clCon=()=>getNode(CL().console);
+const clMx=()=>{ const c=clCon(); return c&&MXP_of(c)?c:null; };
+const clHead=()=>clMx()?[...CL_HEAD.slice(0,5),'Send／DCA',CL_HEAD[5]]:CL_HEAD;
 // 訊號流程方框上方的標記：★ 主控台；其他有自己 Channel List 的控台
 function conBadge(n){
   if(doc.main&&doc.main===n.id) return {t:'★ 主控台',c:'#f59e0b',main:true};
@@ -4078,7 +4550,7 @@ function clResolve(k,hint){
   doc.nodes.push(n); return n;
 }
 function clEdit(fn){
-  edit(()=>{ if(fn()===false) return false; const m=CL().sync; if(m!=='f2l') clApply(); if(m==='sync') clDerive(); });
+  edit(()=>{ if(fn()===false) return false; const m=CL().sync; if(m!=='f2l') clApply(); if(m==='sync') clDerive(); mxSyncAll(); });
 }
 function clSetSync(m,btn){
   const cl=CL(); if(cl.sync===m) return;
@@ -4128,7 +4600,9 @@ function clRowHTML(r,i,ro,lk){
   const hops=r.pts.map((p,k)=>clHopHTML(r,i,p,k,ro)).join('<span class="arr">→</span>');
   const path=`<div class="cl-path">${hops}${ro?'':`<button class="ib add" data-ca="hadd" data-r="${i}" title="加一站：途經的裝置（介面、DI、Stage Box…）">＋</button>`}${e.t?`<span class="cl-end${e.bad?' bad':''}">${esc((e.bad?'⚠ ':'')+e.t)}</span>`:''}${miss?`<span class="cl-end bad">⚠ 流程圖缺 ${miss} 條線</span>`:''}</div>`;
   const inp=(f,ph,cls='')=>`<input class="ci${cls}" data-cf="${f}" data-r="${i}" value="${esc(r[f])}" placeholder="${ph}"${f==='who'?' list="clwho"':''}>`;
-  return `<tr data-r="${i}"><td class="ch">${chLabel(i)}</td><td>${inp('name','樂器／音源',' b')}</td><td>${inp('who','演奏者')}</td><td><div class="cl-mic">${mic}</div></td><td>${path}</td><td>${inp('note','備註')}</td>`
+  const mc=clMx(), mt=mc?mxChText(mc,i+1):'';
+  return `<tr data-r="${i}"><td class="ch">${chLabel(i)}</td><td>${inp('name','樂器／音源',' b')}</td><td>${inp('who','演奏者')}</td><td><div class="cl-mic">${mic}</div></td><td>${path}</td>`
+    +(mc?`<td class="cl-mxc"><button class="cl-pick${mt?' on':''}" data-ca="mx" data-r="${i}" title="${esc(mt?mt+'（點一下修改）':'送到哪些 Bus、Main、DCA、Mute Group')}">${mt?esc(mt):'<span class="dim">＋ Send</span>'}</button></td>`:'')+`<td>${inp('note','備註')}</td>`
     +`<td class="cl-act"><button class="ib" data-ca="loc" data-r="${i}" title="到訊號流程找出這一軌的裝置">⌖</button>${ro?'':`<button class="ib" data-ca="up" data-r="${i}" title="上移（CH 編號跟著改）">↑</button><button class="ib" data-ca="down" data-r="${i}" title="下移">↓</button>`}<button class="ib" data-ca="ins" data-r="${i}" title="在下方插入一軌">＋</button><button class="ib" data-ca="del" data-r="${i}" title="刪除這一軌">✕</button></td></tr>`;
 }
 function renderCList(){
@@ -4149,8 +4623,8 @@ function renderCList(){
     <div class="cl-meta"><span>演出活動</span><input data-cm="event" value="${esc(cl.event)}" placeholder="活動名稱"><span>演出日期</span><input data-cm="date" value="${esc(cl.date)}" placeholder="例如 260918"><span>演出樂團</span><input data-cm="band" value="${esc(cl.band)}" placeholder="團名"><span>控台</span><select data-cs="console">${cons}</select></div>
     <div class="cl-bar"><span class="dim">同步</span><div class="seg">${Object.entries(CL_SYNC).map(([k,l])=>`<button data-csync="${k}" class="${cl.sync===k?'on':''}">${l}</button>`).join('')}</div>${tools}${cl.console&&cl.console!==doc.main?'<button class="btn" data-ca="setmain" title="Channel List 預設顯示主控台的清單">★ 設為主控台</button>':''}${multi?'<button class="btn danger" data-ca="dellist" title="刪除這份清單（不會刪除流程圖的裝置與接線）">刪除這份清單</button>':''}<span class="grow"></span><button class="btn" data-ca="add">＋ 新增一軌</button><button class="btn" data-ca="csv">匯出 CSV</button><button class="btn" data-ca="print">列印／PDF</button></div>
     <div class="cl-hint">${hint}CH 編號 ＝ 這台控台的第幾個輸入。途經裝置的「輸入 › 輸出」就是它的內部路由，會和訊號流程同步（雙擊裝置可編輯）。路徑的最後一站若是 Stage Box 等遠端 I/O 的輸入，訊號經數位連線（AES50、Dante…）進主控台；最後一站有輸出，就直接接到主控台的第 CH 個輸入。</div></div>`;
-  h+=`<div class="cl-wrap"><table class="cl-tbl"><colgroup><col style="width:66px"><col style="width:13%"><col style="width:7%"><col style="width:12%"><col><col style="width:11%"><col style="width:146px"></colgroup><thead><tr>${CL_HEAD.map(t=>`<th>${t}</th>`).join('')}<th></th></tr></thead><tbody>`;
-  h+=cl.rows.map((r,i)=>clRowHTML(r,i,ro,lk)).join('')||`<tr><td colspan="7" class="cl-empty">還沒有任何軌道。${cl.console?'按「＋ 新增一軌」開始，或在訊號流程把裝置接到這台控台的輸入。':'先在上方選擇控台（或新增一台），再按「＋ 新增一軌」。'}</td></tr>`;
+  h+=`<div class="cl-wrap"><table class="cl-tbl"><colgroup><col style="width:66px"><col style="width:13%"><col style="width:7%"><col style="width:12%"><col>${clMx()?'<col style="width:150px">':''}<col style="width:11%"><col style="width:146px"></colgroup><thead><tr>${clHead().map(t=>`<th>${t}</th>`).join('')}<th></th></tr></thead><tbody>`;
+  h+=cl.rows.map((r,i)=>clRowHTML(r,i,ro,lk)).join('')||`<tr><td colspan="${clHead().length+1}" class="cl-empty">還沒有任何軌道。${cl.console?'按「＋ 新增一軌」開始，或在訊號流程把裝置接到這台控台的輸入。':'先在上方選擇控台（或新增一台），再按「＋ 新增一軌」。'}</td></tr>`;
   h+=`</tbody></table></div>`;
   const who=new Set([...cl.rows.map(r=>r.who).filter(Boolean),...doc.nodes.filter(n=>catOf(n)==='perf').map(n=>n.name)]);
   h+=`<datalist id="clwho">${[...who].map(v=>`<option value="${esc(v)}">`).join('')}</datalist>`;
@@ -4205,6 +4679,7 @@ clv.addEventListener('click',e=>{
       const f=r.pts[0]; if(f&&!f.i){ const h=clHop(getNode(f.n),i,false,r.pts.length===1); f.i=h.i; }
     })}); break;
     case 'micx': clEdit(()=>{ r.mic=''; r.mo=''; }); break;
+    case 'mx': { const c=clMx(); if(c) mxPop(b,{t:'ch',n:c.id,k:i+1}); break; }
     case 'hadd': openPick(b,{title:'加一站：途經的裝置（介面、DI、Stage Box…）',pick:key=>clEdit(()=>{
       const n=clResolve(key), last=r.pts[r.pts.length-1];
       if(last&&!last.o){ const ln=getNode(last.n), a=getPort(ln,last.i), outs=ln.ports.filter(p=>p.dir==='out'); const o=outs.find(p=>a&&pnum(p.name)===pnum(a.name))||outs[0]; if(o) last.o=o.id; }
@@ -4227,17 +4702,17 @@ clv.addEventListener('click',e=>{
 /* ── 匯出 ── */
 function clTable(){
   clClean(); if(CL().sync!=='l2f') clDerive();
-  return CL().rows.map((r,i)=>[chLabel(i),r.name,r.who,clMicText(r),clPathText(r,i),r.note]);
+  const mc=clMx(); return CL().rows.map((r,i)=>mc?[chLabel(i),r.name,r.who,clMicText(r),clPathText(r,i),mxChText(mc,i+1),r.note]:[chLabel(i),r.name,r.who,clMicText(r),clPathText(r,i),r.note]);
 }
 function clCSV(){
   const rows=clTable(), cl=CL(), c=clCon(); if(!rows.length){ toast('清單是空的'); return; }
-  const out=[csvRow([(cl.band?cl.band+' ':'')+'Stage Channel List']),csvRow(['演出活動',cl.event,'演出日期',cl.date]),csvRow(['演出樂團',cl.band,'主控台',c?c.name+(c.model?' ('+c.model+')':''):'']),'',csvRow(CL_HEAD),...rows.map(csvRow)];
+  const out=[csvRow([(cl.band?cl.band+' ':'')+'Stage Channel List']),csvRow(['演出活動',cl.event,'演出日期',cl.date]),csvRow(['演出樂團',cl.band,'主控台',c?c.name+(c.model?' ('+c.model+')':''):'']),'',csvRow(clHead()),...rows.map(csvRow)];
   download(`${fname()}_ChannelList.csv`,new Blob(['﻿'+out.join('\r\n')],{type:'text/csv;charset=utf-8'}));
 }
 function clPrintHTML(){
   const rows=clTable(), cl=CL(), c=clCon();
   return `<table><tr><th>演出活動</th><td>${esc(cl.event)}</td><th>演出日期</th><td>${esc(cl.date)}</td></tr><tr><th>演出樂團</th><td>${esc(cl.band)}</td><th>主控台</th><td>${esc(c?c.name+(c.model?'（'+c.model+'）':''):'')}</td></tr></table>`
-    +`<table><tr>${CL_HEAD.map(t=>`<th>${t}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((v,j)=>`<td>${j<2?'<b>'+esc(v)+'</b>':esc(v)}</td>`).join('')}</tr>`).join('')}</table>`;
+    +`<table><tr>${clHead().map(t=>`<th>${t}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((v,j)=>`<td>${j<2?'<b>'+esc(v)+'</b>':esc(v)}</td>`).join('')}</tr>`).join('')}</table>`;
 }
 function clPrint(){
   const cl=CL(); if(!cl.rows.length){ toast('清單是空的'); return; }
@@ -4379,14 +4854,14 @@ function applyLibW(){ document.documentElement.style.setProperty('--libw',clamp(
 /* =========================================================
    內部路由編輯（雙擊裝置）：放大的裝置方框拉線，或矩陣打勾
    ========================================================= */
-const rte={id:null,view:'box',arm:null};
+const rte={id:null,view:'box',arm:null,mxN:0,mxMsg:null,mxOpen:new Set(),mxShut:new Set()};
 let rteDrag=null;
 const rtAble=n=>!!n&&n.ports.some(a=>isSrcP(a)&&n.ports.some(b=>isDstP(b)&&b!==a));
 function openRt(id){
   const n=getNode(id); if(!rtAble(n)){ toast('這台裝置只有輸入或只有輸出，不需要內部路由'); return; }
-  closeFloating(); cancelWireArm(); rte.id=id; rte.arm=null; $('#rte').hidden=false; renderRt();
+  closeFloating(); cancelWireArm(); if(rte.id!==id){ rte.mxN=0; rte.mxOpen.clear(); rte.mxShut.clear(); } rte.mxMsg=null; rte.id=id; rte.arm=null; $('#rte').hidden=false; renderRt();
 }
-function closeRt(){ $('#rte').hidden=true; rte.id=null; rte.arm=null; rteDrag=null; }
+function closeRt(){ $('#rte').hidden=true; rte.id=null; rte.arm=null; rteDrag=null; mxPopClose(); }
 // on：true 加入、false 刪除、undefined 切換
 function rtToggle(n,a,b,on){
   if(!n) return; const has=rtHas(n,a,b); if(on===has){ renderRt(); return; }
@@ -4430,11 +4905,18 @@ function rtMatrix(n,srcs,dsts){
 }
 function renderRt(){
   const n=getNode(rte.id); if(!n||!rtAble(n)){ closeRt(); return; }
-  const T=theme(), srcs=n.ports.filter(isSrcP), dsts=n.ports.filter(isDstP), k=(n.rt||[]).length;
-  $('#rte-t').innerHTML=`⇄ 內部路由 · ${esc(n.icon)} ${esc(n.name)}`;
+  const T=theme(), srcs=n.ports.filter(isSrcP), dsts=n.ports.filter(isDstP), k=(n.rt||[]).length, mix=!!MXP_of(n);
+  if(rte.view==='mix'&&!mix) rte.view='box';
+  $('#rte-mixtab').hidden=!mix; $('#rte .modal').classList.toggle('wide',rte.view==='mix'); $$('#rte [data-ra]').forEach(b=>b.hidden=rte.view==='mix');
+  $('#rte-t').innerHTML=rte.view==='mix'?`🎚 混音／Send · ${esc(n.icon)} ${esc(n.name)}`:`⇄ 內部路由 · ${esc(n.icon)} ${esc(n.name)}`;
   $$('#rte-tabs [data-rtv]').forEach(b=>b.classList.toggle('on',b.dataset.rtv===rte.view));
+  if(rte.view==='mix'){
+    const b=$('#rte-body'), st=b.scrollTop, ws=[...b.querySelectorAll('.mx-wrap')].map(w=>[w.scrollLeft,w.scrollTop]);
+    b.innerHTML=mxView(n); b.scrollTop=st; b.querySelectorAll('.mx-wrap').forEach((w,i)=>{ if(ws[i]){ w.scrollLeft=ws[i][0]; w.scrollTop=ws[i][1]; } });
+    mxPopRefresh(); return;
+  }
   let h=`<div class="rte-hint">${rte.view==='box'?'左邊是訊號<b>進來</b>的接口，右邊是訊號<b>出去</b>的接口（雙向接口兩邊都有）。從左邊拖曳到右邊，或先點一邊再點另一邊，就能建立路由；點一下路由線可刪除。AES50、Dante 等雙向接口可以接回自己（訊號從這個接口進來、處理後再從同一個接口送回去）。':'每一列是訊號進來的接口，每一欄是出去的接口；點格子打勾或取消。'}`
-    +(k?` 目前 ${k} 條路由。`:' <b>目前沒有設定</b>：訊號追蹤會把所有輸入視為通往所有輸出。')+` 主畫面上的路由線可用工具列切換「正常／半透明／不顯示」。</div>`;
+    +(k?` 目前 ${k} 條路由。`:' <b>目前沒有設定</b>：訊號追蹤會把所有輸入視為通往所有輸出。')+(mix?' 控台的 Channel、Send、Bus 與輸出 Patch 在「混音／Send」分頁設定，會自動產生這裡的路由。':'')+` 主畫面上的路由線可用工具列切換「正常／半透明／不顯示」。</div>`;
   h+=rte.view==='box'?rtBoxSVG(n,T,srcs,dsts):rtMatrix(n,srcs,dsts);
   const b=$('#rte-body'), st=b.scrollTop; b.innerHTML=h; b.scrollTop=st;
 }
@@ -4484,6 +4966,141 @@ function renderRt(){
   });
 })();
 
+/* ── 混音分頁（內部路由視窗）── */
+const mxPopS={on:null};
+function mxView(n){
+  const P=MXP_of(n), mx=n.mx||{}, fixed=mxFixed(n), bs=mxBuses(n), N=mxNCh(n), cl=doc.cls.find(c=>c.console===n.id);
+  const used=Math.max(0,...Object.keys(mx.ch||{}).map(Number).filter(k=>k<=N));
+  const show=Math.min(N,Math.max(fixed?N:16,cl?cl.rows.length:0,used,rte.mxN||0));
+  let h=`<div class="rte-hint"><b>${esc(P.name)}</b>：${esc(P.spec)}。${fixed?'':'「來源」沒指定時依 Channel List 推算（直接進控台，或 Stage Box 第幾個輸入經 AES50／Dante 進來），沒有清單時照出廠預設 CH k ← 第 k 個本機輸入。'}點 Send 格子開啟，再點一次可調電平或關閉。設定好輸出 Patch 後，接線圖的路由線與訊號追蹤會跟著更新。</div>`;
+  if(rte.mxMsg){ const m=rte.mxMsg; h+=`<div class="mx-msg${m.err?' bad':''}">${m.ok?`<b>✓ ${esc(m.ok)}</b>`:''}${m.t.length?`<ul>${m.t.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:(m.ok?'，沒有需要注意的地方。':'')}</div>`; }
+  const ex=P.exp==='x32'?'匯出 X32 場景（.scn）':P.exp==='xair'?'匯出 X AIR 場景（.scn）':P.exp==='wing'?'匯出 WING Snippet（.snip）':'';
+  h+=`<div class="mx-bar">${P.cfgBus?`<label class="mx-nb">Bus 數量 <input type="number" min="1" max="${P.cfgBus}" data-mx="nb" value="${mxNB(n)}"></label>`:''}<span class="grow"></span>`
+    +(ex?`<button class="btn pri" data-mxa="exp" title="${P.exp==='wing'?'Snippet 只包含這裡設定的參數，載入時不會動到 EQ、動態等其他設定':'用工具內建的預設場景當底，再寫入這裡的設定'}">⬇ ${ex}</button>`:'')
+    +(P.exp==='x32'||P.exp==='xair'?`<button class="btn" data-mxa="tpl" title="用控台或 X-Edit 存出來的 .scn 當底：保留它的 EQ、動態、效果器等設定，只改 patch、名稱、Send、DCA">📄 用現有場景當範本匯出…</button>`:'')
+    +`<button class="btn" data-mxa="csv" title="輸入軌道、Send、Bus 與輸出 Patch 表">⬇ CSV</button></div>`;
+  // 輸入軌道 × Bus
+  h+=`<div class="mx-sec">輸入軌道與 Send<span class="dim">（${show}／${N} 軌${fixed?'，接法固定':''}）</span></div><div class="mx-wrap"><table class="mxt"><thead><tr><th class="c">CH</th><th>名稱</th><th>${fixed?'輸入':'來源'}</th><th class="v" title="送到 Main"><span>${P.fam==='wing'?'Main 1':'Main LR'}</span></th>`
+    +bs.map(b=>`<th class="v" title="${esc(b.nm)}（${mxTap(n,b.i)==='PRE'?'推桿前':'推桿後'}）"><span>${esc(b.nm)}</span></th>`).join('')+(P.dca||P.mg?'<th>DCA／Mute</th>':'')+'</tr></thead><tbody>';
+  for(let k=1;k<=show;k++){ const c=mxC(n,k), src=mxSrcOf(n,k), auto=!c.src;
+    h+=`<tr><th class="c">${P2(k)}</th><td><input class="mx-in" data-mx="nm" data-k="${k}" value="${esc(c.nm||'')}" placeholder="${esc(mxClName(n,k)||'')}" maxlength="16"></td>`;
+    h+=fixed?`<td class="dim">${esc((mxStrips(n)[k-1]||{}).l||'')}</td>`:`<td><button class="mx-src${auto?' auto':''}" data-mxa="src" data-k="${k}" title="${auto?'自動（依 Channel List 推算）':'手動指定'}：點一下更改">${auto?'⟲ ':''}${esc(mxSrcLabel(n,src))}</button></td>`;
+    h+=`<td class="s${c.lr!==false?' on':''}" data-mxl="${k}" title="送到 Main（點一下切換）">${c.lr!==false?'●':''}</td>`;
+    h+=bs.map(b=>{ const l=c.s&&c.s[b.i]; return `<td class="s${l!=null?' on':''}" data-mxs="${k}|${b.i}" title="CH ${k} → ${esc(b.nm)}${l!=null?'：'+fmtDb(l)+' dB（點一下調整）':'（點一下開啟）'}">${l!=null?(l?esc(fmtDb(l)):'●'):''}</td>`; }).join('');
+    if(P.dca||P.mg) h+=`<td><button class="mx-src" data-mxa="grp" data-k="${k}">${esc([...(c.d||[]).map(i=>'D'+i),...(c.m||[]).map(i=>'M'+i)].join(' '))||'<span class="dim">＋</span>'}</button></td>`;
+    h+='</tr>'; }
+  h+=`</tbody></table></div>${show<N?`<button class="btn mx-more" data-mxa="more">顯示更多軌道（${show}／${N}）</button>`:''}`;
+  // Bus
+  h+=`<div class="mx-sec">Bus${P.mtx?'、Main 與 Matrix':''}</div><div class="mx-wrap"><table class="mxt"><thead><tr><th class="c">#</th><th>名稱</th><th>送出點</th>${P.busLR?'<th>→ Main</th>':''}${P.link?'<th title="和下一個 Bus 組成立體聲（只有單數 Bus）">立體聲連結</th>':''}${mxRange(1,P.mtx).map(j=>`<th class="c">→ Mtx ${j}</th>`).join('')}</tr></thead><tbody>`;
+  for(const b of bs){ const x=mxB(n,b.i), lk=P.link&&b.i%2&&b.i<(P.linkN||bs.length);
+    h+=`<tr><th class="c">${b.i}</th><td><input class="mx-in" data-mx="bnm" data-b="${b.i}" value="${esc(x.nm||'')}" placeholder="${esc(b.dn)}" maxlength="16"></td>`
+      +`<td><select data-mx="btap" data-b="${b.i}" class="mx-sel">${['PRE','POST'].map(t=>`<option value="${t}"${mxTap(n,b.i)===t?' selected':''}>${t==='PRE'?'Pre（推桿前）':'Post（推桿後）'}</option>`).join('')}</select></td>`
+      +(P.busLR?`<td class="s${x.lr?' on':''}" data-mxb="lr|${b.i}">${x.lr?'●':''}</td>`:'')+(P.link?`<td class="c">${lk?`<input type="checkbox" data-mx="bst" data-b="${b.i}"${x.st?' checked':''}>`:''}</td>`:'')
+      +mxRange(1,P.mtx).map(j=>`<td class="s${x.mt&&x.mt[j]!=null?' on':''}" data-mxb="mt|${b.i}|${j}">${x.mt&&x.mt[j]!=null?'●':''}</td>`).join('')+'</tr>'; }
+  if(P.mtx){ const mt=(mx.main&&mx.main.mt)||{};
+    h+=`<tr><th class="c">M</th><td colspan="${2+(P.busLR?1:0)+(P.link?1:0)}">${P.fam==='wing'?'Main 1':'Main LR'}</td>${mxRange(1,P.mtx).map(j=>`<td class="s${mt[j]!=null?' on':''}" data-mxb="mm|0|${j}">${mt[j]!=null?'●':''}</td>`).join('')}</tr>`;
+    h+=`<tr><th class="c">名稱</th><td colspan="${2+(P.busLR?1:0)+(P.link?1:0)}" class="dim">Matrix 名稱</td>${mxRange(1,P.mtx).map(j=>`<td><input class="mx-in s" data-mx="xnm" data-j="${j}" value="${esc((mx.mtx&&mx.mtx[j]&&mx.mtx[j].nm)||'')}" placeholder="Mtx ${j}" maxlength="16"></td>`).join('')}</tr>`; }
+  h+='</tbody></table></div>';
+  // 輸出 Patch
+  h+=`<div class="mx-sec">輸出 Patch${fixed||P.fixedMain?'<span class="dim">（固定的接法照原廠）</span>':''}</div>`;
+  const om=mxOutMap(n), fo=P.fout?P.fout(n):{};
+  if(fixed){ h+=`<div class="mx-fixed">${Object.entries(om).map(([dk,sg])=>`<span>${esc((getPort(n,dk)||{}).name||dk)} ← <b>${esc(mxSigLabel(n,sg))}</b></span>`).join('')||'<span class="dim">沒有輸出</span>'}</div>`; }
+  else { const sigs=mxSigs(n), ds=mxDsts(n), byP=new Map(); ds.forEach(d=>{ if(!byP.has(d.p)) byP.set(d.p,[]); byP.get(d.p).push(d); });
+    const opt=cur=>`<option value="">—</option>`+sigs.map(s=>`<option value="${s.k}"${s.k===cur?' selected':''}>${esc(s.l)}</option>`).join('');
+    const singles=[...byP.values()].filter(a=>a.length===1&&!a[0].j).map(a=>a[0]), multis=[...byP.entries()].filter(([,a])=>a.length>1||a[0].j);
+    h+=`<div class="mx-out">${singles.map(d=>fo[d.k]?`<label><span>${esc(d.l)}</span><b class="dim">← ${esc(mxSigLabel(n,fo[d.k]))}（固定）</b></label>`:`<label><span>${esc(d.l)}</span><select data-mx="out" data-d="${d.k}" class="mx-sel">${opt(om[d.k])}</select></label>`).join('')}</div>`;
+    for(const [pid,a] of multis){ const set=a.filter(d=>om[d.k]).length, op=rte.mxOpen.has(pid)||(set&&!rte.mxShut.has(pid)), p=getPort(n,pid);
+      const wired=doc.wires.some(w=>(w.a.n===n.id&&w.a.p===pid)||(w.b.n===n.id&&w.b.p===pid));
+      h+=`<div class="mx-grp"><button class="mx-gh" data-mxa="og" data-p="${pid}">${op?'▾':'▸'} ${esc(p.name)}（${a.length} 軌${set?`，已設定 ${set}`:''}${wired?'，有接線':''}）</button>`;
+      if(op) h+=`<div class="mx-out">${a.map(d=>`<label><span>${esc(d.l)}</span><select data-mx="out" data-d="${d.k}" class="mx-sel">${opt(om[d.k])}</select></label>`).join('')}</div>`;
+      h+='</div>'; } }
+  // DCA／Mute Group 名稱
+  if(P.dca||P.mg) h+=`<div class="mx-sec">DCA 與 Mute Group 名稱</div><div class="mx-names">${mxRange(1,P.dca).map(i=>`<label>DCA ${i}<input class="mx-in" data-mx="dnm" data-i="${i}" value="${esc((mx.dca&&mx.dca[i])||'')}" maxlength="16"></label>`).join('')}${P.fam==='x32'?'':mxRange(1,P.mg).map(i=>`<label>Mute ${i}<input class="mx-in" data-mx="gnm" data-i="${i}" value="${esc((mx.mg&&mx.mg[i])||'')}" maxlength="16"></label>`).join('')}</div>`;
+  return h;
+}
+// 浮動小視窗：選來源、調 Send 電平、勾 DCA／Mute Group（Channel List 也用它）
+function mxPopHTML(){
+  const s=mxPopS.on, n=s&&getNode(s.n); if(!n||!MXP_of(n)) return '';
+  const P=MXP_of(n), c=mxC(n,s.k), nm=mxName(n,s.k);
+  let h=`<div class="mp-t">CH ${P2(s.k)}${nm?' · '+esc(nm):''}<button class="x" data-pk="close">✕</button></div>`;
+  if(s.t==='src'){ const src=mxSrcOf(n,s.k), groups=new Map(); mxSrcs(n).forEach(x=>{ if(!groups.has(x.pn)) groups.set(x.pn,[]); groups.get(x.pn).push(x); });
+    h+=`<select size="14" data-pk="src" class="mp-sel"><option value=""${!c.src?' selected':''}>⟲ 自動（${esc(mxSrcLabel(n,mxAuto(n,s.k)))}）</option><option value="off"${c.src==='off'?' selected':''}>（無）</option>`
+      +[...groups.entries()].map(([g,a])=>a.length===1?`<option value="${a[0].k}"${c.src===a[0].k?' selected':''}>${esc(a[0].l)}</option>`:`<optgroup label="${esc(g)}">${a.map(x=>`<option value="${x.k}"${c.src===x.k?' selected':''}>${esc(x.l)}</option>`).join('')}</optgroup>`).join('')+'</select>';
+    h+=`<div class="mp-h">目前：${esc(mxSrcLabel(n,src))}</div>`; }
+  else if(s.t==='lvl'){ const b=mxBuses(n).find(x=>x.i===s.b), l=c.s&&c.s[s.b];
+    h+=`<div class="mp-h">→ ${esc(b?b.nm:'Bus '+s.b)}（${mxTap(n,s.b)==='PRE'?'推桿前':'推桿後'}）</div><label class="mp-l">電平 <input type="number" step="0.5" min="-90" max="10" data-pk="lvl" value="${l??0}"> dB</label>`
+      +`<div class="mp-b"><button class="btn" data-pk="l0">0 dB</button><button class="btn" data-pk="l-10">-10 dB</button><button class="btn danger" data-pk="soff">關閉這個 Send</button></div>`; }
+  else { const bs=mxBuses(n), chk=(k,on,l)=>`<label class="mp-c"><input type="checkbox" data-pk="${k}"${on?' checked':''}>${esc(l)}</label>`;
+    h+=`<div class="mp-g">${chk('lr',c.lr!==false,P.fam==='wing'?'Main 1':'Main LR')}</div>`;
+    if(s.t==='ch') h+=`<div class="mp-s">Send</div><div class="mp-g">${bs.map(b=>chk('s:'+b.i,c.s&&c.s[b.i]!=null,b.nm+(c.s&&c.s[b.i]?' ('+fmtDb(c.s[b.i])+')':''))).join('')}</div>`;
+    if(P.dca) h+=`<div class="mp-s">DCA</div><div class="mp-g">${mxRange(1,P.dca).map(i=>chk('d:'+i,(c.d||[]).includes(i),(n.mx&&n.mx.dca&&n.mx.dca[i])||'DCA '+i)).join('')}</div>`;
+    if(P.mg) h+=`<div class="mp-s">Mute Group</div><div class="mp-g">${mxRange(1,P.mg).map(i=>chk('m:'+i,(c.m||[]).includes(i),(n.mx&&n.mx.mg&&n.mx.mg[i])||'Mute '+i)).join('')}</div>`;
+    if(s.t==='ch') h+=`<div class="mp-b"><button class="btn" data-pk="open">⇄ 打開完整混音設定</button></div>`; }
+  return h;
+}
+function mxPop(anchor,st){
+  mxPopS.on=st; const p=$('#mxpop'); p.innerHTML=mxPopHTML(); p.hidden=false;
+  const r=anchor.getBoundingClientRect(), z=UZ(); p.style.left=(r.left/z)+'px'; p.style.top=((r.bottom+4)/z)+'px';
+  const pr=p.getBoundingClientRect(); if(pr.right>innerWidth-8) p.style.left=Math.max(8,innerWidth-8-pr.width)/z+'px'; if(pr.bottom>innerHeight-8) p.style.top=Math.max(8,r.top-4-pr.height)/z+'px';
+  const f=p.querySelector('select,input[type=number]'); if(f) f.focus();
+}
+function mxPopClose(){ const p=$('#mxpop'); if(p&&!p.hidden){ p.hidden=true; p.innerHTML=''; mxPopS.on=null; } }
+function mxPopRefresh(){ const p=$('#mxpop'); if(!p||p.hidden) return; const n=getNode(mxPopS.on&&mxPopS.on.n); if(!n){ mxPopClose(); return; } p.innerHTML=mxPopHTML(); }
+function mxToggleSend(n,k,b,on){ mxEdit(n,()=>{ const c=mxDc(n,k); c.s||(c.s={}); if(on===false||(on==null&&c.s[b]!=null)) delete c.s[b]; else if(c.s[b]==null) c.s[b]=0; }); }
+(()=>{
+  const p=$('#mxpop');
+  p.addEventListener('change',e=>{ const s=mxPopS.on, n=s&&getNode(s.n), el=e.target, k=el.dataset.pk; if(!n||!k) return;
+    if(k==='src'){ mxEdit(n,()=>{ const c=mxDc(n,s.k); if(el.value) c.src=el.value; else delete c.src; }); mxPopClose(); return; }
+    if(k==='lvl'){ const v=clamp(+el.value||0,-90,10); mxEdit(n,()=>{ const c=mxDc(n,s.k); (c.s||(c.s={}))[s.b]=Math.round(v*10)/10; }); mxPopRefresh(); return; }
+    if(k==='lr') mxEdit(n,()=>{ const c=mxDc(n,s.k); if(el.checked) delete c.lr; else c.lr=false; });
+    else if(k.startsWith('s:')) mxToggleSend(n,s.k,+k.slice(2),el.checked);
+    else if(/^[dm]:/.test(k)) mxEdit(n,()=>{ const c=mxDc(n,s.k), f=k[0], i=+k.slice(2), a=new Set(c[f]||[]); el.checked?a.add(i):a.delete(i); c[f]=[...a].sort((x,y)=>x-y); if(!c[f].length) delete c[f]; });
+    mxPopRefresh(); });
+  p.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.dataset.pk==='lvl'){ e.target.dispatchEvent(new Event('change',{bubbles:true})); mxPopClose(); } else if(e.key==='Escape'){ e.stopPropagation(); mxPopClose(); } });
+  p.addEventListener('click',e=>{ const b=e.target.closest('button[data-pk]'), s=mxPopS.on, n=s&&getNode(s.n); if(!b||!n) return; const k=b.dataset.pk;
+    if(k==='close') mxPopClose();
+    else if(k==='soff'){ mxToggleSend(n,s.k,s.b,false); mxPopClose(); }
+    else if(k==='l0'||k==='l-10'){ mxEdit(n,()=>{ const c=mxDc(n,s.k); (c.s||(c.s={}))[s.b]=k==='l0'?0:-10; }); mxPopClose(); }
+    else if(k==='open'){ mxPopClose(); openMix(n.id); } });
+  document.addEventListener('pointerdown',e=>{ if(!p.hidden&&!p.contains(e.target)&&!e.target.closest('[data-mxa="src"],[data-mxa="grp"],[data-mxs],[data-ca="mx"]')) mxPopClose(); },true);
+  const rb=$('#rte-body');
+  rb.addEventListener('click',e=>{
+    const n=getNode(rte.id); if(!n||rte.view!=='mix') return;
+    const s=e.target.closest('[data-mxs]'); if(s){ const [k,b]=s.dataset.mxs.split('|').map(Number); if(mxC(n,k).s&&mxC(n,k).s[b]!=null) mxPop(s,{t:'lvl',n:n.id,k,b}); else { mxToggleSend(n,k,b,true); } return; }
+    const l=e.target.closest('[data-mxl]'); if(l){ const k=+l.dataset.mxl; mxEdit(n,()=>{ const c=mxDc(n,k); if(c.lr===false) delete c.lr; else c.lr=false; }); return; }
+    const bb=e.target.closest('[data-mxb]'); if(bb){ const [f,b,j]=bb.dataset.mxb.split('|'); mxEdit(n,()=>{
+      if(f==='lr'){ const x=mxDb(n,+b); if(x.lr) delete x.lr; else x.lr=true; }
+      else if(f==='mt'){ const x=mxDb(n,+b); x.mt||(x.mt={}); if(x.mt[j]!=null) delete x.mt[j]; else x.mt[j]=0; }
+      else { const m=mxD(n); m.main||(m.main={mt:{}}); m.main.mt||(m.main.mt={}); if(m.main.mt[j]!=null) delete m.main.mt[j]; else m.main.mt[j]=0; } }); return; }
+    const a=e.target.closest('[data-mxa]'); if(!a) return; const k=+a.dataset.k;
+    switch(a.dataset.mxa){
+      case 'src': mxPop(a,{t:'src',n:n.id,k}); break;
+      case 'grp': mxPop(a,{t:'grp',n:n.id,k}); break;
+      case 'more': rte.mxN=Math.min(mxNCh(n),Math.max(rte.mxN||0,16)+16); renderRt(); break;
+      case 'og': { const pid=a.dataset.p, open=a.textContent.trim().startsWith('▾'); if(open){ rte.mxOpen.delete(pid); rte.mxShut.add(pid); } else { rte.mxOpen.add(pid); rte.mxShut.delete(pid); } renderRt(); break; }
+      case 'exp': mxExport(n); break;
+      case 'tpl': { const f=$('#mx-tpl'); f.value=''; f.onchange=()=>{ const file=f.files[0]; if(!file) return; file.text().then(t=>mxExport(n,t)); }; f.click(); break; }
+      case 'csv': mxCSV(n); break;
+    }
+  });
+  rb.addEventListener('change',e=>{
+    const n=getNode(rte.id), el=e.target, f=el.dataset.mx; if(!n||!f||rte.view!=='mix') return;
+    const v=el.value.trim();
+    mxEdit(n,()=>{ const m=mxD(n);
+      switch(f){
+        case 'nm': { const c=mxDc(n,+el.dataset.k); if(v) c.nm=v; else delete c.nm; break; }
+        case 'bnm': { const x=mxDb(n,+el.dataset.b); if(v) x.nm=v; else delete x.nm; break; }
+        case 'btap': mxDb(n,+el.dataset.b).tap=el.value; break;
+        case 'bst': { const x=mxDb(n,+el.dataset.b); if(el.checked) x.st=true; else delete x.st; break; }
+        case 'xnm': { m.mtx||(m.mtx={}); if(v) m.mtx[el.dataset.j]={nm:v}; else delete m.mtx[el.dataset.j]; break; }
+        case 'dnm': case 'gnm': { const g=f==='dnm'?'dca':'mg'; m[g]||(m[g]={}); if(v) m[g][el.dataset.i]=v; else delete m[g][el.dataset.i]; break; }
+        case 'out': { m.out||(m.out={}); if(el.value) m.out[el.dataset.d]=el.value; else delete m.out[el.dataset.d]; break; }
+        case 'nb': m.nb=clamp(Math.round(+el.value)||1,1,MXP_of(n).cfgBus||64); break;
+      } });
+  });
+})();
+function openMix(id){ const n=getNode(id); if(!MXP_of(n)){ toast('這台裝置沒有混音設定'); return; } openRt(id); rte.view='mix'; rte.mxMsg=null; renderRt(); }
+
 /* =========================================================
    聚光燈逐步導覽（第一次開啟時顯示；工具列「教學」可再看一次）
    ========================================================= */
@@ -4492,7 +5109,7 @@ const TOUR=[
   {el:'#top .seg[title="切換畫面"]',t:'三個畫面',b:'☰ Channel List 是控台輸入軌道表，⇄ 訊號流程畫接線，🗺 場地配置擺器材並估算線長。三個畫面共用同一份資料。'},
   {el:'#lib',t:'裝置庫',b:'TSL 器材、園區器材、品牌型號、通用、活動臨時五個分頁。點一下加入畫布，或拖曳到想放的位置；清單沒有的器材可以「＋ 新增自訂器材」。'},
   {el:'#stage',t:'拉線',b:'從接口的圓點拖曳到另一台裝置的接口，或點一下接口、再點目標。拉到空白處放開會開快速新增；雙擊空白處也能新增裝置。'},
-  {el:()=>$$('#Ln .node').find(g=>{ const n=getNode(g.dataset.node); return n&&rtAble(n); })||$('#stage'),t:'雙擊裝置：內部路由',b:'雙擊裝置會打開它的內部路由，設定哪個輸入走到哪個輸出（例如介面 In 1 → Out 3）。可以在放大的方框裡拖曳拉線，或切到「矩陣」打勾。'},
+  {el:()=>$$('#Ln .node').find(g=>{ const n=getNode(g.dataset.node); return n&&rtAble(n); })||$('#stage'),t:'雙擊裝置：內部路由',b:'雙擊裝置會打開它的內部路由，設定哪個輸入走到哪個輸出（例如介面 In 1 → Out 3）。可以在放大的方框裡拖曳拉線，或切到「矩陣」打勾。控台還有「混音／Send」分頁：輸入軌道來源、Send、Bus、Matrix、DCA 與輸出 Patch，X32、X AIR 可匯出 .scn，WING 可匯出 .snip。'},
   {el:'#rvseg',t:'內部路由的顯示方式',b:'主畫面上，裝置方框裡的路由線可以選「正常」「半透明」或「不顯示」。畫面線很多時，切成半透明或不顯示會比較清楚。'},
   {el:'[data-tog="trace"]',t:'訊號追蹤',b:'開啟後選一台裝置、一條線，或點一下某個接口，只會亮起真正走得到的那一路。有設定內部路由的裝置會照路由追，不會整台全亮。快捷鍵 T。'},
   {el:'#side',t:'屬性面板',b:'選取裝置後，在這裡改名稱、型號、I/O 數量與來源；也可以「★ 設為主控台」、開它的 Channel List，或編輯內部路由。'},
