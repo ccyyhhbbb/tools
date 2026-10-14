@@ -132,6 +132,8 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
     <option value="0.8">80%</option><option value="1">100%</option><option value="1.3" selected>130%</option>
     <option value="1.6">160%</option><option value="2">200%</option>
   </select>
+  <button class="btn needdoc" id="bRotL" disabled title="整份文件所有頁面逆時針旋轉 90°">⟲ 全部左轉</button>
+  <button class="btn needdoc" id="bRotR" disabled title="整份文件所有頁面順時針旋轉 90°">⟳ 全部右轉</button>
   <span class="sep"></span>
   <button class="btn needdoc" id="bText" disabled title="在頁面上加入新的文字框">𝐓 文字框</button>
   <button class="btn needdoc sym" data-shape="check" disabled title="加入勾勾">✓ 勾勾</button>
@@ -381,7 +383,7 @@ async function openPdf(file){
     for(let i=0;i<doc.numPages;i++){
       const page = await doc.getPage(i+1);
       const tc = await page.getTextContent();
-      S.pages.push({src:i, page, vp1:page.getViewport({scale:1}), styles:tc.styles, raw:tc.items, items:null});
+      S.pages.push({src:i, page, rot:0, vp1:page.getViewport({scale:1}), styles:tc.styles, raw:tc.items, items:null});
     }
     $('empty').style.display='none';
     $('main').classList.add('hasdoc');
@@ -402,15 +404,32 @@ const refreshAll = () => {
   S.objs.filter(o=>o.type==='text').forEach(drawObj);
 };
 
+// 頁面在畫面上的角度 = PDF 原本的 /Rotate + 使用者加的旋轉
+const viewRot = P => ((P.page.rotate||0) + (P.rot||0) + 360) % 360;
+
+/* 原有文字在畫面上的位置。框以「文字自身方向」描述：(x,y) 為框左上、ang 為文字方向（弧度），
+   旋轉中心在基線左端 (x, y+bl)，頁面旋轉後文字框會跟著轉 */
 function geom(it, vp){
   const tx = pdfjsLib.Util.transform(vp.transform, it.t);
   const fs = Math.hypot(tx[2],tx[3]) || Math.hypot(tx[0],tx[1]);
+  const ang = Math.atan2(tx[1],tx[0]);
   // ca / cd：覆蓋框的上下緣（至少等於字型 ascent / descent，取樣後會依實際墨跡擴大）
-  return { x:tx[4], y:tx[5]-it.ca*fs, w:it.w*vp.scale, h:(it.ca-it.cd)*fs, fs, bl:it.ca*fs };
+  return { x:tx[4], y:tx[5]-it.ca*fs, w:it.w*vp.scale, h:(it.ca-it.cd)*fs, fs, bl:it.ca*fs, ang:Math.abs(ang)<1e-6?0:ang };
+}
+function placeBox(el, g){
+  Object.assign(el.style,{left:g.x+'px',top:g.y+'px',width:g.w+'px',height:g.h+'px',
+    transformOrigin:`0 ${g.bl}px`, transform:g.ang?`rotate(${g.ang}rad)`:''});
+}
+// 旋轉後文字框的外接矩形 [x0,y0,x1,y1]
+function geomAABB(g){
+  const c=Math.cos(g.ang), si=Math.sin(g.ang), ox=g.x, oy=g.y+g.bl;
+  const pts=[[0,-g.bl],[g.w,-g.bl],[0,g.h-g.bl],[g.w,g.h-g.bl]].map(([u,v])=>[ox+u*c-v*si, oy+u*si+v*c]);
+  const xs=pts.map(q=>q[0]), ys=pts.map(q=>q[1]);
+  return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
 }
 
 async function renderPage(P){
-  const vp = P.page.getViewport({scale:S.scale}); P.vp = vp;
+  const vp = P.page.getViewport({scale:S.scale, rotation:viewRot(P)}); P.vp = vp;
   const dpr = window.devicePixelRatio||1;
   // 畫布尺寸取整數個裝置像素，避免被瀏覽器縮放而模糊
   const cw = Math.round(vp.width*dpr), ch = Math.round(vp.height*dpr);
@@ -421,16 +440,18 @@ async function renderPage(P){
   const ov = document.createElement('div'); ov.className='overlay';
   const head = document.createElement('div'); head.className='pghead';
   head.innerHTML = `<span class="pl"></span><span style="flex:1"></span>
+    <button data-act="rotl" title="此頁逆時針旋轉 90°">⟲</button><button data-act="rotr" title="此頁順時針旋轉 90°">⟳</button>
     <button data-act="up" title="往前移一頁">↑</button><button data-act="down" title="往後移一頁">↓</button>
     <button data-act="export" title="只匯出這一頁">⬇ 匯出此頁</button>
     <button data-act="del" class="danger" title="刪除這一頁">🗑 刪除頁面</button>`;
   head.addEventListener('click',e=>{ const a=e.target.closest('button')?.dataset.act; if(a) pageAction(P,a); });
-  wrap.append(head, cv, ov); $('pages').append(wrap);
+  wrap.append(head, cv, ov);
+  if(P.el?.isConnected) P.el.replaceWith(wrap); else $('pages').append(wrap);   // 單頁重繪時原地替換
   P.el=wrap; P.canvas=cv; P.overlay=ov; P.label=head.querySelector('.pl');
   const ctx = cv.getContext('2d',{willReadFrequently:true});
   await P.page.render({canvasContext:ctx, viewport:vp, transform: dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
   if(!P.items) P.items = buildItems(P);
-  sampleColors(P, ctx, dpr);
+  await ensureColors(P, ctx, dpr);
   for(const it of P.items){ it.el = makeItemEl(it, P); ov.append(it.el); refreshItem(it); }
   S.objs.filter(o=>o.P===P).forEach(mountObj);
   ov.addEventListener('click', e=>onPageClick(e,P));
@@ -455,11 +476,20 @@ function buildItems(P){
 
 /* 從畫面取樣：背景色（邊框眾數）、文字色（離背景最遠的像素），
    並往上下延伸找出實際墨跡範圍，讓覆蓋框能完整蓋住原文字 */
-function sampleColors(P, ctx, dpr){
-  const W=P.canvas.width, H=P.canvas.height;
+async function ensureColors(P, ctx, dpr){
+  if(P.items.every(it=>it.colorSet)) return;
+  if(viewRot(P)===0) return sampleColors(P, ctx, dpr, P.vp);
+  const vp0=P.page.getViewport({scale:S.scale*dpr, rotation:0}), c=document.createElement('canvas');
+  c.width=Math.round(vp0.width); c.height=Math.round(vp0.height);
+  const ctx0=c.getContext('2d',{willReadFrequently:true});
+  await P.page.render({canvasContext:ctx0, viewport:vp0}).promise;
+  sampleColors(P, ctx0, 1, vp0);
+}
+function sampleColors(P, ctx, dpr, vp){
+  const W=ctx.canvas.width, H=ctx.canvas.height;
   for(const it of P.items){
     if(it.colorSet) continue;
-    const g = geom(it, P.vp), ext = g.fs*0.45;
+    const g = geom(it, vp), ext = g.fs*0.45;
     const x0=Math.max(0,Math.floor((g.x-2)*dpr)), x1=Math.min(W,Math.ceil((g.x+g.w+2)*dpr));
     const y0=Math.max(0,Math.floor((g.y-ext)*dpr)), y1=Math.min(H,Math.ceil((g.y+g.h+ext)*dpr));
     const ty0=Math.max(y0,Math.floor((g.y-2)*dpr)), ty1=Math.min(y1,Math.ceil((g.y+g.h+2)*dpr));
@@ -492,7 +522,7 @@ const pageNo = P => S.pages.indexOf(P)+1;
 function relabel(){
   const n=S.pages.length;
   S.pages.forEach((P,i)=>{
-    if(P.label) P.label.textContent=`第 ${i+1} 頁`;
+    if(P.label) P.label.textContent=`第 ${i+1} 頁`+(P.rot?`（已旋轉 ${P.rot>180?P.rot-360:P.rot}°）`:'');
     if(P.el){
       P.el.querySelector('[data-act=up]').disabled = i===0;
       P.el.querySelector('[data-act=down]').disabled = i===n-1;
@@ -525,6 +555,25 @@ function pageAction(P, act){
   else if(act==='down' && i<S.pages.length-1) movePage(P,i+1);
   else if(act==='export') exportPdf([P]);
   else if(act==='del') deletePage(P);
+  else if(act==='rotl') rotatePages([P],-90);
+  else if(act==='rotr') rotatePages([P],90);
+}
+/* 旋轉頁面：新增的物件跟著頁面移動（圖片一起轉，文字框與符號保持正向） */
+async function rotatePages(list, d){
+  for(const P of list){
+    const old=P.vp1;
+    P.rot=((P.rot||0)+d+360)%360;
+    P.vp1=P.page.getViewport({scale:1, rotation:viewRot(P)});
+    P.lines=null;
+    for(const o of S.objs.filter(o=>o.P===P)){
+      const [px,py]=old.convertToPdfPoint(o.x+o.w/2, o.y+o.h/2), [nx,ny]=P.vp1.convertToViewportPoint(px,py);
+      o.x=nx-o.w/2; o.y=ny-o.h/2;
+      if(o.type==='sig') o.rot=normAngle((o.rot||0)+d);
+    }
+    if(P.el) await renderPage(P);
+    renderThumb(P);
+  }
+  relabel(); showSide(); status();
 }
 const clearDrop = () => document.querySelectorAll('.th.drop-b,.th.drop-a').forEach(t=>t.classList.remove('drop-b','drop-a'));
 async function buildThumbs(){
@@ -532,7 +581,7 @@ async function buildThumbs(){
   for(const P of S.pages){
     const th=document.createElement('div'); th.className='th'; th.draggable=true;
     th.innerHTML=`<div class="thc"></div><div class="thf"><span class="thn"></span>
-      <span class="tha"><button data-act="export" title="只匯出這一頁">⬇</button><button data-act="del" title="刪除這一頁">🗑</button></span></div>`;
+      <span class="tha"><button data-act="rotr" title="此頁順時針旋轉 90°">⟳</button><button data-act="export" title="只匯出這一頁">⬇</button><button data-act="del" title="刪除這一頁">🗑</button></span></div>`;
     P.thumb=th; P.thumbN=th.querySelector('.thn');
     th.addEventListener('click',e=>{
       const a=e.target.closest('button')?.dataset.act;
@@ -559,13 +608,14 @@ async function buildThumbs(){
     list.append(th);
   }
   relabel();
-  const dpr=window.devicePixelRatio||1;
-  for(const P of S.pages){
-    const v=P.page.getViewport({scale:116/P.vp1.width*dpr});
-    const c=document.createElement('canvas'); c.width=Math.round(v.width); c.height=Math.round(v.height);
-    await P.page.render({canvasContext:c.getContext('2d'), viewport:v}).promise;
-    P.thumb?.querySelector('.thc').append(c);
-  }
+  for(const P of S.pages) await renderThumb(P);
+}
+async function renderThumb(P){
+  const box=P.thumb?.querySelector('.thc'); if(!box) return;
+  const dpr=window.devicePixelRatio||1, v=P.page.getViewport({scale:116/P.vp1.width*dpr, rotation:viewRot(P)});
+  const c=document.createElement('canvas'); c.width=Math.round(v.width); c.height=Math.round(v.height);
+  await P.page.render({canvasContext:c.getContext('2d'), viewport:v}).promise;
+  box.replaceChildren(c);
 }
 
 /* ---------- 文字繪製（預覽） ---------- */
@@ -591,8 +641,7 @@ const isChanged = it => !!(it.deleted || it.text!==it.str || it.fsz!==it.size ||
 
 function makeItemEl(it, P){
   const el=document.createElement('div'); el.className='ti';
-  const g=geom(it,P.vp);
-  Object.assign(el.style,{left:g.x+'px',top:g.y+'px',width:g.w+'px',height:g.h+'px'});
+  placeBox(el, geom(it,P.vp));
   el.title = it.str;
   el.addEventListener('click',e=>{ if(S.pending) return; e.stopPropagation(); select(it); });
   el.addEventListener('dblclick',e=>{ if(S.pending) return; e.stopPropagation(); startInline(it); });
@@ -613,10 +662,10 @@ function refreshItem(it){
   const c=document.createElement('canvas'), ctx=c.getContext('2d');
   const tw=drawRuns(ctx,it.text,it,fs,0,0,null);
   const off=alignOffset(it.align,g.w,tw);
-  // 將畫布對齊到裝置像素格線，文字才不會被重新取樣而模糊
+  // 將畫布對齊到裝置像素格線，文字才不會被重新取樣而模糊（旋轉中的文字無法對齊，略過）
   const r=el.getBoundingClientRect();
-  const left=Math.round((r.left+Math.min(0,off)-2)*dpr)/dpr - r.left;
-  const top =Math.round((r.top-pad)*dpr)/dpr - r.top;
+  const left= g.ang ? Math.min(0,off)-2 : Math.round((r.left+Math.min(0,off)-2)*dpr)/dpr - r.left;
+  const top = g.ang ? -pad : Math.round((r.top-pad)*dpr)/dpr - r.top;
   const W=Math.ceil((Math.max(g.w,off+tw)-left+2)*dpr), H=Math.ceil((g.h+pad*2)*dpr);
   c.width=W; c.height=H; c.style.width=W/dpr+'px'; c.style.height=H/dpr+'px';
   c.style.left=left+'px'; c.style.top=top+'px';
@@ -647,7 +696,7 @@ function startInline(it){
   select(it);
   const P=it.P, g=geom(it,P.vp), fs=g.fs*it.fsz/it.size;
   const box=document.createElement('div'); box.className='inl';
-  Object.assign(box.style,{left:g.x+'px',top:g.y+'px'});
+  Object.assign(box.style,{left:g.x+'px',top:g.y+'px',transformOrigin:`0 ${g.bl}px`,transform:g.ang?`rotate(${g.ang}rad)`:''});
   box.innerHTML=`<div class="itb">${alignButtons(it)}</div><input>`;
   const inp=box.querySelector('input');
   inp.value = it.deleted ? '' : it.text;
@@ -792,7 +841,7 @@ function detectLines(P){
   const d=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,H).data;
   const dark=new Uint8Array(W*H);
   for(let i=0,j=0;j<W*H;i+=4,j++) dark[j] = d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11 < 160 ? 1 : 0;
-  const textBoxes=(P.items||[]).map(it=>{ const g=geom(it,P.vp1); return [g.x+1,g.y+1,g.x+g.w-1,g.y+g.h-1]; });
+  const textBoxes=(P.items||[]).map(it=>{ const b=geomAABB(geom(it,P.vp1)); return [b[0]+1,b[1]+1,b[2]-1,b[3]-1]; });
   const inText=(x,y)=>textBoxes.some(b=>x>b[0]&&x<b[2]&&y>b[1]&&y<b[3]);
   const gap=Math.round(1.5*k)+1, off=Math.round(3*k)+2;
   // 掃描一個方向：along=沿線方向長度，across=另一方向長度，at(a,b) 取像素
@@ -1028,7 +1077,7 @@ function sideHelp(side){
   side.innerHTML = `<h2>${S.doc?'尚未選取':'使用說明'}</h2><div class="muted">
     <p><b>修改文字</b><br>• 點一下文字 → 查看偵測到的字體<br>• 雙擊文字 → 直接修改，上方可選對齊<br>• 選取後按 Delete → 刪除文字</p>
     <p><b>新增內容</b><br>• 文字框：按「𝐓 文字框」再點頁面，可選頁面字體、標楷體、微軟正黑體<br>• 符號：勾勾 / 方塊 / 圓點，可連續點多個，Esc 結束<br>• 圖片 / 簽名：PNG、JPG 等圖檔或手寫簽名，可拖曳移動、拉右下角縮放</p>
-    <p><b>頁面</b><br>• 左側縮圖可拖曳排序<br>• 每頁上方可上下移動、單獨匯出、刪除</p>
+    <p><b>頁面</b><br>• 左側縮圖可拖曳排序<br>• 每頁上方可旋轉（⟲ ⟳）、上下移動、單獨匯出、刪除<br>• 工具列「全部左轉 / 右轉」旋轉整份文件，匯出後會保留</p>
     ${S.doc?`<p>目前：${S.pages.length} 頁、修改 ${countEdits()} 處、新增物件 ${S.objs.length} 個。</p>`:''}</div>`;
 }
 function sideItem(side, it){
@@ -1281,8 +1330,8 @@ async function exportPdf(only){
       if(f.std){ const n=stdName(f.std,bold,italic); embedded[n]=embedded[n]||await doc.embedFont(PDFLib.StandardFonts[n]); return {font:embedded[n]}; }
       return null;
     }
-    // 畫一行文字（中文 / 英數分段用各自字型），x 為框左緣、by 為基線
-    async function drawLine(pg, text, o, x, by, sz, boxW, align){
+    // 畫一行文字（中文 / 英數分段用各自字型），(x,by) 為基線起點、ang 為書寫方向（度，逆時針）
+    async function drawLine(pg, text, o, x, by, sz, boxW, align, ang=0){
       const col=rgb(...o.color.map(v=>v/255)), runs=[];
       for(const run of splitRuns(text)){
         const key=runKey(o,run.kind), rf=await resolve(key,o.font.bold,o.font.italic);
@@ -1292,22 +1341,26 @@ async function exportPdf(only){
         }
         const r=rasterRun(run.s,o,key,sz); runs.push({s:run.s, img:r, w:r.w});
       }
-      let cx = x + alignOffset(align, boxW, runs.reduce((a,r)=>a+r.w,0));
+      const a=ang*Math.PI/180, ux=Math.cos(a), uy=Math.sin(a);
+      let t = alignOffset(align, boxW, runs.reduce((acc,r)=>acc+r.w,0));
       for(const r of runs){
+        const px=x+ux*t, py=by+uy*t;
         if(r.img){
-          pg.drawImage(await doc.embedPng(r.img.url),{x:cx,y:by-r.img.below,width:r.img.w,height:r.img.h});
+          pg.drawImage(await doc.embedPng(r.img.url),{x:px+uy*r.img.below, y:py-ux*r.img.below, width:r.img.w, height:r.img.h, rotate:degrees(ang)});
         }else{
           if(r.rf.fauxBold) pg.pushOperators(pushGraphicsState(), setTextRenderingMode(TextRenderingMode.FillAndOutline),
                                              setLineWidth(sz*0.035), setStrokingColor(col));
-          pg.drawText(r.s,{x:cx,y:by,size:sz,font:r.rf.font,color:col, ...(r.rf.fauxItalic?{xSkew:degrees(0),ySkew:degrees(12)}:{})});
+          pg.drawText(r.s,{x:px,y:py,size:sz,font:r.rf.font,color:col, rotate:degrees(ang),
+            ...(r.rf.fauxItalic?{xSkew:degrees(0),ySkew:degrees(12)}:{})});
           if(r.rf.fauxBold) pg.pushOperators(popGraphicsState());
         }
-        cx+=r.w;
+        t+=r.w;
       }
     }
     const pages=doc.getPages();
     for(const P of list){
-      const pg=pages[P.src];
+      const pg=pages[P.src], R=viewRot(P);   // R：頁面顯示角度；畫面上正向的物件在 PDF 內要逆轉 R
+      pg.setRotation(degrees(R));
       for(const it of (P.items||[])){
         if(!isChanged(it)) continue;
         const pad=Math.max(0.4,it.size*0.04);
@@ -1316,22 +1369,23 @@ async function exportPdf(only){
         if(!it.deleted && it.text) await drawLine(pg, it.text, it, it.t[4], it.t[5], it.fsz, it.w, it.align);
       }
       for(const o of S.objs.filter(o=>o.P===P)){
-        const R=pdfRect(P,o.x,o.y,o.w,o.h), color=o.color && rgb(...o.color.map(v=>v/255));
+        const B=pdfRect(P,o.x,o.y,o.w,o.h), color=o.color && rgb(...o.color.map(v=>v/255));
         if(o.type==='sig'){
           const img = o.imgType==='jpg' ? await doc.embedJpg(o.bytes) : await doc.embedPng(o.bytes);
           // PDF 的 rotate 以左下角為軸、逆時針為正；換算成以中心旋轉
-          const f=-(o.rot||0)*Math.PI/180, cx=R.x+R.width/2, cy=R.y+R.height/2, w=R.width, h=R.height;
+          const deg=R-(o.rot||0), f=deg*Math.PI/180, w=o.w, h=o.h;
+          const [cx,cy]=P.vp1.convertToPdfPoint(o.x+o.w/2, o.y+o.h/2);
           pg.drawImage(img,{x:cx-(Math.cos(f)*w/2-Math.sin(f)*h/2), y:cy-(Math.sin(f)*w/2+Math.cos(f)*h/2),
-            width:w, height:h, rotate:degrees(-(o.rot||0))});
+            width:w, height:h, rotate:degrees(deg)});
         }else if(o.type==='mark'){
-          if(o.shape==='square') pg.drawRectangle({...R, color, borderWidth:0});
-          else if(o.shape==='circle') pg.drawEllipse({x:R.x+R.width/2, y:R.y+R.height/2, xScale:R.width/2, yScale:R.height/2, color, borderWidth:0});
-          else pg.drawSvgPath(MARK_CHECK,{x:R.x, y:R.y+R.height, scale:R.width/100, color, borderWidth:0});
+          if(o.shape==='square') pg.drawRectangle({...B, color, borderWidth:0});
+          else if(o.shape==='circle') pg.drawEllipse({x:B.x+B.width/2, y:B.y+B.height/2, xScale:B.width/2, yScale:B.height/2, color, borderWidth:0});
+          else { const [x,y]=P.vp1.convertToPdfPoint(o.x,o.y); pg.drawSvgPath(MARK_CHECK,{x, y, scale:o.w/100, rotate:degrees(R), color, borderWidth:0}); }
         }else if(o.text.trim()){
           const lines=layoutText(o);
           for(let i=0;i<lines.length;i++){
             const [px,py]=P.vp1.convertToPdfPoint(o.x+TB_PAD, o.y+baseOff(o,i));
-            await drawLine(pg, lines[i], o, px, py, o.size, o.w-TB_PAD*2, o.align);
+            await drawLine(pg, lines[i], o, px, py, o.size, o.w-TB_PAD*2, o.align, R);
           }
         }
       }
@@ -1368,6 +1422,8 @@ $('bPad').onclick=openPad;
 $('bFont').onclick=()=>$('fFont').click();
 $('fFont').onchange=e=>{ if(e.target.files[0]) addFont(e.target.files[0]); e.target.value=''; };
 $('bExport').onclick=()=>exportPdf();
+$('bRotL').onclick=()=>rotatePages(S.pages,-90);
+$('bRotR').onclick=()=>rotatePages(S.pages,90);
 $('marks').onchange=e=>$('viewer').classList.toggle('marks',e.target.checked);
 $('zoom').onchange=async e=>{ S.scale=+e.target.value; if(S.doc) await renderAll(); };
 document.addEventListener('keydown',e=>{
