@@ -940,7 +940,7 @@ const MODELS=[
   ['bx_x32rack','mix','🎚️','Behringer','X32 Rack','數位混音器','','in|16*In|XLR|micline;out|8*Out|XLR|line;in|6*Aux In|TRS|line;out|6*Aux Out|TRS|line;in|Talkback|XLR|mic;out|Phones|TRS|hp;out|AES Out|XLR|aes;'+MIDI_IO+';io|AES50 A,AES50 B|ECON|aes50|ch=48ch;out|ULTRANET|RJ45|ultranet;io|X-USB (USB)|USBB|usb|ch=32×32;io|擴充卡槽|SLOT|card;io|Remote LAN|RJ45|net','x32 rack behringer digital mixer'],
   ['bx_x32c','mix','🎚️','Behringer','X32 Compact','數位混音器','','in|16*In|XLR|micline;out|8*Out|XLR|line;in|6*Aux In|TRS|line;out|6*Aux Out|TRS|line;in|Talkback|XLR|mic;out|Monitor L,Monitor R|TRS|line;out|Phones 1,Phones 2|TRS|hp;out|AES Out|XLR|aes;'+MIDI_IO+';io|AES50 A,AES50 B|ECON|aes50|ch=48ch;out|ULTRANET|RJ45|ultranet;io|X-USB (USB)|USBB|usb|ch=32×32;io|擴充卡槽|SLOT|card;io|Remote LAN|RJ45|net','x32 compact behringer digital mixer'],
   ['bx_wing','mix','🎚️','Behringer','WING','數位混音器','','in|8*Local In|XLR|micline;out|8*Local Out|XLR|line;in|8*Aux In|TRS|line;out|8*Aux Out|TRS|line;in|AES In|XLR|aes;out|AES Out|XLR|aes;io|AES50 A,AES50 B,AES50 C|ECON|aes50|ch=48ch;io|StageConnect|XLR|stageconnect|ch=32ch;io|USB Audio|USBB|usb|ch=48×48;io|擴充卡槽|SLOT|card|ch=64×64;'+MIDI_IO+';out|Phones 1,Phones 2|TRS|hp;io|Ethernet|RJ45|net','wing behringer digital mixer'],
-  ['bx_wingrack','mix','🎚️','Behringer','WING Rack','數位混音器','','in|24*Local In|XLR|micline;out|8*Local Out|XLR|line;in|8*Aux In|TRS|line;out|8*Aux Out|TRS|line;in|AES In|XLR|aes;out|AES Out|XLR|aes;io|AES50 A,AES50 B,AES50 C|ECON|aes50|ch=48ch;io|StageConnect|XLR|stageconnect|ch=32ch;io|USB Audio|USBB|usb|ch=48×48;io|擴充卡槽|SLOT|card|ch=64×64;'+MIDI_IO+';out|Phones|TRS|hp;io|Ethernet|RJ45|net','wing rack behringer digital mixer'],
+  ['bx_wingrack','mix','🎚️','Behringer','WING Rack','數位混音器','','in|24*Local In|XLR|micline;out|8*Local Out|XLR|line;in|8*Aux In|TRS|line;out|8*Aux Out|TRS|line;in|AES In|XLR|aes;out|AES Out|XLR|aes;io|AES50 A,AES50 B,AES50 C|ECON|aes50|ch=48ch;io|StageConnect|XLR|stageconnect|ch=32ch;io|USB Audio|USBB|usb|ch=48×48;io|擴充卡槽|SLOT|card|ch=64×64;'+MIDI_IO+';out|Phones|TRS|hp;out|IEM 1/2,IEM 3/4,IEM 5/6,IEM 7/8|TRS|hp;io|Ethernet|RJ45|net','wing rack behringer digital mixer'],
   ['midas_mr18','mix','🎚️','Midas','MR18','數位混音器（機架）','','in|16*In|COMBO|micline;in|Aux In L,Aux In R|TRS|line;out|Main L,Main R|XLR|line;out|6*Aux Out|XLR|line;out|Phones|TRS|hp;out|ULTRANET|RJ45|ultranet;io|USB|USBB|usb|ch=18×18;io|Ethernet|RJ45|net;'+MIDI_IO,'mr18 midas x air xair mixer 混音器'],
   ['bx_xr18','mix','🎚️','Behringer','X AIR XR18','數位混音器（機架）','','in|16*In|COMBO|micline;in|Aux In L,Aux In R|TRS|line;out|Main L,Main R|XLR|line;out|6*Aux Out|XLR|line;out|Phones|TRS|hp;out|ULTRANET|RJ45|ultranet;io|USB|USBB|usb|ch=18×18;io|Ethernet|RJ45|net','xr18 x air xair behringer mixer 混音器'],
   ['kt_dn32','mix','🃏','Klark Teknik','DN32-DANTE','X32 Dante 擴充卡','','io|擴充卡槽|SLOT|card;io|Dante Pri,Dante Sec|RJ45|net|ch=32×32','dn32 dante x32 card 擴充卡'],
@@ -1364,7 +1364,7 @@ const INV=[
   ['as3-ladder','v-as3','工作梯','8 呎',1,'prop','🪜'],
   ['my-ladder','v-meiyuan-1f','梯子','',1,'prop','🪜'],
   // FVL DOME：依「FUTURE VISION LAB Tech Spec」，規格書沒有寫型號
-  ['fvd-console','v-fvl','數位控台','型號待確認',1,'mixer_d','','可用 Dante 串接創作者設備'],
+  ['fvd-console','v-fvl','數位控台','Behringer WING Rack',1,'bx_wingrack','','使用者 2026-10-15 確認型號；可用 Dante 串接創作者設備（WING Rack 的 Dante 需要擴充卡）'],
   ['fvd-pc','v-fvl','主控電腦','型號待確認',1,'computer','','播放預錄多聲道／Ambisonics 音檔'],
   ['fvd-dante','v-fvl','Dante 網路系統','型號待確認',1,'netsw'],
   ['fvd-spk','v-fvl','被動喇叭','型號待確認',25,'spk_pas','','25.4 聲道環繞配置'],
