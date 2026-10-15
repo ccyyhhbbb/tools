@@ -1602,7 +1602,8 @@ function mxLinkPort(n,box){
 // how：'cl' 依清單推算、'def' 出廠預設（匯出時不改範本裡的來源）
 function mxAutoX(n,k){
   const cl=doc.cls.find(c=>c.console===n.id), r=cl&&cl.rows[k-1];
-  if(r){ const t=withCL(cl,()=>clTerminal(r,k-1));
+  // 空白的清單列不算「依清單推算」：照出廠預設處理，匯出時不改控台原本的來源
+  if(r&&!clEmpty(r)){ const t=withCL(cl,()=>clTerminal(r,k-1));
     if(t){ if(t.n===n.id) return {k:mxKeyOf(n,t.p,1),how:'cl'};
       const box=getNode(t.n), q=mxLinkPort(n,box);
       if(box&&q){ const j=box.ports.filter(p=>p.dir==='in').findIndex(p=>p.id===t.p)+1; if(j>0) return {k:mxKeyOf(n,q.id,j),how:'cl'}; } } }
@@ -1661,6 +1662,7 @@ function cleanMx(n,m){
   const num=v=>isFinite(+v)?clamp(Math.round(+v*10)/10,-90,10):0, ints=a=>Array.isArray(a)?[...new Set(a.map(x=>Math.round(+x)).filter(x=>x>0&&x<=64))].sort((a,b)=>a-b):[];
   const obj=v=>v&&typeof v==='object'?v:{}, str=v=>String(v??'').slice(0,32), o={ch:{},bus:{},main:{mt:{}},mtx:{},dca:{},mg:{},out:{}};
   if(m.nb) o.nb=clamp(Math.round(+m.nb)||1,1,64);
+  if(m.noIni) o.noIni=true;
   for(const [k,c] of Object.entries(obj(m.ch))){ if(!(+k>0)||!c||typeof c!=='object') continue; const x={};
     if(c.src) x.src=String(c.src); if(c.nm) x.nm=str(c.nm); if(c.lr===false) x.lr=false;
     if(c.s&&typeof c.s==='object'){ x.s={}; for(const [b,l] of Object.entries(c.s)) if(+b>0) x.s[b]=num(l); }
@@ -1872,6 +1874,8 @@ function wingSnip(n,kind){
     if(e){ put(p+'.in.conn.grp',e.g); put(p+'.in.conn.in',e.gi); } else if(sk==='') put(p+'.in.conn.grp','OFF');
     // clink＝「LINK CUSTOMIZATION TO SOURCE」：開著時軌道顯示輸入來源的名稱，要關掉才看得到這裡的名稱
     if(nm){ put(p+'.name',String(nm).slice(0,16)); put(p+'.clink',false); }
+    // 用到的軌道（有名稱、有來源或有設定）匯入後要出得了聲：取消靜音、推桿 0 dB；Gate／Comp／EQ／Trim 與來源名稱不動
+    if(!mx.noIni&&(nm||e||(mx.ch&&mx.ch[k]))){ put(p+'.mute',false); put(p+'.fdr',0); }
     if(!(mx.ch&&mx.ch[k])) continue;
     put(p+'.main.1.on',c.lr!==false);
     for(let b=1;b<=16;b++){ const l=c.s&&c.s[b]; put(`${p}.send.${b}.on`,l!=null); put(`${p}.send.${b}.lvl`,l!=null?l:-144); put(`${p}.send.${b}.mode`,mxTap(n,b)); }
@@ -1896,8 +1900,8 @@ const WING_HOWTO=[
   '開啟 WING Edit → 左側 <b>SETUP</b> → <b>CONNECT</b>。<b>先把右邊的 SYNC DIRECTION 點成「MIXER -&gt; PC」</b>（變綠色）。如果停在「PC -&gt; MIXER」，一連線就會用電腦裡的設定蓋掉控台。',
   '在左邊 SELECT CONSOLE 清單點選控台 → 按 <b>CONNECT</b>；跳出「Synchronize」視窗時按 <b>Mixer -&gt; PC</b>。視窗標題列出現控台名稱與 IP 就是連上了。清單是空的時候按 RESCAN，或在 MANUAL IP ADDRESS 輸入 WING 的 IP 再按 SCAN。',
   '（建議）先備份：按右上角 <b>SAVE</b>，把控台目前的狀態存成一個 .snap（例如「演出前備份.snap」）。',
-  '按右上角 <b>LOAD</b>，選第 1 步下載的 .snap → 開啟，控台會立刻套用。檔案只包含工具裡設定的項目（輸入來源、軌道名稱、Send、Main、DCA／Mute Group、Bus 名稱、輸出 Patch），EQ、動態、推桿等其他設定不會變。',
-  '檢查推桿上方的軌道名稱、右側的 Bus 名稱與 ROUTING 頁的輸出。要回到原本的設定，再用 LOAD 載入第 5 步的備份即可。'];
+  '按右上角 <b>LOAD</b>，選第 1 步下載的 .snap → 開啟，控台會立刻套用。檔案只包含工具裡設定的項目：輸入來源、軌道名稱、Send、Main、DCA／Mute Group、Bus 名稱、輸出 Patch，以及用到的軌道「取消靜音、推桿 0 dB」（匯出按鈕旁的勾選框可以關掉）。Gate、Comp、EQ、Trim、增益與 48V 不會變。',
+  '檢查推桿下方的軌道名稱、右側的 Bus 名稱與 ROUTING 頁的輸出。MIXVIEW 最上方的色塊是控台輸入來源（例如 LCL 1）自己的名稱，沿用控台原本的設定，工具不會改。也記得聽一下控台原本的 Gate、Comp 有沒有影響聲音。要回到原本的設定，再用 LOAD 載入第 5 步的備份即可。'];
 const WING_TIP='小提醒：WING Edit 裡 <kbd>Ctrl</kbd>+<kbd>A</kbd> 是「Talkback A」的快捷鍵，輸入檔名時不要用它全選。另一顆「⬇ Snippet（.snip）」內容相同，要放進「文件\\WingEdit\\Library」資料夾，再從 WING Edit 的 LIBRARY → SNIP 分頁載入。';
 const wingHowtoLis=()=>WING_HOWTO.map(t=>`<li>${t}</li>`).join('')+`<li class="tip">${WING_TIP}</li>`;
 $$('.wing-howto').forEach(el=>el.innerHTML=wingHowtoLis());
@@ -4887,6 +4891,7 @@ function mxConvert(m,from,to,f,chMap,lost){
   const o={ch:{},bus:{},main:{mt:{}},mtx:{},dca:{},mg:{},out:{}}; to.mx=o;
   const refB=Math.max(0,...Object.values(m.ch||{}).flatMap(c=>Object.keys(c.s||{}).map(Number)),...Object.keys(m.bus||{}).map(Number));
   if(PT.cfgBus&&(m.nb||refB>PT.nbDef)) o.nb=clamp(Math.max(+m.nb||0,refB),1,PT.cfgBus);
+  if(m.noIni) o.noIni=true;
   const B=new Set(mxBuses(to).map(b=>b.i)), nCh=mxNCh(to), fx=PT.fam==='fixed', lb=new Set(), ld=new Set(), lg=new Set(), lx=new Set();
   const srcK=new Set(mxSrcs(to).map(s=>s.k)), dstK=new Set(mxDsts(to).map(s=>s.k));
   const mk=(k,keys)=>{ const [p,j]=String(k).split('#'), q=f(p); if(!q) return ''; return (j?[q+'#'+j,...(j==='1'?[q]:[])]:[q,q+'#1']).find(x=>keys.has(x))||''; };
@@ -5263,7 +5268,7 @@ function mxView(n){
   let h=`<div class="rte-hint"><b>${esc(P.name)}</b>：${esc(P.spec)}。${fixed?'':'「來源」沒指定時依 Channel List 推算（直接進控台，或 Stage Box 第幾個輸入經 AES50／Dante 進來），沒有清單時照出廠預設 CH k ← 第 k 個本機輸入。'}點 Send 格子開啟，再點一次可調電平或關閉。設定好輸出 Patch 後，接線圖的路由線與訊號追蹤會跟著更新。</div>`;
   if(rte.mxMsg){ const m=rte.mxMsg; h+=`<div class="mx-msg${m.err?' bad':''}">${m.ok?`<b>✓ ${esc(m.ok)}</b>`:''}${m.t.length?`<ul>${m.t.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:(m.ok?'，沒有需要注意的地方。':'')}</div>`; }
   const ex=P.exp==='x32'?'匯出 X32 場景（.scn）':P.exp==='xair'?'匯出 X AIR 場景（.scn）':P.exp==='wing'?'匯出 WING 快照（.snap）':'';
-  h+=`<div class="mx-bar">${P.cfgBus?`<label class="mx-nb">Bus 數量 <input type="number" min="1" max="${P.cfgBus}" data-mx="nb" value="${mxNB(n)}"></label>`:''}<span class="grow"></span>`
+  h+=`<div class="mx-bar">${P.cfgBus?`<label class="mx-nb">Bus 數量 <input type="number" min="1" max="${P.cfgBus}" data-mx="nb" value="${mxNB(n)}"></label>`:''}${P.exp==='wing'?`<label class="mx-nb" title="匯出的 .snap／.snip 會讓有名稱、有來源或有設定的軌道取消靜音、推桿設在 0 dB；Gate、Comp、EQ、Trim、增益與輸入來源名稱都不會改"><input type="checkbox" data-mx="ini"${mx.noIni?'':' checked'}> 用到的軌道取消靜音、推桿 0 dB</label>`:''}<span class="grow"></span>`
     +(ex?`<button class="btn pri" data-mxa="exp" title="${P.exp==='wing'?'在 WING Edit 按右上角 LOAD 載入。檔案只包含這裡設定的參數，載入時不會動到 EQ、動態、推桿等其他設定':'用工具內建的預設場景當底，再寫入這裡的設定'}">⬇ ${ex}</button>`:'')
     +(P.exp==='wing'?`<button class="btn" data-mxa="snip" title="內容和快照相同，在 WING Edit 的 LIBRARY → SNIP 分頁載入">⬇ Snippet（.snip）</button>`:'')
     +(P.exp==='x32'||P.exp==='xair'?`<button class="btn" data-mxa="tpl" title="用控台或 X-Edit 存出來的 .scn 當底：保留它的 EQ、動態、效果器等設定，只改 patch、名稱、Send、DCA">📄 用現有場景當範本匯出…</button>`:'')
@@ -5387,6 +5392,7 @@ function mxToggleSend(n,k,b,on){ mxEdit(n,()=>{ const c=mxDc(n,k); c.s||(c.s={})
         case 'dnm': case 'gnm': { const g=f==='dnm'?'dca':'mg'; m[g]||(m[g]={}); if(v) m[g][el.dataset.i]=v; else delete m[g][el.dataset.i]; break; }
         case 'out': { m.out||(m.out={}); if(el.value) m.out[el.dataset.d]=el.value; else delete m.out[el.dataset.d]; break; }
         case 'nb': m.nb=clamp(Math.round(+el.value)||1,1,MXP_of(n).cfgBus||64); break;
+        case 'ini': if(el.checked) delete m.noIni; else m.noIni=true; break;
       } });
   });
 })();
