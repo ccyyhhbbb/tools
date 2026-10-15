@@ -574,7 +574,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <ul>
         <li>介面、混音器、Stage Box 等裝置，哪個輸入走到哪個輸出，在流程圖的接線上看不出來。<b>雙擊裝置</b>（或右鍵 →「⇄ 內部路由…」、右側面板「編輯內部路由」）就能設定。</li>
         <li><b>更換型號</b>：器材臨時要換（例如 WING 換成 WING Rack、X32 換成 WING、S16 換成 SD16），右鍵裝置 →「🔁 更換型號…」或右側面板的按鈕（直接改「類型」選單也會開這個視窗）。工具會自動配對新舊接口（同名 → 同編號 → 同訊號類型），列出每個接口接了什麼，可以逐一改；接線、內部路由、Channel List，以及控台的混音／Send／DCA／輸出 Patch 會一起搬過去，新型號放不下的會在套用前列出來。新控台的輸入順序不同時，可選「CH 跟著接口走」或「保持 CH 編號」。</li>
-        <li><b>控台的混音、Send 與輸出 Patch</b>：X32、WING、X AIR／MR18、dLive、TouchMix、MG16XU 等控台，在內部路由視窗切到「混音／Send」分頁：每個輸入軌道的來源（沒指定時依 Channel List 推算）、送到哪些 Bus 與 Main、Bus 送 Matrix、DCA 與 Mute Group，以及每個輸出接口送出哪個訊號。Channel List 也多一欄「Send／DCA」可以快速勾選。X32 可匯出 <b>.scn 場景</b>（X32-Edit 或控台 USB 載入；可用你自己的場景當範本，保留 EQ 等設定），X AIR／MR18 匯出 .scn，WING 匯出 <b>.snip Snippet</b>（只改設定到的參數）；其他控台可匯出 CSV。</li>
+        <li><b>控台的混音、Send 與輸出 Patch</b>：X32、WING、X AIR／MR18、dLive、TouchMix、MG16XU 等控台，在內部路由視窗切到「混音／Send」分頁：每個輸入軌道的來源（沒指定時依 Channel List 推算）、送到哪些 Bus 與 Main、Bus 送 Matrix、DCA 與 Mute Group，以及每個輸出接口送出哪個訊號。Channel List 也多一欄「Send／DCA」可以快速勾選。X32 可匯出 <b>.scn 場景</b>（X32-Edit 或控台 USB 載入；可用你自己的場景當範本，保留 EQ 等設定），X AIR／MR18 匯出 .scn，WING 匯出 <b>.snap 快照</b>（WING Edit 右上角 LOAD 載入）或 .snip Snippet（LIBRARY → SNIP），兩種都只改設定到的參數，EQ、動態、推桿等保持不變；其他控台可匯出 CSV。</li>
         <li><b>接線圖</b>：放大的裝置方框，左邊是訊號進來的接口、右邊是出去的接口（雙向接口兩邊都有）。從左邊拖曳到右邊，或先點一邊再點另一邊即可建立；點一下路由線刪除。</li>
         <li><b>矩陣</b>：每列是進來的接口、每欄是出去的接口，點格子打勾或取消，適合幾十軌的控台。</li>
         <li>「同編號一對一」會一次加入 In 1 → Out 1、In 2 → Out 2…；「全部清除」回到未設定。可以用 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原。</li>
@@ -1852,14 +1852,16 @@ function xairScene(n,tplText){
   if(bad.length) warn.push(`X AIR 只能顯示英數字，${bad.length} 個名稱的中文已略過（例如「${bad[0]}」）`);
   return {text:D.L.join('\n')+'\n',warn};
 }
-// WING：匯出成 Snippet（.snip），載入時只改檔案裡有的參數（格式依 Maillot《WING Remote Protocols》FW 3.0.x）
-function wingSnip(n){
+// WING：匯出成快照（.snap，WING Edit 右上角 LOAD）或 Snippet（.snip，LIBRARY → SNIP），內容相同，只放有設定的參數；
+// 2026-10-15 在 WING Edit 3.3.3＋WING Rack 韌體 3.1 實測：兩種載入都只改檔案裡的參數，其他設定不變
+function wingSnip(n,kind){
   const ae={}, warn=[], mx=n.mx||{}, S=new Map(mxSrcs(n).map(s=>[s.k,s])), Dm=new Map(mxDsts(n).map(s=>[s.k,s])); let np=0;
   const put=(path,v)=>{ let o=ae; const a=path.split('.'); for(const k of a.slice(0,-1)) o=o[k]||(o[k]={}); o[a[a.length-1]]=v; np++; };
   const cl=doc.cls.find(c=>c.console===n.id), N=Math.max(cl?cl.rows.length:0,...Object.keys(mx.ch||{}).map(Number),0);
   for(let k=1;k<=Math.min(40,N);k++){ const c=mxC(n,k), sk=mxSrcExp(n,k), e=sk&&S.get(sk), nm=mxName(n,k), p='ch.'+k;
     if(e){ put(p+'.in.conn.grp',e.g); put(p+'.in.conn.in',e.gi); } else if(sk==='') put(p+'.in.conn.grp','OFF');
-    if(nm) put(p+'.name',String(nm).slice(0,16));
+    // clink＝「LINK CUSTOMIZATION TO SOURCE」：開著時軌道顯示輸入來源的名稱，要關掉才看得到這裡的名稱
+    if(nm){ put(p+'.name',String(nm).slice(0,16)); put(p+'.clink',false); }
     if(!(mx.ch&&mx.ch[k])) continue;
     put(p+'.main.1.on',c.lr!==false);
     for(let b=1;b<=16;b++){ const l=c.s&&c.s[b]; put(`${p}.send.${b}.on`,l!=null); put(`${p}.send.${b}.lvl`,l!=null?l:-144); put(`${p}.send.${b}.mode`,mxTap(n,b)); }
@@ -1873,7 +1875,8 @@ function wingSnip(n){
     if(!m){ warn.push(`WING 的輸出 patch 不支援「${mxSigLabel(n,sg)}」：${e.l} 沒有匯出`); continue; }
     put(`io.out.${e.g}.${e.gi}.grp`,{M:'MAIN',B:'BUS',X:'MTX'}[m[1]]); put(`io.out.${e.g}.${e.gi}.in`,(+m[2]-1)*2+(m[3]==='L'?1:2)); }
   const now=new Date(), ts=now.getFullYear()+'-'+P2(now.getMonth()+1)+'-'+P2(now.getDate())+' '+P2(now.getHours())+':'+P2(now.getMinutes())+':'+P2(now.getSeconds());
-  const o={type:'snippet.10',creator_fw:'3.0.5',creator_sn:'NO_SERIAL',creator_model:'wing',creator_version:'',creator_name:'Audio Routing',created:ts,active_show:'',active_scene:'',num_pars:np,ae_data:ae,ce_data:{},ae_globals:{},ce_globals:{}};
+  const o=kind==='snip'?{type:'snippet.10',creator_fw:'3.0.5',creator_sn:'NO_SERIAL',creator_model:'wing',creator_version:'',creator_name:'Audio Routing',created:ts,active_show:'',active_scene:'',num_pars:np,ae_data:ae,ce_data:{},ae_globals:{},ce_globals:{}}
+    :{type:'snapshot.11',creator_fw:'VERSION_FULL',creator_sn:'NO_SERIAL',creator_model:'WING-EDIT',creator_version:'3.3.3',creator_name:'Audio Routing',created:ts,ae_data:ae,ce_data:{},ae_globals:{},ce_globals:{}};
   return {text:JSON.stringify(o),warn};
 }
 function mxCSV(n){
@@ -1887,12 +1890,12 @@ function mxCSV(n){
   const Dm=new Map(mxDsts(n).map(s=>[s.k,s])); for(const [dk,sg] of Object.entries(mxOutMap(n))){ const e=Dm.get(dk)||{l:(getPort(n,dk.split('#')[0])||{}).name||dk}; out.push(csvRow([e.l,mxSigLabel(n,sg)])); }
   download(`${fname()}_${(n.name||'console').replace(/[\\/:*?"<>|]+/g,'_')}_Mix.csv`,new Blob(['﻿'+out.join('\r\n')],{type:'text/csv;charset=utf-8'}));
 }
-function mxExport(n,tplText){
+function mxExport(n,tplText,kind){
   const P=MXP_of(n); let r, ext;
-  if(P.exp==='x32'){ r=x32Scene(n,tplText); ext='scn'; } else if(P.exp==='xair'){ r=xairScene(n,tplText); ext='scn'; } else if(P.exp==='wing'){ r=wingSnip(n); ext='snip'; } else return;
+  if(P.exp==='x32'){ r=x32Scene(n,tplText); ext='scn'; } else if(P.exp==='xair'){ r=xairScene(n,tplText); ext='scn'; } else if(P.exp==='wing'){ ext=kind==='snip'?'snip':'snap'; r=wingSnip(n,ext); } else return;
   if(r.err){ rte.mxMsg={err:true,t:[r.err]}; renderRt(); return; }
-  download(`${fname()}_${(n.name||'console').replace(/[\\/:*?"<>|]+/g,'_')}.${ext}`,new Blob([r.text],{type:ext==='snip'?'application/json':'text/plain'}));
-  rte.mxMsg={t:r.warn,ok:`已匯出 ${ext==='snip'?'WING Snippet':P.exp==='x32'?'X32 場景':'X AIR 場景'}${tplText?'（以你的場景檔為範本）':''}`}; renderRt();
+  download(`${fname()}_${(n.name||'console').replace(/[\\/:*?"<>|]+/g,'_')}.${ext}`,new Blob([r.text],{type:ext==='scn'?'text/plain':'application/json'}));
+  rte.mxMsg={t:r.warn,ok:`已匯出 ${ext==='snap'?'WING 快照（在 WING Edit 按右上角 LOAD 載入）':ext==='snip'?'WING Snippet（在 WING Edit 的 LIBRARY → SNIP 載入）':P.exp==='x32'?'X32 場景':'X AIR 場景'}${tplText?'（以你的場景檔為範本）':''}`}; renderRt();
 }
 
 
@@ -3596,7 +3599,7 @@ function panelNode(n){
   if(MXP_of(n)){
     const mx=n.mx||{}, nS=Object.values(mx.ch||{}).reduce((a,c)=>a+Object.keys(c.s||{}).length,0), nO=Object.keys(mx.out||{}).length, P=MXP_of(n);
     h+=secH('混音、Send 與輸出 Patch');
-    h+=`<div class="hint">${esc(P.name)}：${nS||nO?`已設定 ${nS} 個 Send、${nO} 個輸出 Patch。`:'尚未設定。'}${P.exp==='x32'?'可匯出 X32 場景（.scn）。':P.exp==='xair'?'可匯出 X AIR 場景（.scn）。':P.exp==='wing'?'可匯出 WING Snippet（.snip）。':''}</div>`;
+    h+=`<div class="hint">${esc(P.name)}：${nS||nO?`已設定 ${nS} 個 Send、${nO} 個輸出 Patch。`:'尚未設定。'}${P.exp==='x32'?'可匯出 X32 場景（.scn）。':P.exp==='xair'?'可匯出 X AIR 場景（.scn）。':P.exp==='wing'?'可匯出 WING 快照（.snap）或 Snippet（.snip）。':''}</div>`;
     h+=`<div class="btns"><button class="btn" data-act="mxedit">🎚 混音／Send…</button></div>`;
   }
   if(n.ports.some(p=>p.dir==='in')){
@@ -5234,9 +5237,10 @@ function mxView(n){
   const show=Math.min(N,Math.max(fixed?N:16,cl?cl.rows.length:0,used,rte.mxN||0));
   let h=`<div class="rte-hint"><b>${esc(P.name)}</b>：${esc(P.spec)}。${fixed?'':'「來源」沒指定時依 Channel List 推算（直接進控台，或 Stage Box 第幾個輸入經 AES50／Dante 進來），沒有清單時照出廠預設 CH k ← 第 k 個本機輸入。'}點 Send 格子開啟，再點一次可調電平或關閉。設定好輸出 Patch 後，接線圖的路由線與訊號追蹤會跟著更新。</div>`;
   if(rte.mxMsg){ const m=rte.mxMsg; h+=`<div class="mx-msg${m.err?' bad':''}">${m.ok?`<b>✓ ${esc(m.ok)}</b>`:''}${m.t.length?`<ul>${m.t.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:(m.ok?'，沒有需要注意的地方。':'')}</div>`; }
-  const ex=P.exp==='x32'?'匯出 X32 場景（.scn）':P.exp==='xair'?'匯出 X AIR 場景（.scn）':P.exp==='wing'?'匯出 WING Snippet（.snip）':'';
+  const ex=P.exp==='x32'?'匯出 X32 場景（.scn）':P.exp==='xair'?'匯出 X AIR 場景（.scn）':P.exp==='wing'?'匯出 WING 快照（.snap）':'';
   h+=`<div class="mx-bar">${P.cfgBus?`<label class="mx-nb">Bus 數量 <input type="number" min="1" max="${P.cfgBus}" data-mx="nb" value="${mxNB(n)}"></label>`:''}<span class="grow"></span>`
-    +(ex?`<button class="btn pri" data-mxa="exp" title="${P.exp==='wing'?'Snippet 只包含這裡設定的參數，載入時不會動到 EQ、動態等其他設定':'用工具內建的預設場景當底，再寫入這裡的設定'}">⬇ ${ex}</button>`:'')
+    +(ex?`<button class="btn pri" data-mxa="exp" title="${P.exp==='wing'?'在 WING Edit 按右上角 LOAD 載入。檔案只包含這裡設定的參數，載入時不會動到 EQ、動態、推桿等其他設定':'用工具內建的預設場景當底，再寫入這裡的設定'}">⬇ ${ex}</button>`:'')
+    +(P.exp==='wing'?`<button class="btn" data-mxa="snip" title="內容和快照相同，在 WING Edit 的 LIBRARY → SNIP 分頁載入">⬇ Snippet（.snip）</button>`:'')
     +(P.exp==='x32'||P.exp==='xair'?`<button class="btn" data-mxa="tpl" title="用控台或 X-Edit 存出來的 .scn 當底：保留它的 EQ、動態、效果器等設定，只改 patch、名稱、Send、DCA">📄 用現有場景當範本匯出…</button>`:'')
     +`<button class="btn" data-mxa="csv" title="輸入軌道、Send、Bus 與輸出 Patch 表">⬇ CSV</button></div>`;
   // 輸入軌道 × Bus
@@ -5339,6 +5343,7 @@ function mxToggleSend(n,k,b,on){ mxEdit(n,()=>{ const c=mxDc(n,k); c.s||(c.s={})
       case 'more': rte.mxN=Math.min(mxNCh(n),Math.max(rte.mxN||0,16)+16); renderRt(); break;
       case 'og': { const pid=a.dataset.p, open=a.textContent.trim().startsWith('▾'); if(open){ rte.mxOpen.delete(pid); rte.mxShut.add(pid); } else { rte.mxOpen.add(pid); rte.mxShut.delete(pid); } renderRt(); break; }
       case 'exp': mxExport(n); break;
+      case 'snip': mxExport(n,null,'snip'); break;
       case 'tpl': { const f=$('#mx-tpl'); f.value=''; f.onchange=()=>{ const file=f.files[0]; if(!file) return; file.text().then(t=>mxExport(n,t)); }; f.click(); break; }
       case 'csv': mxCSV(n); break;
     }
@@ -5370,7 +5375,7 @@ const TOUR=[
   {el:'#lib',t:'裝置庫',b:'TSL 器材、園區器材、品牌型號、通用、活動臨時五個分頁。點一下加入畫布，或拖曳到想放的位置；清單沒有的器材可以「＋ 新增自訂器材」。'},
   {el:'#stage',t:'拉線',b:'從接口的圓點拖曳到另一台裝置的接口，或點一下接口、再點目標。拉到空白處放開會開快速新增；雙擊空白處也能新增裝置。'},
   {el:()=>$$('#Ln .node').find(g=>{ const n=getNode(g.dataset.node); return n&&rtAble(n); })||$('#stage'),t:'雙擊裝置：內部路由',b:'雙擊裝置會打開它的內部路由，設定哪個輸入走到哪個輸出（例如介面 In 1 → Out 3）。可以在放大的方框裡拖曳拉線，或切到「矩陣」打勾。'},
-  {el:()=>$$('#Ln .node').find(g=>MXP_of(getNode(g.dataset.node)))||$$('#Ln .node').find(g=>{ const n=getNode(g.dataset.node); return n&&rtAble(n); })||$('#stage'),t:'控台的混音／Send',b:'X32、WING、MR18、dLive、TouchMix、MG16XU 等控台，雙擊後切到「混音／Send」分頁：每個輸入軌道的來源（沒指定時依 Channel List 推算）、點格子送到 Bus 與 Main、Bus 送 Matrix、DCA 與 Mute Group，最下面是每個輸出接口送哪個訊號。設定好會自動變成內部路由，訊號追蹤跟著走。X32、X AIR 可匯出 .scn 場景，WING 匯出 .snip，其他控台匯出 CSV；右鍵控台也有「🎚 混音／Send…」。'},
+  {el:()=>$$('#Ln .node').find(g=>MXP_of(getNode(g.dataset.node)))||$$('#Ln .node').find(g=>{ const n=getNode(g.dataset.node); return n&&rtAble(n); })||$('#stage'),t:'控台的混音／Send',b:'X32、WING、MR18、dLive、TouchMix、MG16XU 等控台，雙擊後切到「混音／Send」分頁：每個輸入軌道的來源（沒指定時依 Channel List 推算）、點格子送到 Bus 與 Main、Bus 送 Matrix、DCA 與 Mute Group，最下面是每個輸出接口送哪個訊號。設定好會自動變成內部路由，訊號追蹤跟著走。X32、X AIR 可匯出 .scn 場景，WING 匯出 .snap 快照（WING Edit 右上角 LOAD）或 .snip，其他控台匯出 CSV；右鍵控台也有「🎚 混音／Send…」。'},
   {el:'#rvseg',t:'內部路由的顯示方式',b:'主畫面上，裝置方框裡的路由線可以選「正常」「半透明」或「不顯示」。畫面線很多時，切成半透明或不顯示會比較清楚。'},
   {el:'[data-tog="trace"]',t:'訊號追蹤',b:'開啟後選一台裝置、一條線，或點一下某個接口，只會亮起真正走得到的那一路。有設定內部路由的裝置會照路由追，不會整台全亮。快捷鍵 T。'},
   {el:'#side',t:'屬性面板',b:'選取裝置後，在這裡改名稱、型號、I/O 數量與來源；也可以「★ 設為主控台」、開它的 Channel List，或編輯內部路由。'},
