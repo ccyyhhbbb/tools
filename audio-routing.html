@@ -419,6 +419,13 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
 .hint a{color:var(--accent);cursor:pointer}
 /* ── 圖面資訊 ── */
 .meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+.modal.swp{width:min(900px,100%)}
+.swp-tb td{vertical-align:middle}
+.swp-tb select{width:100%;min-width:180px}
+.swp-tb tr.swp-lost td{background:rgba(245,165,36,.08)}
+.swp-s{font-size:11px;color:var(--dim);margin-top:2px}
+.swp-w{color:var(--warn)}
+#swp .msg ul{margin:4px 0 0;padding-left:18px}
 #meta-pv{margin-top:10px}
 #meta-pv img{display:block;max-width:100%;max-height:360px;margin:0 auto;border:1px solid var(--line);border-radius:8px;background:#fff}
 @media (max-width:640px){ .meta-grid{grid-template-columns:1fr} #uiz input{width:64px} #uiz>span{display:none} }
@@ -566,6 +573,7 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
       <h3>內部路由（裝置內部的訊號走向）</h3>
       <ul>
         <li>介面、混音器、Stage Box 等裝置，哪個輸入走到哪個輸出，在流程圖的接線上看不出來。<b>雙擊裝置</b>（或右鍵 →「⇄ 內部路由…」、右側面板「編輯內部路由」）就能設定。</li>
+        <li><b>更換型號</b>：器材臨時要換（例如 WING 換成 WING Rack、X32 換成 WING、S16 換成 SD16），右鍵裝置 →「🔁 更換型號…」或右側面板的按鈕（直接改「類型」選單也會開這個視窗）。工具會自動配對新舊接口（同名 → 同編號 → 同訊號類型），列出每個接口接了什麼，可以逐一改；接線、內部路由、Channel List，以及控台的混音／Send／DCA／輸出 Patch 會一起搬過去，新型號放不下的會在套用前列出來。新控台的輸入順序不同時，可選「CH 跟著接口走」或「保持 CH 編號」。</li>
         <li><b>控台的混音、Send 與輸出 Patch</b>：X32、WING、X AIR／MR18、dLive、TouchMix、MG16XU 等控台，在內部路由視窗切到「混音／Send」分頁：每個輸入軌道的來源（沒指定時依 Channel List 推算）、送到哪些 Bus 與 Main、Bus 送 Matrix、DCA 與 Mute Group，以及每個輸出接口送出哪個訊號。Channel List 也多一欄「Send／DCA」可以快速勾選。X32 可匯出 <b>.scn 場景</b>（X32-Edit 或控台 USB 載入；可用你自己的場景當範本，保留 EQ 等設定），X AIR／MR18 匯出 .scn，WING 匯出 <b>.snip Snippet</b>（只改設定到的參數）；其他控台可匯出 CSV。</li>
         <li><b>接線圖</b>：放大的裝置方框，左邊是訊號進來的接口、右邊是出去的接口（雙向接口兩邊都有）。從左邊拖曳到右邊，或先點一邊再點另一邊即可建立；點一下路由線刪除。</li>
         <li><b>矩陣</b>：每列是進來的接口、每欄是出去的接口，點格子打勾或取消，適合幾十軌的控台。</li>
@@ -680,6 +688,13 @@ body.m-clist #cv,body.m-clist #zoombar,body.m-clist #empty,body.m-clist #lib,bod
   <div class="modal">
     <div class="m-head"><b>圖面資訊（匯出標示）</b><div class="grow"></div><button class="x" data-close title="關閉 (Esc)">✕</button></div>
     <div class="m-body" id="meta-body"></div>
+  </div>
+</div>
+
+<div id="swp" class="modal-wrap" hidden>
+  <div class="modal swp">
+    <div class="m-head"><b id="swp-t">更換型號</b><div class="grow"></div><button class="x" data-close title="關閉 (Esc)">✕</button></div>
+    <div class="m-body" id="swp-body"></div>
   </div>
 </div>
 
@@ -3339,7 +3354,7 @@ cv.addEventListener('contextmenu',e=>{
     items=[['編輯','',()=>{ openSide(); focusField('[data-ff="label"]'); }],['再製','Ctrl+D',dupSel],['旋轉 90°','R',()=>rotSel(90)],['-'],['刪除','Del',delSel,'danger']];
   } else if(isVenue()&&ng){
     const id=ng.dataset.node; if(!sel.n.has(id)){ selectOnly('n',id); renderAll(); }
-    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],[getNode(id).hs?'取消演中插拔標示':'⇆ 標示為演中插拔','',()=>hsToggleNodes(id)],['複製一台並放在旁邊','Ctrl+D',dupSel],['從場地移除（保留在流程圖）','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)){ n.vx=null; n.vy=null; n.vv=''; } }))],['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['-'],['刪除裝置','Del',delSel,'danger']];
+    items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],[getNode(id).hs?'取消演中插拔標示':'⇆ 標示為演中插拔','',()=>hsToggleNodes(id)],['🔁 更換型號…','',()=>openSwap(id)],['複製一台並放在旁邊','Ctrl+D',dupSel],['從場地移除（保留在流程圖）','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)){ n.vx=null; n.vy=null; n.vv=''; } }))],['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['-'],['刪除裝置','Del',delSel,'danger']];
   } else if(isVenue()&&!wg){
     items=[['在這裡新增裝置…','雙擊',()=>openQA(e.clientX,e.clientY,pt,null)],['顯示全部','F',fitView]];
   } else if(ng){
@@ -3349,6 +3364,7 @@ cv.addEventListener('contextmenu',e=>{
     if(MXP_of(nn)) extra.push(['🎚 混音／Send…','',()=>openMix(id)]);
     if(nn.ports.some(p=>p.dir==='in')&&doc.main!==id) extra.push(['★ 設為主控台','',()=>setMain(id)]);
     extra.push([nn.hs?'取消演中插拔標示':'⇆ 標示為演中插拔','',()=>hsToggleNodes(id)]);
+    extra.push(['🔁 更換型號…','',()=>openSwap(id)]);
     items=[['編輯屬性','',()=>{ openSide(); focusField('[data-nf="name"]'); }],...extra,['再製','Ctrl+D',dupSel],['複製','Ctrl+C',()=>copySel()],['左右翻轉','',()=>edit(()=>doc.nodes.forEach(n=>{ if(sel.n.has(n.id)) n.flip=!n.flip; }))],
       ['追蹤訊號路徑','T',()=>{ settings.trace=true; renderAll(); }],['用區域框框住','',()=>addZone('frame')],['-'],
       ['移除所有接線','',()=>edit(()=>{ doc.wires=doc.wires.filter(w=>!sel.n.has(w.a.n)&&!sel.n.has(w.b.n)); })],['刪除','Del',delSel,'danger']];
@@ -3548,6 +3564,7 @@ function panelNode(n){
   let h=`<div class="ph-head"><div class="big-ico">${n.icon}</div><div><div class="ph-title">${esc(n.name)}</div><div class="ph-sub">${esc(T.name)} · ${n.ports.length} 個接口 · ${nw} 條線</div></div></div>`;
   h+=secH('裝置');
   h+=fld('類型',`<select data-nf="type">${typeOpts(n.type)}</select>`);
+  if(n.ports.length) h+=`<div class="btns"><button class="btn" data-act="swap" title="換成另一個型號，接線、內部路由、Channel List 與混音設定一起搬過去">🔁 更換型號（搬移接線與設定）…</button></div>`;
   h+=fld('圖示',`<div class="icos">${[...new Set([n.icon,...ICONS])].map(i=>`<button class="ico-b${n.icon===i?' on':''}" data-act="seticon" data-ico="${i}" title="換成這個圖示">${i}</button>`).join('')}</div>`);
   h+=fld('名稱',`<input data-nf="name" value="${esc(n.name)}">`);
   h+=fld('型號',`<input data-nf="model" value="${esc(n.model)}" placeholder="例如 SM58、X32、Scarlett 4i4">`);
@@ -3771,7 +3788,7 @@ function applyField(el){
     const n=selNode(); if(!n) return; takeSnap(); const f=el.dataset.nf;
     if(f==='w') n.w=+v;
     else if(f==='vz') n.vz=v===''||!isFinite(+v)?null:Math.max(0,+v);
-    else if(f==='type'){ n.type=v; n.icon=TYPES[v].icon; }
+    else if(f==='type'){ if(n.ports.length||(TYPES[v]||TYPES.custom).make().ports.length){ setTimeout(()=>{ if($('#swp').hidden) openSwap(n.id,v); },0); return; } n.type=v; n.icon=TYPES[v].icon; }
     else n[f]=v;
     if(f==='name'){ const t=$('#side .ph-title'); if(t) t.textContent=v; }
   } else if(el.dataset.pf){
@@ -3842,6 +3859,7 @@ side.addEventListener('click',e=>{
     case 'del': delSel(); break;
     case 'trace': settings.trace=true; renderAll(); break;
     case 'rtedit': openRt(n.id); break;
+    case 'swap': openSwap(n.id); break;
     case 'mxedit': openMix(n.id); break;
     case 'rtclear': edit(()=>{ n.rt=[]; }); break;
     case 'setmain': setMain(n.id); break;
@@ -4785,6 +4803,248 @@ $('#cust').addEventListener('click',e=>{
   custEdit=null;
 });
 $('#cust-new').addEventListener('click',()=>openCustom(null));
+
+/* ── 更換型號：接線、內部路由、Channel List、混音設定一起搬到新型號 ── */
+let swp=null;
+const swBase=s=>String(s||'').toLowerCase().replace(/[（(].*?[)）]/g,'').replace(/\d+\s*$/,'').replace(/[\s_\-\/]+/g,' ').trim();
+// 這台裝置有用到的接口：有接線、手動的內部路由、Channel List、混音設定、48V
+function swapUsed(n){
+  const u=new Set(), mxr=new Set(n.mxr||[]), ins=n.ports.filter(p=>p.dir==='in');
+  doc.wires.forEach(w=>{ if(w.a.n===n.id) u.add(w.a.p); if(w.b.n===n.id) u.add(w.b.p); });
+  (n.rt||[]).forEach(([a,b])=>{ if(!mxr.has(rtKey(n.id,a,b))){ u.add(a); u.add(b); } });
+  doc.cls.forEach(cl=>cl.rows.forEach((r,k)=>{
+    if(r.mic===n.id&&r.mo) u.add(r.mo);
+    r.pts.forEach(p=>{ if(p.n===n.id){ if(p.i) u.add(p.i); if(p.o) u.add(p.o); } });
+    if(cl.console===n.id&&!clEmpty(r)&&ins[k]&&swapDirect(r,n.id)) u.add(ins[k].id);
+  }));
+  const m=n.mx; if(m){ Object.values(m.ch||{}).forEach(c=>{ if(c.src&&c.src!=='off') u.add(c.src.split('#')[0]); }); Object.keys(m.out||{}).forEach(k=>u.add(k.split('#')[0])); }
+  n.ports.forEach(p=>{ if(p.p48) u.add(p.id); });
+  return new Set(n.ports.filter(p=>u.has(p.id)).map(p=>p.id));
+}
+// 這一軌是不是直接進控台的第 CH 個輸入（不是經 Stage Box 等遠端 I/O）
+const swapDirect=(r,cid)=>{ const s=clSeq(r), L=s[s.length-1]; return !(L&&L.i&&(!L.o||L.n===cid)); };
+// 自動配對：同名 → 同類型同編號（名稱相近優先）→ 同訊號的空接口 → 同訊號家族的空接口
+function swapAutoMap(n,nps,chMode){
+  const used=swapUsed(n), olds=n.ports.filter(p=>used.has(p.id)), map={}, how={}, taken=new Set();
+  const give=(p,q,h)=>{ map[p.id]=q.id; how[p.id]=h; taken.add(q.id); }, left=()=>olds.filter(p=>!(p.id in map));
+  if(chMode==='ch'){ const oi=n.ports.filter(p=>p.dir==='in'), ni=nps.filter(p=>p.dir==='in'); oi.forEach((p,i)=>{ if(used.has(p.id)&&ni[i]) give(p,ni[i],'ch'); }); }
+  for(const p of left()){ const q=nps.find(q=>!taken.has(q.id)&&q.dir===p.dir&&q.name.toLowerCase()===p.name.toLowerCase()); if(q) give(p,q,'name'); }
+  const cand=[];
+  for(const p of left()) for(const q of nps){
+    if(taken.has(q.id)||q.dir!==p.dir||q.sig!==p.sig||pnum(q.name)!==pnum(p.name)) continue;
+    const a=swBase(p.name), b=swBase(q.name), wa=a.split(' '), wb=b.split(' ');
+    cand.push({p,q,s:(a===b?8:0)+(a&&b&&(a.includes(b)||b.includes(a))?4:0)+(wa.some(x=>x&&wb.includes(x))?2:0)+(q.conn===p.conn?1:0)});
+  }
+  cand.sort((x,y)=>y.s-x.s);
+  for(const c of cand) if(!(c.p.id in map)&&!taken.has(c.q.id)) give(c.p,c.q,'num');
+  for(const p of left()){ const q=nps.find(q=>!taken.has(q.id)&&q.dir===p.dir&&q.sig===p.sig); if(q) give(p,q,'sig'); }
+  const fam=p=>(SIG[p.sig]||SIG.line).fam, odd=p=>p.sig==='hp'||p.sig==='spk';
+  for(const p of left()){ const q=nps.find(q=>!taken.has(q.id)&&q.dir===p.dir&&fam(q)===fam(p)&&!odd(p)&&!odd(q)); if(q) give(p,q,'fam'); }
+  for(const p of left()){ map[p.id]=''; how[p.id]='none'; }
+  return {map,how};
+}
+// 輸出訊號換到另一個家族的寫法（X32 的 M:L ↔ WING 的 M:1L、單聲道 Bus ↔ 立體聲 Bus）
+function mxSigConv(sg,chMap,SG){
+  const m=/^([MBXD]):(\d+|C|L|R)?([LR])?$/.exec(sg||''); if(!m) return '';
+  const t=m[1]; let c;
+  if(t==='M'){ const lr=m[2]==='L'||m[2]==='R', i=lr?1:m[2]==='C'?0:+m[2], sd=lr?m[2]:(m[3]||''); c=i===0?['M:C']:i===1?['M:'+sd,'M:1'+sd]:[`M:${i}${sd}`]; }
+  else if(t==='D') c=['D:'+(chMap[m[2]]||m[2])];
+  else { const i=m[2], sd=m[3]||''; c=sd?[t+':'+i+sd,t+':'+i]:[t+':'+i,t+':'+i+'L']; }
+  return c.find(x=>SG.has(x))||'';
+}
+// 混音設定換到新型號：能對上的照編號搬，超出新型號規格的列在 lost
+function mxConvert(m,from,to,f,chMap,lost){
+  const PT=MXP_of(to), cnt=o=>Object.keys(o||{}).length;
+  if(!PT){ if(cnt(m.ch)||cnt(m.bus)||cnt(m.out)||cnt(m.dca)||cnt(m.mg)) lost.push('新型號不是控台：混音、Send、DCA 與輸出 Patch 都不保留'); return undefined; }
+  const o={ch:{},bus:{},main:{mt:{}},mtx:{},dca:{},mg:{},out:{}}; to.mx=o;
+  const refB=Math.max(0,...Object.values(m.ch||{}).flatMap(c=>Object.keys(c.s||{}).map(Number)),...Object.keys(m.bus||{}).map(Number));
+  if(PT.cfgBus&&(m.nb||refB>PT.nbDef)) o.nb=clamp(Math.max(+m.nb||0,refB),1,PT.cfgBus);
+  const B=new Set(mxBuses(to).map(b=>b.i)), nCh=mxNCh(to), fx=PT.fam==='fixed', lb=new Set(), ld=new Set(), lg=new Set(), lx=new Set();
+  const srcK=new Set(mxSrcs(to).map(s=>s.k)), dstK=new Set(mxDsts(to).map(s=>s.k));
+  const mk=(k,keys)=>{ const [p,j]=String(k).split('#'), q=f(p); if(!q) return ''; return (j?[q+'#'+j,...(j==='1'?[q]:[])]:[q,q+'#1']).find(x=>keys.has(x))||''; };
+  for(const [k0,c] of Object.entries(m.ch||{})){
+    const k=chMap[k0]||+k0, lab=`CH ${P2(+k0)}${c.nm?'（'+c.nm+'）':''}`;
+    if(k>nCh){ lost.push(`${lab}：新型號只有 ${nCh} 個輸入軌道，這軌的設定不保留`); continue; }
+    const x={};
+    if(c.src==='off') x.src='off';
+    else if(c.src&&!fx){ const s=mk(c.src,srcK); if(s) x.src=s; else lost.push(`${lab} 的來源：新型號沒有對應的接口，改回自動`); }
+    if(c.nm) x.nm=c.nm; if(c.lr===false) x.lr=false;
+    if(c.s){ x.s={}; for(const [b,l] of Object.entries(c.s)){ if(B.has(+b)) x.s[b]=l; else lb.add(+b); } }
+    if(c.d){ c.d.filter(i=>i>PT.dca).forEach(i=>ld.add(i)); const d=c.d.filter(i=>i<=PT.dca); if(d.length) x.d=d; }
+    if(c.m){ c.m.filter(i=>i>PT.mg).forEach(i=>lg.add(i)); const g=c.m.filter(i=>i<=PT.mg); if(g.length) x.m=g; }
+    if(Object.keys(x).length) o.ch[k]=x;
+  }
+  for(const [b,x] of Object.entries(m.bus||{})){
+    if(!B.has(+b)){ lb.add(+b); continue; } const y={};
+    if(x.nm) y.nm=x.nm; if(x.lr) y.lr=true; if(x.tap) y.tap=x.tap; if(x.st&&PT.link) y.st=true;
+    if(x.mt){ y.mt={}; for(const [j,l] of Object.entries(x.mt)){ if(+j<=PT.mtx) y.mt[j]=l; else lx.add(+j); } }
+    if(Object.keys(y).length) o.bus[b]=y;
+  }
+  for(const [j,l] of Object.entries((m.main||{}).mt||{})){ if(+j<=PT.mtx) o.main.mt[j]=l; else lx.add(+j); }
+  for(const [j,x] of Object.entries(m.mtx||{})){ if(+j<=PT.mtx) o.mtx[j]=x; else lx.add(+j); }
+  for(const [i,v] of Object.entries(m.dca||{})){ if(+i<=PT.dca) o.dca[i]=v; else ld.add(+i); }
+  for(const [i,v] of Object.entries(m.mg||{})){ if(+i<=PT.mg) o.mg[i]=v; else lg.add(+i); }
+  const SG=new Set(mxSigs(to).map(s=>s.k)), outs=Object.entries(m.out||{});
+  const pl=k=>{ const [p,j]=String(k).split('#'), q=getPort(from,p); return (q?q.name:'?')+(j?' '+j:''); }, mono=new Set();
+  if(outs.length&&fx) lost.push(`輸出 Patch（${outs.length} 個）：${PT.name} 的輸出接法固定，不搬`);
+  else for(const [k,sg] of outs){
+    const d=mk(k,dstK), s=mxSigConv(sg,chMap,SG), lab=`輸出 Patch「${MXP_of(from)?mxSigLabel(from,sg):sg} → ${pl(k)}」`;
+    if(!d) lost.push(lab+'：新型號沒有對應的輸出接口'); else if(!s) lost.push(lab+'：新型號沒有這個訊號'); else { o.out[d]=s; if(/^[BX]:\d+[LR]$/.test(sg)&&!/[LR]$/.test(s)) mono.add(s); }
+  }
+  if(mono.size) lost.push(`${[...mono].map(x=>x.replace('B:','Bus ').replace('X:','Matrix ')).join('、')}：新型號這裡是單聲道，原本 L／R 兩個輸出都改送同一個 Bus（要立體聲請在新型號連結兩個 Bus 後重設輸出 Patch）`);
+  const rg=s=>[...s].sort((a,b)=>a-b).join('、');
+  if(lb.size) lost.push(`Bus ${rg(lb)}：新型號沒有這些 Bus，相關的 Send 與設定不保留`);
+  if(ld.size) lost.push(`DCA ${rg(ld)}：新型號${PT.dca?'只有 '+PT.dca+' 個 DCA':'沒有 DCA'}`);
+  if(lg.size) lost.push(`Mute Group ${rg(lg)}：新型號${PT.mg?'只有 '+PT.mg+' 個':'沒有 Mute Group'}`);
+  if(lx.size) lost.push(`Matrix ${rg(lx)}：新型號${PT.mtx?'只有 '+PT.mtx+' 個':'沒有 Matrix'}`);
+  return o;
+}
+// 實際更換（預覽時在 doc 的複本上跑，只取報告）。o：{type, ports, map, name, model, inv, chMode}
+function swapCore(id,o){
+  const n=getNode(id), oldT=n.type, T=TYPES[o.type]||TYPES.custom, oT=TYPES[oldT]||TYPES.custom, d=T.make();
+  const rep={wires:[],rt:0,ch:[],mx:[]}, nps=o.ports.map(p=>({...p})), f=p=>(p&&o.map[p])||'';
+  const pname=pid=>(getPort(n,pid)||{}).name||'';
+  n.ports.forEach(p=>{ const q=nps.find(x=>x.id===f(p.id)); if(q&&p.p48&&q.dir==='in'&&(SIG[q.sig]||SIG.line).fam==='a') q.p48=true; });
+  const oldIns=n.ports.filter(p=>p.dir==='in'), newIns=nps.filter(p=>p.dir==='in');
+  // 接線：接口換成新的，對不到的拔掉
+  doc.wires=doc.wires.filter(w=>{
+    for(const e of [w.a,w.b]) if(e.n===id&&!f(e.p)){ const E=e===w.a?w.b:w.a, on=getNode(E.n); rep.wires.push(`${pname(e.p)} ${e===w.a?'→':'←'} ${on?on.name:''}・${(getPort(on,E.p)||{}).name||''}`); return false; }
+    if(w.a.n===id) w.a.p=f(w.a.p); if(w.b.n===id) w.b.p=f(w.b.p); return true;
+  });
+  // 內部路由
+  const mxr=new Set(n.mxr||[]);
+  n.rt=(n.rt||[]).map(([a,b])=>{ const x=f(a), y=f(b); if(x&&y) return [x,y]; if(!mxr.has(rtKey(id,a,b))) rep.rt++; return null; }).filter(Boolean);
+  const rk=k=>{ const m=String(k).match(/^([^|]*)\|([^>]*)>(.*)$/); if(!m||m[1]!==id) return k; const a=f(m[2]), b=f(m[3]); return a&&b?rtKey(id,a,b):''; };
+  const wk=k=>{ const m=String(k).match(/^([^|]*)\|([^>]*)>([^|]*)\|(.*)$/); if(!m) return k; const a=m[1]===id?f(m[2]):m[2], b=m[3]===id?f(m[4]):m[4]; return a&&b?`${m[1]}|${a}>${m[3]}|${b}`:''; };
+  n.mxr=(n.mxr||[]).map(rk).filter(Boolean);
+  // Channel List：每一站的接口、清單建立的線與路由
+  const out1=(nps.find(p=>p.dir==='out')||nps.find(p=>p.dir==='io')||{}).id||'';
+  for(const cl of doc.cls){
+    for(const r of cl.rows){
+      if(r.mic===id) r.mo=f(r.mo)||out1;
+      r.pts.forEach(p=>{ if(p.n===id){ p.i=f(p.i); p.o=f(p.o); } });
+      r.ap=(r.ap||[]).map(wk).filter(Boolean); r.ar=(r.ar||[]).map(rk).filter(Boolean);
+    }
+    cl.gone=(cl.gone||[]).map(wk).filter(Boolean); if(cl.goneR) cl.goneR=cl.goneR.map(rk).filter(Boolean);
+  }
+  // 這台控台自己的清單：CH 編號＝第幾個輸入，直接進控台的軌跟著接口換位置
+  const chMap={}, cl=doc.cls.find(c=>c.console===id);
+  if(cl&&o.chMode!=='ch'){
+    const slot=[], flo=[], tail=[];
+    cl.rows.forEach((r,k)=>{
+      if(clEmpty(r)) return;
+      if(swapDirect(r,id)&&oldIns[k]){ const j=newIns.findIndex(p=>p.id===f(oldIns[k].id)); if(j<0){ tail.push([r,k]); return; } if(!slot[j]){ slot[j]=r; if(j!==k) chMap[k+1]=j+1; return; } }
+      flo.push([r,k]);
+    });
+    flo.forEach(([r,k])=>{ let j=k; while(slot[j]) j++; slot[j]=r; if(j!==k) chMap[k+1]=j+1; });
+    tail.forEach(([r,k])=>{ const j=Math.max(newIns.length,slot.length); slot[j]=r; chMap[k+1]=j+1; });
+    cl.rows=Array.from({length:slot.length},(_,j)=>slot[j]||clRow());
+    for(const [a,b] of Object.entries(chMap)){ const r=cl.rows[b-1]; rep.ch.push({a:+a,b,nm:r.name||mxC(n,+a).nm||'',lost:b>newIns.length}); }
+    rep.ch.sort((x,y)=>x.a-y.a);
+  }
+  // 混音設定：沒有清單的軌道若撞到搬過來的軌，往後找空的
+  if(n.mx&&n.mx.ch){
+    const ks=Object.keys(n.mx.ch).map(Number), tg=new Set(Object.values(chMap)), taken=new Set([...tg,...ks.filter(k=>!(k in chMap))]);
+    ks.filter(k=>!(k in chMap)&&tg.has(k)).forEach(k=>{ let j=k; while(taken.has(j)) j++; chMap[k]=j; taken.add(j); });
+  }
+  const tmp={id,type:o.type,ports:nps,mx:null}, from={id,type:oldT,ports:n.ports,mx:n.mx};
+  const mx=n.mx?mxConvert(n.mx,from,tmp,f,chMap,rep.mx):undefined;
+  // 裝置本身
+  n.type=TYPES[o.type]?o.type:'custom';
+  if(!n.icon||n.icon===oT.icon) n.icon=T.icon;
+  n.name=String(o.name||'').trim()||n.name; n.model=String(o.model??''); n.ph=d.ph||''; n.inv=o.inv||''; n.ports=nps;
+  if(mx){ n.mx=mx; mxSync(n); } else { delete n.mx; n.rt=n.rt.filter(([a,b])=>!n.mxr.includes(rtKey(id,a,b))); n.mxr=[]; }
+  n.rt=hasRt(n)?rtNorm(n,n.rt):[];
+  clClean();
+  if(trFocus&&trFocus.n===id) trFocus=null;
+  return rep;
+}
+function swapPreview(){ const keep=doc; doc=JSON.parse(JSON.stringify(doc)); try{ return swapCore(swp.id,swp); } catch(e){ console.error(e); return null; } finally{ doc=keep; } }
+function openSwap(id,type){
+  const n=getNode(id); if(!n) return; if(wireArm) cancelWireArm(); closeFloating();
+  swp={id,chMode:'port'}; swapSetType(type||n.type); $('#swp').hidden=false;
+}
+function swapSetType(t){
+  const n=getNode(swp.id), T=TYPES[t]||TYPES.custom, d=T.make(), oT=TYPES[n.type]||TYPES.custom, od=oT.make(), on=od.name||oT.name;
+  swp.type=t; swp.ports=d.ports;
+  swp.name=n.name===on||new RegExp('^'+on.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+' \\d+$').test(n.name)?uniqueName(d.name||T.name,n):n.name;
+  swp.model=t===n.type?n.model:(d.model||'');
+  const it=INVM.get(n.inv), c=INV.filter(x=>x.type===t);
+  swp.inv=it&&it.type===t?it.id:(it&&c.find(x=>x.sec===it.sec)||{}).id||'';
+  swapRemap();
+}
+function swapRemap(){ Object.assign(swp,swapAutoMap(getNode(swp.id),swp.ports,swp.chMode)); renderSwap(); }
+// 「用途」欄：這個接口接了什麼、在清單與混音裡的角色
+function swapUseHTML(n,p){
+  const t=[], ins=n.ports.filter(q=>q.dir==='in');
+  doc.wires.forEach(w=>{ const me=w.a.n===n.id&&w.a.p===p.id?'a':w.b.n===n.id&&w.b.p===p.id?'b':''; if(!me) return; const E=me==='a'?w.b:w.a, o=getNode(E.n); t.push(`${me==='a'?'→':'←'} ${esc(o?o.name:'')}・${esc((getPort(o,E.p)||{}).name||'')}${w.hs?' ⇆':''}`); });
+  const cl=doc.cls.find(c=>c.console===n.id), k=ins.indexOf(p);
+  if(cl&&k>=0&&cl.rows[k]&&!clEmpty(cl.rows[k])&&swapDirect(cl.rows[k],n.id)) { const nm=cl.rows[k].name||mxC(n,k+1).nm; t.push(`☰ ${chLabel(k)}${nm?' '+esc(nm):''}`); }
+  const m=n.mx||{};
+  Object.entries(m.ch||{}).forEach(([c,x])=>{ if(x.src&&x.src.split('#')[0]===p.id) t.push(`🎚 CH ${P2(+c)} 的來源`); });
+  if(MXP_of(n)) Object.entries(m.out||{}).forEach(([q,sg])=>{ if(q.split('#')[0]===p.id) t.push(`🎚 送出 ${esc(mxSigLabel(n,sg))}`); });
+  if(p.p48) t.push('48V');
+  return t.length>4?t.slice(0,4).join('<br>')+`<br>…另 ${t.length-4} 項`:t.join('<br>')||'<span class="swp-s">（內部路由）</span>';
+}
+function renderSwap(){
+  const n=getNode(swp.id), T=TYPES[swp.type]||TYPES.custom, oT=TYPES[n.type]||TYPES.custom, nps=swp.ports, used=n.ports.filter(p=>p.id in swp.map);
+  const row=(l,inner)=>`<div class="cust-row"><span>${l}</span>${inner}</div>`, sg=p=>(SIG[p.sig]||SIG.line).l, cn=p=>(CONN[p.conn]||{}).s||p.conn;
+  $('#swp-t').textContent=`🔁 更換型號：${n.name}`;
+  let h=`<div class="hint" style="margin-top:0">把「${esc(n.name)}」（${esc(oT.name)}）換成另一個型號。接線、內部路由、Channel List，以及控台的混音／Send／DCA／輸出 Patch 會一起搬過去；位置、場地擺放、★ 主控台都不變。下面已自動配對，可以逐一修改，按「套用更換」才會生效（可 Ctrl+Z 復原）。</div>`;
+  h+=row('新型號',`<select data-sw="type">${typeOpts(swp.type)}</select>`);
+  h+=row('名稱',`<input data-sw="name" value="${esc(swp.name)}">`)+row('型號',`<input data-sw="model" value="${esc(swp.model)}">`);
+  const invs=INV.filter(x=>x.type===swp.type), secN=x=>(INV_SECS.find(s=>s.id===x.sec)||{}).name||'';
+  if(invs.length||n.inv) h+=row('器材清單',`<select data-sw="inv">${opts([['','不連結器材清單'],...invs.map(x=>[x.id,`${secN(x)}・${x.item}（共 ${x.qty}）`])],swp.inv)}</select>`);
+  if(doc.cls.some(c=>c.console===n.id)) h+=row('Channel List',`<select data-sw="chMode">${opts([['port','CH 跟著接口走（輸入順序不同時，CH 編號會變）'],['ch','保持 CH 編號（第 N 軌改接到新型號的第 N 個輸入）']],swp.chMode)}</select>`);
+  if(!used.length) h+=`<div class="hint">這台裝置沒有接線或設定，會直接換成新型號的預設接口。</div>`;
+  else {
+    const rev={}; Object.entries(swp.map).forEach(([a,b])=>{ if(b) rev[b]=a; });
+    const HOW={name:'同名',num:'同編號',sig:'同訊號類型',fam:'類似訊號',ch:'同 CH 順序',man:'手動'};
+    h+=`<table class="tbl swp-tb"><thead><tr><th>原本的接口</th><th>接了什麼／用途</th><th>→ 新型號的接口</th></tr></thead><tbody>`;
+    for(const p of used){
+      const q=nps.find(x=>x.id===swp.map[p.id]), w=[];
+      if(q&&q.conn!==p.conn) w.push(`接頭 ${cn(p)} → ${cn(q)}`);
+      if(q&&q.sig!==p.sig) w.push(`訊號 ${sg(p)} → ${sg(q)}`);
+      const ch=nps.filter(x=>x.dir===p.dir).map(x=>[x.id,`${x.name}（${cn(x)}）${rev[x.id]&&rev[x.id]!==p.id?'・已被 '+(getPort(n,rev[x.id])||{}).name+' 使用':''}`]);
+      h+=`<tr class="${q?'':'swp-lost'}"><td><b>${esc(p.name)}</b><div class="swp-s">${esc(cn(p))}・${esc(sg(p))}</div></td><td>${swapUseHTML(n,p)}</td>`
+        +`<td><select data-swp="${p.id}">${opts([['','✕ 不接（不搬過去）'],...ch],q?q.id:'')}</select><div class="swp-s">${q?HOW[swp.how[p.id]]||'':'對不到，不搬過去'}${w.length?`<span class="swp-w">　⚠ ${esc(w.join('、'))}</span>`:''}</div></td></tr>`;
+    }
+    h+=`</tbody></table>`;
+  }
+  const r=swapPreview(), li=a=>`<ul>${a.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  if(!r) h+=`<div class="msg lv2">預覽失敗，請回報這個型號組合。</div>`;
+  else {
+    const ch=r.ch.filter(x=>!x.lost), chL=r.ch.filter(x=>x.lost);
+    if(r.wires.length) h+=`<div class="msg lv2">會拔掉 ${r.wires.length} 條線：${li(r.wires.map(esc))}</div>`;
+    if(r.rt) h+=`<div class="msg lv2">${r.rt} 條手動設定的內部路由對不到新接口，會移除。</div>`;
+    if(chL.length) h+=`<div class="msg lv2">Channel List 有 ${chL.length} 軌對不到新型號的輸入，會移到清單最後面（${chL.map(x=>chLabel(x.a-1)+(x.nm?' '+esc(x.nm):'')).join('、')}）。</div>`;
+    if(ch.length) h+=`<div class="msg lv1">Channel List 與混音軌道會換位置（輸入順序不同）：${li(ch.map(x=>`${chLabel(x.a-1)}${x.nm?' '+esc(x.nm):''} → ${chLabel(x.b-1)}`))}想維持原本的 CH 編號，把上面「Channel List」改成「保持 CH 編號」。</div>`;
+    if(r.mx.length) h+=`<div class="msg lv2">混音設定有 ${r.mx.length} 項沒辦法搬過去：${li(r.mx.map(esc))}</div>`;
+    if(!r.wires.length&&!r.rt&&!r.ch.length&&!r.mx.length) h+=`<div class="msg lv0">✓ 接線${MXP_of(n)&&MXP_of({type:swp.type})?'、混音設定':''}與 Channel List 全部都能搬過去。</div>`;
+  }
+  h+=`<div class="btns"><button class="btn pri" data-swa="apply">套用更換</button>${swp.type!==n.type?'<button class="btn" data-swa="typeonly" title="只改類型與圖示，接口、接線與設定都不動">只改類型（保留原接口）</button>':''}<button class="btn" data-close>取消</button></div>`;
+  $('#swp-body').innerHTML=h;
+}
+function swapApply(){
+  const s=swp, n=getNode(s.id); if(!n) return; const T=TYPES[s.type]||TYPES.custom; let rep=null;
+  edit(()=>{ rep=swapCore(s.id,s); });
+  $('#swp').hidden=true; swp=null;
+  const lost=rep.wires.length+rep.rt+rep.mx.length+rep.ch.filter(x=>x.lost).length;
+  toast(`已換成 ${T.name}${lost?`（${lost} 項沒搬過去，Ctrl+Z 可復原）`:'，全部設定都搬過去了'}`);
+}
+$('#swp').addEventListener('input',e=>{ const k=e.target.dataset.sw; if(swp&&(k==='name'||k==='model')) swp[k]=e.target.value; });
+$('#swp').addEventListener('change',e=>{
+  const el=e.target; if(!swp) return;
+  if(el.dataset.swp){ const p=el.dataset.swp, v=el.value; if(v) for(const [a,b] of Object.entries(swp.map)) if(a!==p&&b===v){ swp.map[a]=''; swp.how[a]='none'; } swp.map[p]=v; swp.how[p]=v?'man':'none'; renderSwap(); return; }
+  const k=el.dataset.sw; if(!k) return;
+  if(k==='type') swapSetType(el.value); else if(k==='chMode'){ swp.chMode=el.value; swapRemap(); } else if(k==='inv') swp.inv=el.value;
+});
+$('#swp').addEventListener('click',e=>{
+  if(e.target===$('#swp')||e.target.closest('[data-close]')){ $('#swp').hidden=true; swp=null; return; }
+  const b=e.target.closest('[data-swa]'); if(!b||!swp) return;
+  if(b.dataset.swa==='apply') swapApply();
+  else if(b.dataset.swa==='typeonly'){ const n=getNode(swp.id), t=swp.type; $('#swp').hidden=true; swp=null; edit(()=>{ n.type=t; n.icon=(TYPES[t]||TYPES.custom).icon; }); }
+});
 
 /* ── 圖面資訊（匯出標示） ── */
 let metaSnap=null, metaPvT=0;
