@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>影片聲音擷取</title>
+<meta name="description" content="選擇影片，把聲音抽出來存成 MP3 或 WAV，可剪裁範圍。全部在瀏覽器本地處理，影片不會上傳。">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --text: #1d2330;
+    --muted: #6b7280;
+    --border: #d9dde4;
+    --accent: #2563eb;
+    --accent-text: #ffffff;
+    --accent-soft: #e8efff;
+    --wave: #94a3b8;
+    --wave-sel: #2563eb;
+    --sel-bg: rgba(37, 99, 235, .10);
+    --playhead: #dc2626;
+    --ok: #15803d;
+    --err: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b;
+      --surface: #1b1f27;
+      --text: #e7e9ee;
+      --muted: #9aa1ad;
+      --border: #2e3440;
+      --accent: #5b8cff;
+      --accent-text: #0b1020;
+      --accent-soft: #1e2a47;
+      --wave: #4b5563;
+      --wave-sel: #5b8cff;
+      --sel-bg: rgba(91, 140, 255, .14);
+      --playhead: #f87171;
+      --ok: #4ade80;
+      --err: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    line-height: 1.5;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: .95rem; }
+
+  .drop {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 40px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop strong { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+  .drop span { color: var(--muted); font-size: .9rem; }
+
+  .options {
+    display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center;
+    margin: 16px 0 8px; padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    font-size: .92rem;
+  }
+  .options label { display: inline-flex; align-items: center; gap: 6px; }
+  select, input[type=checkbox] { accent-color: var(--accent); }
+  select, input[type=text] {
+    font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px;
+  }
+  .folder-name { color: var(--muted); font-size: .85rem; }
+
+  button {
+    font: inherit; font-size: .9rem; cursor: pointer;
+    border-radius: 8px; padding: 6px 12px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button:disabled { opacity: .5; cursor: default; }
+
+  .toolbar { display: flex; gap: 8px; justify-content: flex-end; margin: 16px 0 8px; flex-wrap: wrap; }
+
+  .list { display: grid; gap: 12px; }
+  .item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .item-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .item-name { font-weight: 600; overflow-wrap: anywhere; }
+  .status { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--err); white-space: normal; }
+  .meta { color: var(--muted); font-size: .85rem; margin: 2px 0 10px; }
+
+  .wave {
+    position: relative; height: 96px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    cursor: crosshair; touch-action: none; user-select: none;
+  }
+  .wave canvas { width: 100%; height: 100%; display: block; }
+  .wave .placeholder {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--muted); font-size: .85rem;
+  }
+
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center;
+    margin-top: 10px; font-size: .9rem;
+  }
+  .controls label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .controls input[type=text] { width: 96px; font-variant-numeric: tabular-nums; }
+  .sel-len { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+  .spacer { flex: 1; }
+
+  .out {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+    font-size: .85rem; color: var(--muted);
+  }
+  .out span { overflow-wrap: anywhere; }
+
+  footer { margin-top: 32px; color: var(--muted); font-size: .82rem; }
+  footer p { margin: 0 0 4px; }
+
+  @media (max-width: 560px) {
+    .item-head { flex-direction: column; gap: 2px; }
+    .spacer { display: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>影片聲音擷取</h1>
+  <p class="sub">選擇或拖入影片，把聲音抽出來存成 MP3 或 WAV，可在波形上拖曳只取一段。全部在瀏覽器本地處理，影片不會上傳。</p>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="選擇影片">
+    <strong>拖曳影片到這裡，或點擊選擇</strong>
+    <span>可一次選多支 · MP4 / WebM / MOV 等瀏覽器可播放的格式，也可直接放音訊檔</span>
+  </div>
+  <input type="file" id="picker" accept="video/*,audio/*" multiple hidden>
+
+  <div class="options">
+    <label>格式
+      <select id="format">
+        <option value="mp3">MP3</option>
+        <option value="wav">WAV（無損）</option>
+      </select>
+    </label>
+    <label id="bitrateWrap">位元率
+      <select id="bitrate">
+        <option value="128">128 kbps</option>
+        <option value="192">192 kbps</option>
+        <option value="256">256 kbps</option>
+        <option value="320">320 kbps</option>
+      </select>
+    </label>
+    <label id="depthWrap">位元深度
+      <select id="depth">
+        <option value="16">16-bit</option>
+        <option value="24">24-bit</option>
+      </select>
+    </label>
+    <label>取樣率
+      <select id="rate">
+        <option value="48000">48 kHz</option>
+        <option value="44100">44.1 kHz</option>
+      </select>
+    </label>
+    <label>聲道
+      <select id="channels">
+        <option value="keep">維持原樣</option>
+        <option value="mono">轉單聲道</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="normalize"> 音量標準化</label>
+    <label>儲存方式
+      <select id="saveMode">
+        <option value="download">自動下載</option>
+        <option value="folder">存到指定資料夾</option>
+        <option value="none">只預覽，手動匯出</option>
+      </select>
+    </label>
+    <button id="pickFolder" hidden>選擇資料夾…</button>
+    <span class="folder-name" id="folderName"></span>
+  </div>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <button id="saveAll">全部匯出</button>
+    <button id="clearAll">清除</button>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <footer>
+    <p>輸出檔名：<code>影片名.mp3</code>；只取一段時為 <code>影片名_起點-終點s.mp3</code>。</p>
+    <p>在波形上拖曳可選取範圍，單點可跳到該時間試聽。「音量標準化」會把最大音量調到 -1 dBFS。</p>
+    <p>「存到指定資料夾」需使用 Chrome 或 Edge。影片會整支讀進記憶體解碼，太長的影片（約一小時以上）可能會失敗。</p>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const drop = $('drop'), picker = $('picker'), list = $('list');
+  const formatSel = $('format'), bitrateSel = $('bitrate'), depthSel = $('depth');
+  const rateSel = $('rate'), channelsSel = $('channels'), normalizeChk = $('normalize');
+  const bitrateWrap = $('bitrateWrap'), depthWrap = $('depthWrap');
+  const saveMode = $('saveMode'), pickFolderBtn = $('pickFolder'), folderName = $('folderName');
+  const toolbar = $('toolbar');
+
+  const LAME_URL = 'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js';
+  const canPickFolder = 'showDirectoryPicker' in window;
+  let dirHandle = null;
+  const cards = [];
+  let queue = Promise.resolve();
+
+  // ---------- 設定（記住上次選項） ----------
+  const PREF_KEYS = { format: formatSel, bitrate: bitrateSel, depth: depthSel, rate: rateSel, channels: channelsSel, saveMode };
+  function loadPrefs() {
+    try {
+      const p = JSON.parse(localStorage.getItem('extract-audio-prefs') || '{}');
+      for (const [k, el] of Object.entries(PREF_KEYS)) if (p[k]) el.value = p[k];
+      normalizeChk.checked = !!p.normalize;
+    } catch {}
+    if (!canPickFolder) {
+      saveMode.querySelector('option[value=folder]').disabled = true;
+      if (saveMode.value === 'folder') saveMode.value = 'download';
+    }
+  }
+  function savePrefs() {
+    try {
+      const p = { normalize: normalizeChk.checked };
+      for (const [k, el] of Object.entries(PREF_KEYS)) p[k] = el.value;
+      localStorage.setItem('extract-audio-prefs', JSON.stringify(p));
+    } catch {}
+  }
+  function syncUI() {
+    bitrateWrap.hidden = formatSel.value !== 'mp3';
+    depthWrap.hidden = formatSel.value !== 'wav';
+    const folder = saveMode.value === 'folder';
+    pickFolderBtn.hidden = !folder;
+    folderName.textContent = folder ? (dirHandle ? '→ ' + dirHandle.name : '尚未選擇') : '';
+  }
+  [...Object.values(PREF_KEYS), normalizeChk].forEach(el => el.addEventListener('input', () => { savePrefs(); syncUI(); }));
+  pickFolderBtn.addEventListener('click', chooseFolder);
+
+  async function chooseFolder() {
+    try {
+      dirHandle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'music' });
+    } catch { /* 使用者取消 */ }
+    syncUI();
+    return dirHandle;
+  }
+
+  function currentOptions() {
+    return {
+      format: formatSel.value,
+      bitrate: Number(bitrateSel.value),
+      depth: Number(depthSel.value),
+      rate: Number(rateSel.value),
+      mono: channelsSel.value === 'mono',
+      normalize: normalizeChk.checked
+    };
+  }
+
+  // ---------- 選檔 / 拖放 ----------
+  drop.addEventListener('click', () => picker.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); picker.click(); } });
+  picker.addEventListener('change', () => { handleFiles(picker.files); picker.value = ''; });
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+  // 避免拖到頁面其他地方時瀏覽器直接開啟影片
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => e.preventDefault());
+
+  async function handleFiles(fileList) {
+    const files = [...fileList].filter(f =>
+      f.type.startsWith('video/') || f.type.startsWith('audio/') ||
+      /\.(mp4|m4v|mov|webm|mkv|ogv|avi|m4a|mp3|wav|aac|ogg|opus|flac)$/i.test(f.name));
+    if (!files.length) return;
+    if (saveMode.value === 'folder' && !dirHandle) {
+      if (!await chooseFolder()) { saveMode.value = 'download'; savePrefs(); syncUI(); }
+    }
+    toolbar.hidden = false;
+    for (const file of files) {
+      const card = makeCard(file);
+      cards.push(card);
+      // 依序處理，避免同時解碼太多影片吃光記憶體
+      queue = queue.then(() => processFile(card));
+    }
+  }
+
+  // ---------- UI 卡片 ----------
+  function makeCard(file) {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div class="item-head">
+        <div class="item-name"></div>
+        <div class="status">等待中…</div>
+      </div>
+      <div class="meta"></div>
+      <div class="wave"><canvas></canvas><div class="placeholder">波形</div></div>
+      <div class="controls">
+        <button data-act="play" disabled>▶ 試聽</button>
+        <label>起點 <input type="text" data-k="start" disabled></label>
+        <label>終點 <input type="text" data-k="end" disabled></label>
+        <span class="sel-len"></span>
+        <button data-act="all" disabled>全選</button>
+        <span class="spacer"></span>
+        <button class="primary" data-act="export" disabled>匯出</button>
+      </div>
+      <div class="out" hidden><span></span><button data-act="download">下載</button></div>`;
+    el.querySelector('.item-name').textContent = file.name;
+    el.querySelector('.meta').textContent = formatSize(file.size);
+    list.prepend(el);
+
+    const q = sel => el.querySelector(sel);
+    const card = {
+      el, file,
+      base: file.name.replace(/\.[^.]+$/, ''),
+      buffer: null,        // 解碼後的 AudioBuffer
+      sel: { start: 0, end: 0 },
+      output: null,        // { blob, name }
+      busy: false,
+      status(text, cls = '') { const s = q('.status'); s.textContent = text; s.className = 'status ' + cls; }
+    };
+
+    // 試聽：直接用 <audio> 播原始檔，不必另外產生音檔
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.src = URL.createObjectURL(file);
+    card.audio = audio;
+
+    const canvas = q('canvas'), wave = q('.wave');
+    const playBtn = q('[data-act=play]'), exportBtn = q('[data-act=export]');
+    const startIn = q('[data-k=start]'), endIn = q('[data-k=end]'), selLen = q('.sel-len');
+    let peaks = null, peaksWidth = 0, raf = 0;
+
+    card.ready = () => {
+      q('.placeholder').remove();
+      for (const b of el.querySelectorAll('[disabled]')) b.disabled = false;
+      const d = card.buffer.duration;
+      card.sel = { start: 0, end: d };
+      q('.meta').textContent = [formatSize(file.size), '長度 ' + formatTime(d), card.buffer.numberOfChannels === 1 ? '單聲道' : card.buffer.numberOfChannels === 2 ? '立體聲' : card.buffer.numberOfChannels + ' 聲道'].join(' · ');
+      syncSel();
+    };
+
+    card.setBusy = busy => { card.busy = busy; exportBtn.disabled = busy || !card.buffer; };
+
+    card.showOutput = (blob, name) => {
+      card.output = { blob, name };
+      const out = q('.out');
+      out.hidden = false;
+      out.querySelector('span').textContent = `${name} · ${formatSize(blob.size)}`;
+    };
+    q('[data-act=download]').addEventListener('click', () => card.output && downloadBlob(card.output.blob, card.output.name));
+    exportBtn.addEventListener('click', () => { queue = queue.then(() => exportCard(card, saveMode.value === 'none' ? 'download' : saveMode.value)); });
+
+    // --- 選取範圍 ---
+    function syncSel() {
+      startIn.value = formatTime(card.sel.start);
+      endIn.value = formatTime(card.sel.end);
+      selLen.textContent = '共 ' + formatTime(card.sel.end - card.sel.start);
+      draw();
+    }
+    function setSel(a, b) {
+      const d = card.buffer.duration;
+      a = clamp(a, 0, d); b = clamp(b, 0, d);
+      if (b < a) [a, b] = [b, a];
+      if (b - a < 0.05) return false;
+      card.sel = { start: a, end: b };
+      syncSel();
+      return true;
+    }
+    for (const [input, k] of [[startIn, 'start'], [endIn, 'end']]) {
+      input.addEventListener('change', () => {
+        const t = parseTime(input.value);
+        if (t == null || !setSel(k === 'start' ? t : card.sel.start, k === 'end' ? t : card.sel.end)) syncSel();
+      });
+    }
+    q('[data-act=all]').addEventListener('click', () => setSel(0, card.buffer.duration));
+
+    const xToTime = x => {
+      const r = wave.getBoundingClientRect();
+      return clamp((x - r.left) / r.width, 0, 1) * card.buffer.duration;
+    };
+    let dragFrom = null, dragX = 0;
+    wave.addEventListener('pointerdown', e => {
+      if (!card.buffer) return;
+      wave.setPointerCapture(e.pointerId);
+      dragFrom = xToTime(e.clientX); dragX = e.clientX;
+    });
+    wave.addEventListener('pointermove', e => {
+      if (dragFrom == null || Math.abs(e.clientX - dragX) < 3) return;
+      setSel(dragFrom, xToTime(e.clientX));
+    });
+    wave.addEventListener('pointerup', e => {
+      if (dragFrom == null) return;
+      // 沒拖動視為單點：跳到該時間
+      if (Math.abs(e.clientX - dragX) < 3) { audio.currentTime = dragFrom; draw(); }
+      dragFrom = null;
+    });
+
+    // --- 試聽 ---
+    playBtn.addEventListener('click', () => {
+      if (!audio.paused) { audio.pause(); return; }
+      const { start, end } = card.sel;
+      if (audio.currentTime < start || audio.currentTime >= end - 0.05) audio.currentTime = start;
+      audio.play().catch(() => card.status('瀏覽器無法播放此檔，但仍可匯出', 'err'));
+    });
+    audio.addEventListener('play', () => { playBtn.textContent = '❚❚ 暫停'; tick(); });
+    audio.addEventListener('pause', () => { playBtn.textContent = '▶ 試聽'; cancelAnimationFrame(raf); draw(); });
+    function tick() {
+      if (audio.currentTime >= card.sel.end) { audio.pause(); audio.currentTime = card.sel.start; }
+      draw();
+      if (!audio.paused) raf = requestAnimationFrame(tick);
+    }
+
+    // --- 波形 ---
+    function computePeaks(width) {
+      const buf = card.buffer, n = buf.length, chs = [];
+      for (let c = 0; c < buf.numberOfChannels; c++) chs.push(buf.getChannelData(c));
+      const out = new Float32Array(width * 2), step = n / width;
+      for (let x = 0; x < width; x++) {
+        let min = 0, max = 0;
+        const from = Math.floor(x * step), to = Math.min(n, Math.floor((x + 1) * step));
+        // 每欄最多取樣 2000 點，長影片也畫得快
+        const stride = Math.max(1, Math.floor((to - from) / 2000));
+        for (const ch of chs) for (let i = from; i < to; i += stride) {
+          const v = ch[i];
+          if (v < min) min = v; else if (v > max) max = v;
+        }
+        out[x * 2] = min; out[x * 2 + 1] = max;
+      }
+      return out;
+    }
+    function draw() {
+      if (!card.buffer) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.round(wave.clientWidth * dpr)), h = Math.max(1, Math.round(wave.clientHeight * dpr));
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      if (!peaks || peaksWidth !== w) { peaks = computePeaks(w); peaksWidth = w; }
+      const ctx = canvas.getContext('2d'), css = getComputedStyle(document.documentElement);
+      const d = card.buffer.duration, sx = card.sel.start / d * w, ex = card.sel.end / d * w, mid = h / 2;
+      const full = card.sel.start <= 0 && card.sel.end >= d;
+      ctx.clearRect(0, 0, w, h);
+      if (!full) { ctx.fillStyle = css.getPropertyValue('--sel-bg'); ctx.fillRect(sx, 0, ex - sx, h); }
+      const waveColor = css.getPropertyValue('--wave'), selColor = css.getPropertyValue('--wave-sel');
+      for (let x = 0; x < w; x++) {
+        ctx.fillStyle = (x >= sx && x <= ex) ? selColor : waveColor;
+        const top = mid - peaks[x * 2 + 1] * mid * 0.95, bot = mid - peaks[x * 2] * mid * 0.95;
+        ctx.fillRect(x, top, 1, Math.max(1, bot - top));
+      }
+      if (!full) {
+        ctx.fillStyle = selColor;
+        ctx.fillRect(sx - dpr, 0, 2 * dpr, h);
+        ctx.fillRect(ex - dpr, 0, 2 * dpr, h);
+      }
+      if (audio.currentTime > 0 || !audio.paused) {
+        ctx.fillStyle = css.getPropertyValue('--playhead');
+        ctx.fillRect(audio.currentTime / d * w - dpr / 2, 0, dpr, h);
+      }
+    }
+    new ResizeObserver(() => draw()).observe(wave);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+
+    card.dispose = () => { audio.pause(); URL.revokeObjectURL(audio.src); cancelAnimationFrame(raf); };
+    return card;
+  }
+
+  // ---------- 解碼 ----------
+  async function decode(file, rate) {
+    const data = await file.arrayBuffer();
+    // 用 OfflineAudioContext 解碼，結果會直接是指定的取樣率
+    const ctx = new OfflineAudioContext(1, 1, rate);
+    try {
+      return await new Promise((resolve, reject) => ctx.decodeAudioData(data, resolve, reject));
+    } catch {
+      throw new Error('找不到音軌，或瀏覽器不支援此影片的音訊編碼');
+    }
+  }
+
+  async function processFile(card) {
+    card.status('讀取音軌中…');
+    try {
+      card.buffer = await decode(card.file, Number(rateSel.value));
+      card.ready();
+      if (saveMode.value === 'none') { card.status('已讀取，可選範圍後匯出', 'ok'); return; }
+      await exportCard(card, saveMode.value);
+    } catch (err) {
+      card.status('失敗：' + (err.message || err), 'err');
+    }
+  }
+
+  // ---------- 轉檔 ----------
+  async function exportCard(card, mode) {
+    if (!card.buffer || card.busy) return;
+    card.setBusy(true);
+    try {
+      const opt = currentOptions();
+      const { start, end } = card.sel;
+      const trimmed = start > 0.001 || end < card.buffer.duration - 0.001;
+      card.status('處理中…');
+      const buf = await prepare(card.buffer, start, end, opt);
+      const blob = opt.format === 'mp3'
+        ? await encodeMp3(buf, opt.bitrate, p => card.status(`MP3 編碼中… ${Math.round(p * 100)}%`))
+        : await encodeWav(buf, opt.depth, p => card.status(`WAV 輸出中… ${Math.round(p * 100)}%`));
+      const name = card.base + (trimmed ? `_${start.toFixed(1)}-${end.toFixed(1)}s` : '') + '.' + opt.format;
+      card.showOutput(blob, name);
+      const saved = await saveBlob(blob, name, mode);
+      card.status(saved ? '完成，已儲存' : '完成', 'ok');
+    } catch (err) {
+      card.status('失敗：' + (err.message || err), 'err');
+    } finally {
+      card.setBusy(false);
+    }
+  }
+
+  // 剪裁、轉取樣率、混成單聲道，一次用 OfflineAudioContext 處理
+  async function prepare(src, start, end, opt) {
+    const channels = opt.mono ? 1 : Math.min(2, src.numberOfChannels);
+    const same = start <= 0 && end >= src.duration && src.sampleRate === opt.rate && src.numberOfChannels === channels;
+    if (same && !opt.normalize) return src;
+    const len = Math.max(1, Math.round((end - start) * opt.rate));
+    const ctx = new OfflineAudioContext(channels, len, opt.rate);
+    const node = ctx.createBufferSource();
+    node.buffer = src;
+    node.connect(ctx.destination);
+    node.start(0, start, end - start);
+    const out = await ctx.startRendering();
+    if (opt.normalize) normalize(out);
+    return out;
+  }
+
+  function normalize(buf) {
+    let peak = 0;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; }
+    }
+    if (peak < 1e-6) return;
+    const gain = Math.pow(10, -1 / 20) / peak; // 調到 -1 dBFS
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) d[i] *= gain;
+    }
+  }
+
+  async function encodeWav(buf, bits, onProgress) {
+    const ch = buf.numberOfChannels, n = buf.length, bytes = bits / 8, block = ch * bytes;
+    const dataSize = n * block;
+    const ab = new ArrayBuffer(44 + dataSize), view = new DataView(ab);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, 'RIFF'); view.setUint32(4, 36 + dataSize, true); str(8, 'WAVE');
+    str(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+    view.setUint16(22, ch, true); view.setUint32(24, buf.sampleRate, true);
+    view.setUint32(28, buf.sampleRate * block, true); view.setUint16(32, block, true); view.setUint16(34, bits, true);
+    str(36, 'data'); view.setUint32(40, dataSize, true);
+
+    const data = []; for (let c = 0; c < ch; c++) data.push(buf.getChannelData(c));
+    const max = bits === 16 ? 0x7fff : 0x7fffff;
+    const CHUNK = 1 << 18;
+    let o = 44;
+    for (let start = 0; start < n; start += CHUNK) {
+      const stop = Math.min(n, start + CHUNK);
+      for (let i = start; i < stop; i++) {
+        for (let c = 0; c < ch; c++) {
+          const s = Math.round(clamp(data[c][i], -1, 1) * max);
+          if (bits === 16) { view.setInt16(o, s, true); o += 2; }
+          else { view.setUint8(o, s & 0xff); view.setUint8(o + 1, (s >> 8) & 0xff); view.setUint8(o + 2, (s >> 16) & 0xff); o += 3; }
+        }
+      }
+      onProgress(stop / n);
+      await nextFrame();
+    }
+    return new Blob([ab], { type: 'audio/wav' });
+  }
+
+  let lamePromise = null;
+  function loadLame() {
+    return lamePromise ||= new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = LAME_URL;
+      s.onload = () => resolve(window.lamejs);
+      s.onerror = () => { lamePromise = null; s.remove(); reject(new Error('MP3 編碼器載入失敗，請檢查網路或改用 WAV')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  async function encodeMp3(buf, kbps, onProgress) {
+    const lamejs = await loadLame();
+    const ch = Math.min(2, buf.numberOfChannels), n = buf.length;
+    const enc = new lamejs.Mp3Encoder(ch, buf.sampleRate, kbps);
+    const L = buf.getChannelData(0), R = ch > 1 ? buf.getChannelData(1) : null;
+    const CHUNK = 1152 * 64, parts = [];
+    const toInt16 = (src, a, b) => {
+      const out = new Int16Array(b - a);
+      for (let i = a; i < b; i++) { const v = clamp(src[i], -1, 1); out[i - a] = v < 0 ? v * 0x8000 : v * 0x7fff; }
+      return out;
+    };
+    let last = performance.now();
+    for (let start = 0; start < n; start += CHUNK) {
+      const stop = Math.min(n, start + CHUNK);
+      const mp3 = R ? enc.encodeBuffer(toInt16(L, start, stop), toInt16(R, start, stop)) : enc.encodeBuffer(toInt16(L, start, stop));
+      if (mp3.length) parts.push(new Uint8Array(mp3));
+      // 定時讓出主執行緒，畫面才不會卡住
+      if (performance.now() - last > 60) { onProgress(stop / n); await nextFrame(); last = performance.now(); }
+    }
+    const tail = enc.flush();
+    if (tail.length) parts.push(new Uint8Array(tail));
+    return new Blob(parts, { type: 'audio/mpeg' });
+  }
+
+  // ---------- 儲存 ----------
+  async function saveBlob(blob, name, mode) {
+    if (mode === 'folder' && dirHandle) {
+      const fh = await dirHandle.getFileHandle(name, { create: true });
+      const w = await fh.createWritable();
+      await w.write(blob);
+      await w.close();
+      return true;
+    }
+    if (mode === 'download') { downloadBlob(blob, name); return true; }
+    return false;
+  }
+
+  function downloadBlob(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  }
+
+  $('saveAll').addEventListener('click', async () => {
+    const mode = saveMode.value === 'none' ? 'download' : saveMode.value;
+    if (mode === 'folder' && !dirHandle && !await chooseFolder()) return;
+    for (const c of cards) {
+      queue = queue.then(async () => { await exportCard(c, mode); await sleep(150); });
+    }
+  });
+  $('clearAll').addEventListener('click', () => {
+    cards.forEach(c => c.dispose());
+    cards.length = 0;
+    list.innerHTML = '';
+    toolbar.hidden = true;
+  });
+
+  // ---------- 小工具 ----------
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const nextFrame = () => new Promise(r => setTimeout(r, 0));
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  function formatTime(s) {
+    if (!isFinite(s)) return '';
+    const m = Math.floor(s / 60), sec = (s % 60).toFixed(2).padStart(5, '0');
+    return `${m}:${sec}`;
+  }
+  // 接受「1:23.5」或「83.5」
+  function parseTime(text) {
+    const parts = String(text).trim().split(':').map(Number);
+    if (!parts.length || parts.some(v => !isFinite(v) || v < 0)) return null;
+    return parts.reduce((acc, v) => acc * 60 + v, 0);
+  }
+  function formatSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    if (b < 1024 ** 3) return (b / 1024 / 1024).toFixed(1) + ' MB';
+    return (b / 1024 ** 3).toFixed(2) + ' GB';
+  }
+
+  loadPrefs();
+  syncUI();
+})();
+</script>
+</body>
+</html>
