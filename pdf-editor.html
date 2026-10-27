@@ -90,9 +90,36 @@ textarea.tb-edit{position:absolute;inset:0;width:100%;min-height:0;border:0;bord
 #empty:hover,#empty.drag{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
 #hint{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--accent);color:#fff;padding:8px 16px;border-radius:999px;display:none;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 /* 頁面縮圖 */
-#thumbs{width:150px;flex:none;background:var(--panel);border-right:1px solid var(--line);overflow:auto;padding:10px;display:none}
+#thumbs{width:172px;flex:none;background:var(--panel);border-right:1px solid var(--line);overflow:auto;padding:10px;display:none}
 .hasdoc #thumbs{display:block}
 .thh{font-size:13px;font-weight:600;margin:0 0 8px}
+.tgh{display:flex;align-items:center;gap:6px;font-size:12px;margin:10px 0 6px;padding:4px 6px;border-left:4px solid var(--accent);border-radius:4px;background:var(--bg);cursor:grab}
+.tgh .tgn{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tgh.drop-b{box-shadow:0 -4px 0 0 var(--accent)}
+.tgh.dragging{opacity:.4}
+.th{border-left-width:4px}
+.orow{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:6px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;background:var(--bg);cursor:grab}
+.orow.cur{background:color-mix(in srgb,var(--accent) 6%,var(--bg))}
+.orow.dragging{opacity:.4}
+.orow.drop-b{box-shadow:0 -3px 0 0 var(--accent)}
+.orow.drop-a{box-shadow:0 3px 0 0 var(--accent)}
+.orow .ograb,.tgh .ograb{color:var(--muted);font-size:16px;line-height:1}
+.orow .othumb{width:40px;flex:none}
+.orow .othumb canvas{display:block;box-shadow:0 1px 3px rgba(0,0,0,.25);background:#fff}
+.orow .oname{flex:1;min-width:0;display:flex;flex-direction:column}
+.orow .oname b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.orow button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;width:28px;height:26px;cursor:pointer}
+.orow button:disabled{opacity:.35;cursor:default}
+#orderList{max-height:55vh;overflow:auto}
+/* 螢光筆：以色彩相乘疊上，黑字不會被蓋住 */
+.hl{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;z-index:5}
+.hl>div{position:absolute;border-radius:1px}
+.hl.sel>div{outline:2px dashed var(--accent);outline-offset:1px}
+.hlcap{position:absolute;inset:0;z-index:40;display:none;cursor:text}
+.hlmode .hlcap{display:block}
+.hlc{display:inline-flex;gap:4px;align-items:center}
+.hlc button{width:22px;height:22px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.hlc button.on{box-shadow:0 0 0 2px var(--accent)}
 .th{position:relative;border:2px solid transparent;border-radius:8px;padding:5px;margin-bottom:8px;cursor:grab;background:var(--bg)}
 .th:hover{border-color:var(--line)}
 .th.dragging{opacity:.4}
@@ -127,7 +154,8 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
 <body>
 <header>
   <h1>📄 PDF 編輯器</h1>
-  <button class="btn" id="bOpen">📂 開啟 PDF</button>
+  <button class="btn" id="bOpen" title="可一次選多個 PDF 合併開啟">📂 開啟 PDF</button>
+  <button class="btn needdoc" id="bAddPdf" disabled title="把其他 PDF 加進目前的文件">➕ 新增 PDF</button>
   <select id="zoom" title="縮放">
     <option value="0.8">80%</option><option value="1">100%</option><option value="1.3" selected>130%</option>
     <option value="1.6">160%</option><option value="2">200%</option>
@@ -139,6 +167,8 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
   <button class="btn needdoc sym" data-shape="check" disabled title="加入勾勾">✓ 勾勾</button>
   <button class="btn needdoc sym" data-shape="square" disabled title="加入黑色正方形">■ 方塊</button>
   <button class="btn needdoc sym" data-shape="circle" disabled title="加入黑色圓形">● 圓點</button>
+  <button class="btn needdoc" id="bHl" disabled title="螢光筆：在文字上拖曳反白，或在空白處框選區域">🖍 螢光筆</button>
+  <span id="hlColors" hidden></span>
   <span class="sep"></span>
   <button class="btn needdoc" id="bSig" disabled title="支援 PNG、JPG、WebP、GIF 等圖檔，PNG 可保留透明背景">🖼 插入圖片 / 簽名</button>
   <button class="btn needdoc" id="bPad" disabled>✍️ 手寫簽名</button>
@@ -146,7 +176,8 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
   <label class="muted"><input type="checkbox" id="marks" checked> 顯示編輯標記</label>
   <button class="btn primary needdoc" id="bExport" disabled>⬇ 匯出 PDF</button>
   <span id="status">尚未開啟檔案</span>
-  <input type="file" id="fPdf" accept="application/pdf" hidden>
+  <input type="file" id="fPdf" accept="application/pdf" multiple hidden>
+  <input type="file" id="fAdd" accept="application/pdf" multiple hidden>
   <input type="file" id="fSig" accept="image/*" hidden>
   <input type="file" id="fFont" accept=".ttf,.otf" hidden>
 </header>
@@ -158,7 +189,7 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
   <div id="viewer" class="marks">
     <div id="empty" role="button" tabindex="0" title="選擇 PDF 檔案">
       <div style="font-size:40px">📄</div>
-      <div><b>點這裡選擇 PDF</b>，或把檔案拖放進來</div>
+      <div><b>點這裡選擇 PDF</b>（可一次選多個合併），或把檔案拖放進來</div>
       <div style="font-size:12px">檔案只在你的瀏覽器中處理，不會上傳到任何地方</div>
     </div>
     <div id="pages"></div>
@@ -167,6 +198,17 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
 </main>
 <div id="hint"></div>
 <div id="toast"></div>
+<div class="modal" id="orderModal">
+  <div class="box" style="width:520px">
+    <h2 id="orderTitle" style="margin:0 0 4px;font-size:15px"></h2>
+    <p class="muted" style="margin:0 0 12px">拖曳或用 ↑ ↓ 調整順序，頁面會依這個順序合併。之後也能在左側縮圖再調整。</p>
+    <div id="orderList"></div>
+    <div class="row"><span style="flex:1"></span>
+      <button class="btn" id="orderCancel">取消</button>
+      <button class="btn primary" id="orderOk"></button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="padModal">
   <div class="box">
     <h2 style="margin:0 0 10px;font-size:15px">手寫簽名</h2>
@@ -188,7 +230,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
 
 const $ = id => document.getElementById(id);
 // pages：目前的頁面順序（P.src = 原始 PDF 的頁碼索引）；objs：新增的簽名 / 文字框 / 符號
-const S = { bytes:null, name:'', doc:null, pages:[], scale:1.3, sel:null, objs:[], pending:null, dragP:null,
+// files：開啟的來源 PDF；pages：目前的頁面順序（P.file + P.src 指向來源檔的第幾頁）
+const S = { files:[], fileSeq:0, pages:[], scale:1.3, sel:null, objs:[], pending:null, drag:null,
+            hl:{on:false, color:'#ffe94d'},
             alignBase:'page', alignRef:null, snap:true };
 
 /* ---------- 字型目錄 ----------
@@ -369,29 +413,317 @@ function fontInfo(P, fontName, str){
 }
 const runKey = (it, kind) => kind==='cjk' || it.font.latKey==='same' ? it.font.cjkKey : it.font.latKey;
 
-/* ---------- 開啟 PDF ---------- */
-async function openPdf(file){
-  try{
-    status('讀取中…');
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const doc = await pdfjsLib.getDocument({
-      data:bytes.slice(), cMapUrl:PDFJS_BASE+'cmaps/', cMapPacked:true,
-      standardFontDataUrl:PDFJS_BASE+'standard_fonts/', fontExtraProperties:true
-    }).promise;
-    S.bytes=bytes; S.doc=doc; S.name=file.name.replace(/\.pdf$/i,'');
-    S.pages=[]; S.objs=[]; S.sel=null; cancelPlace();
-    for(let i=0;i<doc.numPages;i++){
-      const page = await doc.getPage(i+1);
-      const tc = await page.getTextContent();
-      S.pages.push({src:i, page, rot:0, vp1:page.getViewport({scale:1}), styles:tc.styles, raw:tc.items, items:null});
-    }
+/* ---------- 開啟 / 合併多個 PDF ---------- */
+const FILE_COLORS = ['#2563eb','#16a34a','#d97706','#db2777','#7c3aed','#0891b2','#65a30d','#dc2626'];
+const hasDoc = () => S.files.length>0;
+// 讀入一個 PDF 檔，建立它的頁面物件（P.file 指回來源檔案）
+async function loadPdfFile(file){
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const doc = await pdfjsLib.getDocument({
+    data:bytes.slice(), cMapUrl:PDFJS_BASE+'cmaps/', cMapPacked:true,
+    standardFontDataUrl:PDFJS_BASE+'standard_fonts/', fontExtraProperties:true
+  }).promise;
+  const f = { id:++S.fileSeq, name:file.name.replace(/\.pdf$/i,''), bytes, doc, pages:[],
+              color:FILE_COLORS[(S.fileSeq-1)%FILE_COLORS.length] };
+  for(let i=0;i<doc.numPages;i++){
+    const page = await doc.getPage(i+1);
+    const tc = await page.getTextContent();
+    f.pages.push({file:f, src:i, page, rot:0, vp1:page.getViewport({scale:1}), styles:tc.styles, raw:tc.items, items:null});
+  }
+  return f;
+}
+/* 開啟檔案：adding=true 代表加入目前的文件 */
+async function openFiles(list, adding){
+  const pdfs=[...list].filter(x=>/pdf$/i.test(x.type)||/\.pdf$/i.test(x.name));
+  if(!pdfs.length) return;
+  const loaded=[];
+  for(const [i,file] of pdfs.entries()){
+    status(`讀取中… ${i+1}/${pdfs.length}　${file.name}`);
+    try{ loaded.push(await loadPdfFile(file)); }
+    catch(e){ console.error(e); alert(`無法開啟「${file.name}」：${e.message}`); }
+  }
+  if(!loaded.length){ status(); return; }
+  let order = loaded;
+  if(adding || loaded.length>1){
+    // 目前文件依檔案分段列出，新檔案就能插在任兩段之間
+    const runs=[];
+    if(adding) for(const P of S.pages){ const r=runs[runs.length-1]; if(r && r.file===P.file) r.pages.push(P); else runs.push({current:true, file:P.file, pages:[P]}); }
+    const items=[...runs, ...loaded];
+    order = await orderDialog(items, adding);
+    if(!order){ status(); return; }
+  }
+  const newFiles=order.filter(x=>!x.current);
+  const pages=order.flatMap(x=>x.pages);
+  if(!adding){
+    S.files=newFiles; S.pages=pages; S.objs=[]; S.sel=null; cancelPlace(); setHl(false);
     $('empty').style.display='none';
     $('main').classList.add('hasdoc');
     document.querySelectorAll('.needdoc').forEach(b=>b.disabled=false);
+    $('thumbList').innerHTML='';
     await renderAll();
-    showSide();
-    buildThumbs();
-  }catch(e){ console.error(e); alert('無法開啟 PDF：'+e.message); status('開啟失敗'); }
+  }else{
+    S.files.push(...newFiles);
+    const fresh=newFiles.flatMap(f=>f.pages);
+    for(const [i,P] of fresh.entries()){ await renderPage(P); status(`算繪中… ${i+1}/${fresh.length}`); }
+    applyOrder(pages);
+    toast(`已加入 ${newFiles.length} 個檔案，共 ${fresh.length} 頁`);
+  }
+  showSide(); status();
+  buildThumbs();
+}
+// 匯出檔名：單一檔案用原檔名，多檔合併用第一個檔名 + 「_合併」
+function baseName(){
+  const used=[...new Set(S.pages.map(P=>P.file))];
+  return used.length>1 ? `${used[0].name}_合併` : (used[0]?.name||'document');
+}
+
+/* 排列檔案順序的視窗；回傳排好的陣列，取消回傳 null */
+function orderDialog(items, adding){
+  return new Promise(resolve=>{
+    let order=[...items], dragI=null;
+    const list=$('orderList');
+    $('orderTitle').textContent = adding ? '新增 PDF：排列順序' : `合併 ${items.length} 個 PDF：排列順序`;
+    $('orderOk').textContent = adding ? '加入' : '合併開啟';
+    const draw=()=>{
+      list.innerHTML='';
+      order.forEach((it,i)=>{
+        const name = it.current ? `${it.file.name}.pdf（已開啟）` : it.name+'.pdf';
+        const n = it.pages.length;
+        const row=document.createElement('div'); row.className='orow'+(it.current?' cur':''); row.draggable=true;
+        row.style.borderLeftColor = it.current ? it.file.color : it.color;
+        row.innerHTML=`<span class="ograb" title="拖曳排序">≡</span><span class="othumb"></span>
+          <span class="oname"><b>${esc(name)}</b><span class="muted">${n} 頁</span></span>
+          <button type="button" data-m="-1" title="往上" ${i===0?'disabled':''}>↑</button>
+          <button type="button" data-m="1" title="往下" ${i===order.length-1?'disabled':''}>↓</button>
+          ${it.current?'<span style="width:28px"></span>':'<button type="button" data-x title="不要加入這個檔案">✕</button>'}`;
+        const P0 = it.pages[0];
+        if(P0) miniThumb(P0, 40).then(c=>row.querySelector('.othumb').append(c));
+        row.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+          const j=i+ +b.dataset.m; [order[i],order[j]]=[order[j],order[i]]; draw(); });
+        row.querySelector('[data-x]')?.addEventListener('click',()=>{ order.splice(i,1); draw(); });
+        row.addEventListener('dragstart',e=>{ dragI=i; row.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',''); });
+        row.addEventListener('dragend',()=>{ dragI=null; draw(); });
+        row.addEventListener('dragover',e=>{ if(dragI===null) return; e.preventDefault();
+          const r=row.getBoundingClientRect(), before=e.clientY<r.top+r.height/2;
+          list.querySelectorAll('.orow').forEach(x=>x.classList.remove('drop-b','drop-a'));
+          row.classList.add(before?'drop-b':'drop-a'); });
+        row.addEventListener('drop',e=>{ if(dragI===null) return; e.preventDefault(); e.stopPropagation();
+          const before=row.classList.contains('drop-b'), moved=order[dragI];
+          order.splice(dragI,1); let j=order.indexOf(it); if(!before) j++; order.splice(j,0,moved); dragI=null; draw(); });
+        list.append(row);
+      });
+      $('orderOk').disabled = !order.some(x=>!x.current);
+    };
+    const close=v=>{ $('orderModal').style.display='none'; resolve(v); };
+    $('orderOk').onclick=()=>close(order);
+    $('orderCancel').onclick=()=>close(null);
+    draw();
+    $('orderModal').style.display='flex';
+  });
+}
+async function miniThumb(P, w){
+  const dpr=window.devicePixelRatio||1, v=P.page.getViewport({scale:w/P.vp1.width*dpr, rotation:viewRot(P)});
+  const c=document.createElement('canvas'); c.width=Math.round(v.width); c.height=Math.round(v.height);
+  c.style.width=w+'px';
+  await P.page.render({canvasContext:c.getContext('2d'), viewport:v}).promise;
+  return c;
+}
+
+/* ---------- 頁面縮圖：連續來自同一檔案的頁面歸成一組 ---------- */
+const clearDrop = () => document.querySelectorAll('.drop-b,.drop-a').forEach(t=>t.classList.remove('drop-b','drop-a'));
+// 把 block（一頁或一整組）移到 target 頁的前 / 後
+function moveBlock(block, target, before){
+  if(block.includes(target)) return;
+  const a=S.pages.filter(x=>!block.includes(x));
+  a.splice(a.indexOf(target)+(before?0:1),0,...block);
+  applyOrder(a);
+}
+function dropTarget(el, onDrop){
+  el.addEventListener('dragover',e=>{
+    if(!S.drag) return;
+    e.preventDefault(); e.stopPropagation();
+    const r=el.getBoundingClientRect(), before=el.classList.contains('tgh') || e.clientY<r.top+r.height/2;
+    clearDrop(); el.classList.add(before?'drop-b':'drop-a');
+  });
+  el.addEventListener('drop',e=>{
+    if(!S.drag) return;
+    e.preventDefault(); e.stopPropagation();
+    const before=el.classList.contains('drop-b'); clearDrop();
+    onDrop(before);
+  });
+}
+function makeThumb(P){
+  const th=document.createElement('div'); th.className='th'; th.draggable=true;
+  th.innerHTML=`<div class="thc"></div><div class="thf"><span class="thn"></span>
+    <span class="tha"><button data-act="rotr" title="此頁順時針旋轉 90°">⟳</button><button data-act="export" title="只匯出這一頁">⬇</button><button data-act="del" title="刪除這一頁">🗑</button></span></div>`;
+  P.thumb=th; P.thumbN=th.querySelector('.thn');
+  th.addEventListener('click',e=>{
+    const a=e.target.closest('button')?.dataset.act;
+    if(a){ e.stopPropagation(); pageAction(P,a); return; }
+    P.el?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  th.addEventListener('dragstart',e=>{ S.drag=[P]; th.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',''); });
+  th.addEventListener('dragend',()=>{ S.drag=null; th.classList.remove('dragging'); clearDrop(); });
+  dropTarget(th, before=>moveBlock(S.drag, P, before));
+}
+function layoutThumbs(){
+  const list=$('thumbList'); list.replaceChildren();
+  const multi=new Set(S.pages.map(P=>P.file)).size>1 || S.files.length>1;
+  for(let i=0;i<S.pages.length;){
+    let j=i; while(j<S.pages.length && S.pages[j].file===S.pages[i].file) j++;
+    const run=S.pages.slice(i,j), f=run[0].file;
+    if(multi){
+      const h=document.createElement('div'); h.className='tgh'; h.draggable=true; h.style.borderLeftColor=f.color;
+      h.title='拖曳可移動整組頁面';
+      h.innerHTML=`<span class="tgn">${esc(f.name)}</span><span class="muted">${run.length} 頁</span><span class="ograb">≡</span>`;
+      h.addEventListener('dragstart',e=>{ S.drag=run; h.classList.add('dragging'); run.forEach(P=>P.thumb?.classList.add('dragging'));
+        e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',''); });
+      h.addEventListener('dragend',()=>{ S.drag=null; clearDrop(); layoutThumbs(); });
+      dropTarget(h, ()=>moveBlock(S.drag, run[0], true));
+      list.append(h);
+    }
+    for(const P of run){ if(!P.thumb) makeThumb(P); P.thumb.style.borderLeftColor = multi ? f.color : ''; P.thumb.classList.remove('dragging'); list.append(P.thumb); }
+    i=j;
+  }
+}
+async function buildThumbs(){
+  layoutThumbs(); relabel();
+  for(const P of S.pages) if(!P.thumbDone){ P.thumbDone=true; await renderThumb(P); }
+}
+async function renderThumb(P){
+  const box=P.thumb?.querySelector('.thc'); if(!box) return;
+  box.replaceChildren(await miniThumb(P,116));
+}
+
+/* ---------- 螢光筆 ---------- */
+const HL_COLORS = [['#ffe94d','黃'],['#9bf09b','綠'],['#ffa8d4','粉紅'],['#9fd6ff','藍'],['#ffc27a','橘']];
+function setHl(on){
+  S.hl.on=on;
+  $('viewer').classList.toggle('hlmode',on);
+  $('bHl').classList.toggle('on',on);
+  $('hlColors').hidden=!on;
+  if(on){
+    cancelPlace();
+    $('hint').textContent='在文字上拖曳即可反白上螢光筆；從空白處拖曳可框選任意區域（Esc 結束）';
+    $('hint').style.display='block';
+  }else if(!S.pending) $('hint').style.display='none';
+}
+function hlSwatches(sel, id){
+  return `<span class="hlc" id="${id}">${HL_COLORS.map(([c,n])=>`<button type="button" data-c="${c}" title="${n}" class="${c===sel?'on':''}" style="background:${c}"></button>`).join('')}</span>`;
+}
+/* 頁面文字的「行」與字元位置（PDF 座標，y 向上），用來把滑鼠位置換算成字元 */
+function textModel(P){
+  if(P.tm) return P.tm;
+  const ctx=document.createElement('canvas').getContext('2d'), lines=[];
+  const items=(P.items||[]).filter(it=>it.t[0]>0 && Math.abs(it.t[1])<1e-3 && Math.abs(it.t[2])<1e-3 && it.str.length);
+  for(const it of items){
+    // 每個字的寬度：以對應字型量測，再等比例縮放到 PDF 記錄的總寬
+    const chars=[...it.str], ws=chars.map(ch=>{ ctx.font=cssFont(it, isLatin(ch)?'latin':'cjk', 100); return ctx.measureText(ch).width||50; });
+    const k=it.w/ws.reduce((a,b)=>a+b,0);
+    let x=it.t[4];
+    const slots=chars.map((ch,i)=>{ const s={x0:x, x1:x+ws[i]*k}; x=s.x1; return s; });
+    const by=it.t[5], top=by+it.ca*it.size, bot=by+it.cd*it.size;
+    let L=lines.find(l=>Math.abs(l.by-by)<0.4*Math.min(l.size,it.size));
+    if(!L){ L={by, size:it.size, top, bot, slots:[]}; lines.push(L); }
+    L.top=Math.max(L.top,top); L.bot=Math.min(L.bot,bot);
+    L.slots.push(...slots.filter(s=>s.x1>s.x0));
+  }
+  lines.sort((a,b)=>b.by-a.by);
+  const all=[];
+  lines.forEach((L,li)=>{ L.slots.sort((a,b)=>a.x0-b.x0); L.start=all.length; L.slots.forEach(s=>{ s.line=li; all.push(s); }); L.end=all.length; });
+  return P.tm={lines, all};
+}
+// 點 (x,y)（PDF 座標）對應到的插入位置；strict=true 時只接受落在文字上的點
+function caretAt(P, x, y, strict){
+  const {lines}=textModel(P);
+  let best=null, bd=Infinity;
+  lines.forEach(L=>{
+    const d = y>L.top ? y-L.top : y<L.bot ? L.bot-y : 0;
+    if(d<bd){ bd=d; best=L; }
+  });
+  if(!best || !best.slots.length) return null;
+  const x0=best.slots[0].x0, x1=best.slots[best.slots.length-1].x1;
+  if(strict && (bd>best.size*0.15 || x<x0-best.size || x>x1+best.size)) return null;
+  if(x<=x0) return best.start;
+  if(x>=x1) return best.end;
+  for(let i=best.start;i<best.end;i++){ const s=textModel(P).all[i]; if(x<s.x1) return x>(s.x0+s.x1)/2 ? i+1 : i; }
+  return best.end;
+}
+// 選取範圍 [a,b) → 每行一條整齊的色條（同一行相距太遠的字分開畫）
+function selectionRects(P, a, b){
+  const {lines, all}=textModel(P), out=[];
+  if(a>b) [a,b]=[b,a];
+  let seg=null;
+  for(let i=a;i<b;i++){
+    const s=all[i], L=lines[s.line];
+    if(seg && seg.line===s.line && s.x0-seg.x1<L.size*1.2){ seg.x1=Math.max(seg.x1,s.x1); continue; }
+    if(seg) out.push(seg);
+    seg={line:s.line, x0:s.x0, x1:s.x1};
+  }
+  if(seg) out.push(seg);
+  return out.map(g=>{ const L=lines[g.line]; return {x0:g.x0, x1:g.x1, y0:L.bot, y1:L.top}; });
+}
+// PDF 座標的矩形 → 畫面上的位置
+function viewRect(P, R){
+  const [ax,ay]=P.vp.convertToViewportPoint(R.x0,R.y0), [bx,by]=P.vp.convertToViewportPoint(R.x1,R.y1);
+  return {left:Math.min(ax,bx), top:Math.min(ay,by), width:Math.abs(bx-ax), height:Math.abs(by-ay)};
+}
+function paintHl(el, P, rects, color){
+  el.replaceChildren(...rects.map(R=>{
+    const d=document.createElement('div'), v=viewRect(P,R);
+    Object.assign(d.style,{left:v.left+'px',top:v.top+'px',width:v.width+'px',height:v.height+'px',background:color});
+    return d;
+  }));
+}
+function mountHl(o){
+  const el=document.createElement('div'); el.className='hl'; o.el=el;
+  o.P.overlay.append(el); drawHl(o);
+}
+function drawHl(o){
+  if(!o.el?.isConnected) return;
+  paintHl(o.el, o.P, o.rects, o.color);
+  o.el.classList.toggle('sel', S.sel===o);
+}
+function hlCapture(P, cap){
+  cap.addEventListener('pointerdown',e=>{
+    e.preventDefault(); e.stopPropagation();
+    cap.setPointerCapture(e.pointerId);
+    const r=P.overlay.getBoundingClientRect();
+    const pt=ev=>P.vp.convertToPdfPoint(ev.clientX-r.left, ev.clientY-r.top);
+    const [ax,ay]=pt(e), sx=e.clientX, sy=e.clientY;
+    const startCaret=caretAt(P,ax,ay,true), mode=startCaret===null ? 'box' : 'text';
+    const tmp=document.createElement('div'); tmp.className='hl'; P.overlay.append(tmp);
+    let rects=[], moved=false;
+    const mv=ev=>{
+      if(Math.abs(ev.clientX-sx)+Math.abs(ev.clientY-sy)>3) moved=true;
+      const [bx,by]=pt(ev);
+      if(mode==='text') rects=selectionRects(P, startCaret, caretAt(P,bx,by,false));
+      else rects=[{x0:Math.min(ax,bx), x1:Math.max(ax,bx), y0:Math.min(ay,by), y1:Math.max(ay,by)}];
+      paintHl(tmp, P, rects, S.hl.color);
+    };
+    const up=ev=>{
+      cap.removeEventListener('pointermove',mv); cap.removeEventListener('pointerup',up);
+      tmp.remove();
+      if(!moved){                                // 只點一下：選取點到的螢光筆
+        const [x,y]=pt(ev), hit=S.objs.find(o=>o.type==='hl' && o.P===P && o.rects.some(R=>x>=R.x0&&x<=R.x1&&y>=R.y0&&y<=R.y1));
+        select(hit||null); return;
+      }
+      rects=rects.filter(R=>R.x1-R.x0>1 && R.y1-R.y0>1);
+      if(!rects.length) return;
+      const o={type:'hl', P, rects, color:S.hl.color};
+      S.objs.push(o); mountHl(o); status();
+    };
+    cap.addEventListener('pointermove',mv); cap.addEventListener('pointerup',up);
+  });
+}
+function sideHl(side, o){
+  side.innerHTML = `
+    <h2>螢光筆 <span class="muted">· 第 ${pageNo(o.P)} 頁</span></h2>
+    <div class="kv"><span class="k">顏色</span>${hlSwatches(o.color,'hlSideColors')}</div>
+    <div class="row"><button class="btn danger" id="hlDel">🗑 刪除螢光筆</button></div>
+    <p class="muted" style="margin-top:14px">螢光筆以「色彩相乘」疊在頁面上，黑色文字不會被蓋住。</p>`;
+  $('hlSideColors').querySelectorAll('button').forEach(b=>b.onclick=()=>{ o.color=b.dataset.c; drawHl(o); showSide(); });
+  $('hlDel').onclick=()=>removeObj(o);
 }
 
 async function renderAll(){
@@ -453,8 +785,9 @@ async function renderPage(P){
   if(!P.items) P.items = buildItems(P);
   await ensureColors(P, ctx, dpr);
   for(const it of P.items){ it.el = makeItemEl(it, P); ov.append(it.el); refreshItem(it); }
-  S.objs.filter(o=>o.P===P).forEach(mountObj);
+  S.objs.filter(o=>o.P===P).forEach(o=>o.type==='hl' ? mountHl(o) : mountObj(o));
   ov.addEventListener('click', e=>onPageClick(e,P));
+  const cap=document.createElement('div'); cap.className='hlcap'; ov.append(cap); hlCapture(P, cap);
 }
 
 function buildItems(P){
@@ -467,7 +800,7 @@ function buildItems(P){
     if(!(asc>0.4 && asc<1.4)) asc = 0.88;
     if(!(desc<0 && desc>-0.6)) desc = -0.22;
     const size = Math.hypot(t[2],t[3]) || Math.hypot(t[0],t[1]);
-    out.push({ id:`p${P.src}_${idx}`, P, str:r.str, text:r.str, t, w:r.width, size, fsz:size, fontName:r.fontName,
+    out.push({ id:`f${P.file.id}p${P.src}_${idx}`, P, str:r.str, text:r.str, t, w:r.width, size, fsz:size, fontName:r.fontName,
       asc, desc, ca:asc, cd:desc, font:fontInfo(P, r.fontName, r.str), st:stats(r.str), align:'left',
       deleted:false, color:[0,0,0], bg:[255,255,255], colorSet:false });
   });
@@ -522,7 +855,11 @@ const pageNo = P => S.pages.indexOf(P)+1;
 function relabel(){
   const n=S.pages.length;
   S.pages.forEach((P,i)=>{
-    if(P.label) P.label.textContent=`第 ${i+1} 頁`+(P.rot?`（已旋轉 ${P.rot>180?P.rot-360:P.rot}°）`:'');
+    if(P.label){
+      P.label.textContent=`第 ${i+1} 頁`+(P.rot?`（已旋轉 ${P.rot>180?P.rot-360:P.rot}°）`:'');
+      if(S.files.length>1){ const t=document.createElement('span'); t.className='plf'; t.style.color=P.file.color;
+        t.textContent=` · ${P.file.name} p.${P.src+1}`; P.label.append(t); }
+    }
     if(P.el){
       P.el.querySelector('[data-act=up]').disabled = i===0;
       P.el.querySelector('[data-act=down]').disabled = i===n-1;
@@ -533,8 +870,8 @@ function relabel(){
 }
 function applyOrder(order){
   S.pages=order;
-  for(const P of order){ if(P.el) $('pages').append(P.el); if(P.thumb) $('thumbList').append(P.thumb); }
-  relabel(); showSide(); status();
+  for(const P of order){ if(P.el) $('pages').append(P.el); }
+  layoutThumbs(); relabel(); showSide(); status();
 }
 function movePage(P, to){
   const a=S.pages.filter(x=>x!==P); a.splice(to,0,P); applyOrder(a);
@@ -546,8 +883,8 @@ function deletePage(P){
   if(S.sel?.P===P) S.sel=null;
   S.pages=S.pages.filter(x=>x!==P);
   S.objs=S.objs.filter(o=>o.P!==P);
-  P.el?.remove(); P.thumb?.remove();
-  relabel(); showSide(); status();
+  P.el?.remove(); P.thumb?.remove(); P.thumb=null;
+  layoutThumbs(); relabel(); showSide(); status();
 }
 function pageAction(P, act){
   const i=S.pages.indexOf(P);
@@ -565,59 +902,17 @@ async function rotatePages(list, d){
     P.rot=((P.rot||0)+d+360)%360;
     P.vp1=P.page.getViewport({scale:1, rotation:viewRot(P)});
     P.lines=null;
-    for(const o of S.objs.filter(o=>o.P===P)){
+    for(const o of S.objs.filter(o=>o.P===P && o.type!=='hl')){   // 螢光筆以 PDF 座標記錄，不需換算
       const [px,py]=old.convertToPdfPoint(o.x+o.w/2, o.y+o.h/2), [nx,ny]=P.vp1.convertToViewportPoint(px,py);
       o.x=nx-o.w/2; o.y=ny-o.h/2;
       if(o.type==='sig') o.rot=normAngle((o.rot||0)+d);
     }
+    P.tm=null;
     if(P.el) await renderPage(P);
     renderThumb(P);
   }
   relabel(); showSide(); status();
 }
-const clearDrop = () => document.querySelectorAll('.th.drop-b,.th.drop-a').forEach(t=>t.classList.remove('drop-b','drop-a'));
-async function buildThumbs(){
-  const list=$('thumbList'); list.innerHTML='';
-  for(const P of S.pages){
-    const th=document.createElement('div'); th.className='th'; th.draggable=true;
-    th.innerHTML=`<div class="thc"></div><div class="thf"><span class="thn"></span>
-      <span class="tha"><button data-act="rotr" title="此頁順時針旋轉 90°">⟳</button><button data-act="export" title="只匯出這一頁">⬇</button><button data-act="del" title="刪除這一頁">🗑</button></span></div>`;
-    P.thumb=th; P.thumbN=th.querySelector('.thn');
-    th.addEventListener('click',e=>{
-      const a=e.target.closest('button')?.dataset.act;
-      if(a){ e.stopPropagation(); pageAction(P,a); return; }
-      P.el?.scrollIntoView({behavior:'smooth',block:'start'});
-    });
-    th.addEventListener('dragstart',e=>{ S.dragP=P; th.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',''); });
-    th.addEventListener('dragend',()=>{ S.dragP=null; th.classList.remove('dragging'); clearDrop(); });
-    th.addEventListener('dragover',e=>{
-      if(!S.dragP) return;
-      e.preventDefault();
-      const r=th.getBoundingClientRect(), before=e.clientY<r.top+r.height/2;
-      clearDrop(); th.classList.add(before?'drop-b':'drop-a');
-    });
-    th.addEventListener('drop',e=>{
-      if(!S.dragP) return;
-      e.preventDefault(); e.stopPropagation();
-      const before=th.classList.contains('drop-b'), D=S.dragP; clearDrop();
-      if(D===P) return;
-      const a=S.pages.filter(x=>x!==D);
-      a.splice(a.indexOf(P)+(before?0:1),0,D);
-      applyOrder(a);
-    });
-    list.append(th);
-  }
-  relabel();
-  for(const P of S.pages) await renderThumb(P);
-}
-async function renderThumb(P){
-  const box=P.thumb?.querySelector('.thc'); if(!box) return;
-  const dpr=window.devicePixelRatio||1, v=P.page.getViewport({scale:116/P.vp1.width*dpr, rotation:viewRot(P)});
-  const c=document.createElement('canvas'); c.width=Math.round(v.width); c.height=Math.round(v.height);
-  await P.page.render({canvasContext:c.getContext('2d'), viewport:v}).promise;
-  box.replaceChildren(c);
-}
-
 /* ---------- 文字繪製（預覽） ---------- */
 function cssFont(it, kind, fs){
   const key = runKey(it, kind), f = FONTS[key];
@@ -757,6 +1052,7 @@ function posObj(o){
     transform:o.rot?`rotate(${o.rot}deg)`:''});
 }
 function drawObj(o){
+  if(o.type==='hl') return drawHl(o);
   const el=o.el; if(!el || !el.isConnected) return;
   if(o.type==='text') o.h = layoutText(o).length*lineH(o) + TB_PAD*2;
   posObj(o);
@@ -928,7 +1224,7 @@ function snapTargets(o){
   const L=detectLines(P);
   L.v.forEach(v=>xs.push(v.pos-v.t/2, v.pos+v.t/2));
   L.h.forEach(h=>ys.push(h.pos-h.t/2, h.pos+h.t/2));
-  S.objs.filter(x=>x!==o && x.P===P && x.type!=='text').forEach(x=>{ const b=bbox(x); xs.push(b.x,b.cx,b.x+b.w); ys.push(b.y,b.cy,b.y+b.h); });
+  S.objs.filter(x=>x!==o && x.P===P && (x.type==='sig'||x.type==='mark')).forEach(x=>{ const b=bbox(x); xs.push(b.x,b.cx,b.x+b.w); ys.push(b.y,b.cy,b.y+b.h); });
   return {xs,ys};
 }
 function applySnap(o, T){
@@ -1032,6 +1328,7 @@ function setTextFont(o, sel){
 }
 
 function beginPlace(p){
+  if(S.hl.on) setHl(false);
   S.pending=p;
   const msg = p.type==='sig' ? '點擊頁面放置圖片（Esc 取消）'
     : p.type==='text' ? '點擊頁面要放文字框的位置（Esc 取消）'
@@ -1071,14 +1368,17 @@ function showSide(){
   if(x.type==='text') return sideText(side,x);
   if(x.type==='mark') return sideMark(side,x);
   if(x.type==='sig') return sideSig(side,x);
+  if(x.type==='hl') return sideHl(side,x);
   sideItem(side,x);
 }
 function sideHelp(side){
-  side.innerHTML = `<h2>${S.doc?'尚未選取':'使用說明'}</h2><div class="muted">
+  side.innerHTML = `<h2>${hasDoc()?'尚未選取':'使用說明'}</h2><div class="muted">
     <p><b>修改文字</b><br>• 點一下文字 → 查看偵測到的字體<br>• 雙擊文字 → 直接修改，上方可選對齊<br>• 選取後按 Delete → 刪除文字</p>
     <p><b>新增內容</b><br>• 文字框：按「𝐓 文字框」再點頁面，可選頁面字體、標楷體、微軟正黑體<br>• 符號：勾勾 / 方塊 / 圓點，可連續點多個，Esc 結束<br>• 圖片 / 簽名：PNG、JPG 等圖檔或手寫簽名，可拖曳移動、拉右下角縮放</p>
+    <p><b>螢光筆</b><br>• 按「🖍 螢光筆」後在文字上拖曳 → 自動上整齊的螢光<br>• 從空白處拖曳 → 框選任意區域（掃描檔也可用）<br>• 黑色文字不會被蓋住；點一下螢光可改色或刪除</p>
+    <p><b>多個 PDF</b><br>• 開啟時可一次選多個，先排好檔案順序再合併<br>• 「➕ 新增 PDF」把其他檔案加進目前的文件<br>• 左側縮圖依檔案分組：拖檔名移動整組，或拖單頁</p>
     <p><b>頁面</b><br>• 左側縮圖可拖曳排序<br>• 每頁上方可旋轉（⟲ ⟳）、上下移動、單獨匯出、刪除<br>• 工具列「全部左轉 / 右轉」旋轉整份文件，匯出後會保留</p>
-    ${S.doc?`<p>目前：${S.pages.length} 頁、修改 ${countEdits()} 處、新增物件 ${S.objs.length} 個。</p>`:''}</div>`;
+    ${hasDoc()?`<p>目前：${S.pages.length} 頁、修改 ${countEdits()} 處、新增物件 ${S.objs.length} 個。</p>`:''}</div>`;
 }
 function sideItem(side, it){
   const f=it.font, st=it.st;
@@ -1197,7 +1497,7 @@ function sideSig(side, o){
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const countEdits = () => S.pages.reduce((n,P)=>n+(P.items||[]).filter(isChanged).length,0);
 function status(msg){
-  $('status').textContent = msg || (S.doc ? `${S.name}.pdf · ${S.pages.length} 頁 · 修改 ${countEdits()} 處 · 新增 ${S.objs.length} 個` : '尚未開啟檔案');
+  $('status').textContent = msg || (hasDoc() ? `${baseName()}.pdf${S.files.length>1?`（${S.files.length} 個檔案）`:''} · ${S.pages.length} 頁 · 修改 ${countEdits()} 處 · 新增 ${S.objs.length} 個` : '尚未開啟檔案');
 }
 function toast(msg){ const t=$('toast'); t.innerHTML=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',7000); }
 
@@ -1306,10 +1606,12 @@ async function exportPdf(only){
   const list = Array.isArray(only) ? only : S.pages;
   const btn=$('bExport'); btn.disabled=true; status('匯出中…（首次使用字型需要載入）');
   const {PDFDocument, rgb, degrees, pushGraphicsState, popGraphicsState, setTextRenderingMode,
-         TextRenderingMode, setLineWidth, setStrokingColor} = PDFLib;
+         TextRenderingMode, setLineWidth, setStrokingColor, BlendMode} = PDFLib;
   const missing=new Set();
   try{
-    const doc = await PDFDocument.load(S.bytes, {ignoreEncryption:true});
+    // 每個來源檔分別套用編輯（字型嵌入在各自的文件裡）
+    async function editFile(file, pages){
+    const doc = await PDFDocument.load(file.bytes, {ignoreEncryption:true});
     doc.registerFontkit(fontkit);
     const embedded={};
     // 依字型目錄取得 PDF 字型；回傳 null 代表只能用圖像
@@ -1357,9 +1659,9 @@ async function exportPdf(only){
         t+=r.w;
       }
     }
-    const pages=doc.getPages();
-    for(const P of list){
-      const pg=pages[P.src], R=viewRot(P);   // R：頁面顯示角度；畫面上正向的物件在 PDF 內要逆轉 R
+    const pdfPages=doc.getPages();
+    for(const P of pages){
+      const pg=pdfPages[P.src], R=viewRot(P);   // R：頁面顯示角度；畫面上正向的物件在 PDF 內要逆轉 R
       pg.setRotation(degrees(R));
       for(const it of (P.items||[])){
         if(!isChanged(it)) continue;
@@ -1368,7 +1670,11 @@ async function exportPdf(only){
           color:rgb(...it.bg.map(v=>v/255)), borderWidth:0});
         if(!it.deleted && it.text) await drawLine(pg, it.text, it, it.t[4], it.t[5], it.fsz, it.w, it.align);
       }
-      for(const o of S.objs.filter(o=>o.P===P)){
+      // 螢光筆：畫在原有文字之上、新增物件之下，以 Multiply 混色讓黑字保持清楚
+      for(const o of S.objs.filter(o=>o.P===P && o.type==='hl'))
+        for(const r of o.rects) pg.drawRectangle({x:r.x0, y:r.y0, width:r.x1-r.x0, height:r.y1-r.y0,
+          color:rgb(...fromHex(o.color).map(v=>v/255)), borderWidth:0, blendMode:BlendMode.Multiply});
+      for(const o of S.objs.filter(o=>o.P===P && o.type!=='hl')){
         const B=pdfRect(P,o.x,o.y,o.w,o.h), color=o.color && rgb(...o.color.map(v=>v/255));
         if(o.type==='sig'){
           const img = o.imgType==='jpg' ? await doc.embedJpg(o.bytes) : await doc.embedPng(o.bytes);
@@ -1390,17 +1696,25 @@ async function exportPdf(only){
         }
       }
     }
-    let out=await doc.save();
-    // 有刪頁、排序或單頁匯出時，依目前順序重組頁面
-    const untouched = list.length===S.doc.numPages && list.every((P,i)=>P.src===i);
-    if(!untouched){
-      const mid=await PDFDocument.load(out,{ignoreEncryption:true}), res=await PDFDocument.create();
-      (await res.copyPages(mid, list.map(P=>P.src))).forEach(p=>res.addPage(p));
+    return await doc.save();
+    }
+    const files=[...new Set(list.map(P=>P.file))], saved=new Map();
+    for(const f of files) saved.set(f, await editFile(f, list.filter(P=>P.file===f)));
+    let out;
+    const f0=files[0];
+    if(files.length===1 && list.length===f0.doc.numPages && list.every((P,i)=>P.src===i)) out=saved.get(f0);
+    else{   // 有合併、刪頁、排序或單頁匯出時，依目前順序重組頁面
+      const res=await PDFDocument.create(), copied=new Map();
+      for(const f of files){
+        const mid=await PDFDocument.load(saved.get(f),{ignoreEncryption:true}), ps=list.filter(P=>P.file===f);
+        (await res.copyPages(mid, ps.map(P=>P.src))).forEach((pg,i)=>copied.set(ps[i],pg));
+      }
+      list.forEach(P=>res.addPage(copied.get(P)));
       out=await res.save();
     }
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([out],{type:'application/pdf'}));
-    a.download = Array.isArray(only) && only.length===1 ? `${S.name}_第${pageNo(only[0])}頁.pdf` : `${S.name}_edited.pdf`;
+    a.download = Array.isArray(only) && only.length===1 ? `${baseName()}_第${pageNo(only[0])}頁.pdf` : `${baseName()}_edited.pdf`;
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     if(missing.size) toast(`無法讀取字型：${[...missing].join('、')}。<br>已改用替代方式輸出（英數用 PDF 內建字型、中文用高解析圖像）。<br>請使用 Chrome / Edge，並在詢問時允許存取「字型」；或確認電腦有安裝該字型。`);
@@ -1412,7 +1726,13 @@ async function exportPdf(only){
 $('bOpen').onclick=()=>$('fPdf').click();
 $('empty').onclick=()=>$('fPdf').click();
 $('empty').onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('fPdf').click(); } };
-$('fPdf').onchange=e=>{ if(e.target.files[0]) openPdf(e.target.files[0]); e.target.value=''; };
+$('fPdf').onchange=e=>{ const f=[...e.target.files]; e.target.value=''; openFiles(f,false); };
+$('bAddPdf').onclick=()=>$('fAdd').click();
+$('fAdd').onchange=e=>{ const f=[...e.target.files]; e.target.value=''; openFiles(f,true); };
+$('bHl').onclick=()=>setHl(!S.hl.on);
+$('hlColors').innerHTML=hlSwatches(S.hl.color,'hlBar');
+$('hlBar').querySelectorAll('button').forEach(b=>b.onclick=()=>{ S.hl.color=b.dataset.c;
+  $('hlBar').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
 $('bText').onclick=()=> S.pending?.type==='text' ? cancelPlace() : beginPlace({type:'text'});
 document.querySelectorAll('.sym').forEach(b=>b.onclick=()=>
   S.pending?.type==='mark' && S.pending.shape===b.dataset.shape ? cancelPlace() : beginPlace({type:'mark', shape:b.dataset.shape}));
@@ -1425,9 +1745,9 @@ $('bExport').onclick=()=>exportPdf();
 $('bRotL').onclick=()=>rotatePages(S.pages,-90);
 $('bRotR').onclick=()=>rotatePages(S.pages,90);
 $('marks').onchange=e=>$('viewer').classList.toggle('marks',e.target.checked);
-$('zoom').onchange=async e=>{ S.scale=+e.target.value; if(S.doc) await renderAll(); };
+$('zoom').onchange=async e=>{ S.scale=+e.target.value; if(hasDoc()) await renderAll(); };
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape') cancelPlace();
+  if(e.key==='Escape'){ cancelPlace(); setHl(false); }
   const tag=document.activeElement?.tagName;
   if((e.key==='Delete'||e.key==='Backspace') && S.sel && !['TEXTAREA','INPUT','SELECT'].includes(tag)){
     e.preventDefault();
@@ -1436,15 +1756,15 @@ document.addEventListener('keydown',e=>{
   }
 });
 const viewer=$('viewer');
-viewer.addEventListener('dragover',e=>{ if(S.dragP) return; e.preventDefault(); $('empty').classList.add('drag'); });
+viewer.addEventListener('dragover',e=>{ if(S.drag) return; e.preventDefault(); $('empty').classList.add('drag'); });
 viewer.addEventListener('dragleave',()=>$('empty').classList.remove('drag'));
 viewer.addEventListener('drop',e=>{
-  if(S.dragP) return;
+  if(S.drag) return;
   e.preventDefault(); $('empty').classList.remove('drag');
   const f=[...e.dataTransfer.files];
-  const pdf=f.find(x=>/pdf$/i.test(x.type)||/\.pdf$/i.test(x.name));
+  const pdfs=f.filter(x=>/pdf$/i.test(x.type)||/\.pdf$/i.test(x.name));
   const img=f.find(x=>/^image\//.test(x.type));
-  if(pdf) openPdf(pdf); else if(img && S.doc) loadSigFile(img);
+  if(pdfs.length) openFiles(pdfs, hasDoc()); else if(img && hasDoc()) loadSigFile(img);
 });
 navigator.permissions?.query({name:'local-fonts'}).then(p=>{ if(p.state==='granted') getLocalFonts(); }).catch(()=>{});
 showSide();
