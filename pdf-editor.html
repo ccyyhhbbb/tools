@@ -37,6 +37,12 @@ main{flex:1;display:flex;min-height:0}
 #pages{display:flex;flex-direction:column;align-items:center;gap:50px}
 .page{position:relative;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);flex:none}
 .page canvas.pg{display:block}
+.sheet{position:relative;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);flex:none}
+.sheetin{position:relative}
+.sheet .page{box-shadow:none;outline:1px dashed #cfd4dc}
+.sheet .page>.pghead{display:none}
+.th.pa{margin-bottom:2px;border-bottom-left-radius:2px;border-bottom-right-radius:2px;background:color-mix(in srgb,var(--accent) 12%,var(--bg))}
+.th.pb{border-top-left-radius:2px;border-top-right-radius:2px;background:color-mix(in srgb,var(--accent) 12%,var(--bg))}
 .overlay{position:absolute;inset:0}
 .pghead{position:absolute;left:0;right:0;bottom:100%;margin-bottom:6px;display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
 .pghead .pl{font-weight:600}
@@ -156,12 +162,14 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
   <h1>📄 PDF 編輯器</h1>
   <button class="btn" id="bOpen" title="可一次選多個 PDF 合併開啟">📂 開啟 PDF</button>
   <button class="btn needdoc" id="bAddPdf" disabled title="把其他 PDF 加進目前的文件">➕ 新增 PDF</button>
+  <button class="btn" id="bOpenProj" title="開啟先前儲存的專案檔（.json），從上次的狀態繼續編輯">📁 開啟專案</button>
   <select id="zoom" title="縮放">
     <option value="0.8">80%</option><option value="1">100%</option><option value="1.3" selected>130%</option>
     <option value="1.6">160%</option><option value="2">200%</option>
   </select>
   <button class="btn needdoc" id="bRotL" disabled title="整份文件所有頁面逆時針旋轉 90°">⟲ 全部左轉</button>
   <button class="btn needdoc" id="bRotR" disabled title="整份文件所有頁面順時針旋轉 90°">⟳ 全部右轉</button>
+  <button class="btn needdoc" id="bPair" disabled title="從第 1 頁開始，每兩頁合併成一張（像列印的「每張 2 頁」）">⧉ 整份兩頁合一</button>
   <span class="sep"></span>
   <button class="btn needdoc" id="bText" disabled title="在頁面上加入新的文字框">𝐓 文字框</button>
   <button class="btn needdoc sym" data-shape="check" disabled title="加入勾勾">✓ 勾勾</button>
@@ -174,10 +182,12 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
   <button class="btn needdoc" id="bPad" disabled>✍️ 手寫簽名</button>
   <button class="btn" id="bFont" title="選用：額外載入 TTF/OTF 字型，會加入字型選單">🔤 加入其他字型</button>
   <label class="muted"><input type="checkbox" id="marks" checked> 顯示編輯標記</label>
+  <button class="btn needdoc" id="bSaveProj" disabled title="把 PDF 與所有編輯存成專案檔（.json），之後可以繼續編輯">💾 儲存專案</button>
   <button class="btn primary needdoc" id="bExport" disabled>⬇ 匯出 PDF</button>
   <span id="status">尚未開啟檔案</span>
   <input type="file" id="fPdf" accept="application/pdf" multiple hidden>
   <input type="file" id="fAdd" accept="application/pdf" multiple hidden>
+  <input type="file" id="fProj" accept=".json,application/json" hidden>
   <input type="file" id="fSig" accept="image/*" hidden>
   <input type="file" id="fFont" accept=".ttf,.otf" hidden>
 </header>
@@ -190,7 +200,7 @@ input[type=color]{width:34px;height:24px;border:1px solid var(--line);border-rad
     <div id="empty" role="button" tabindex="0" title="選擇 PDF 檔案">
       <div style="font-size:40px">📄</div>
       <div><b>點這裡選擇 PDF</b>（可一次選多個合併），或把檔案拖放進來</div>
-      <div style="font-size:12px">檔案只在你的瀏覽器中處理，不會上傳到任何地方</div>
+      <div style="font-size:12px">也可以拖入先前儲存的專案檔（.json）繼續編輯<br>檔案只在你的瀏覽器中處理，不會上傳到任何地方</div>
     </div>
     <div id="pages"></div>
   </div>
@@ -418,12 +428,14 @@ const FILE_COLORS = ['#2563eb','#16a34a','#d97706','#db2777','#7c3aed','#0891b2'
 const hasDoc = () => S.files.length>0;
 // 讀入一個 PDF 檔，建立它的頁面物件（P.file 指回來源檔案）
 async function loadPdfFile(file){
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  return loadPdfBytes(new Uint8Array(await file.arrayBuffer()), file.name.replace(/\.pdf$/i,''));
+}
+async function loadPdfBytes(bytes, name){
   const doc = await pdfjsLib.getDocument({
     data:bytes.slice(), cMapUrl:PDFJS_BASE+'cmaps/', cMapPacked:true,
     standardFontDataUrl:PDFJS_BASE+'standard_fonts/', fontExtraProperties:true
   }).promise;
-  const f = { id:++S.fileSeq, name:file.name.replace(/\.pdf$/i,''), bytes, doc, pages:[],
+  const f = { id:++S.fileSeq, name, bytes, doc, pages:[],
               color:FILE_COLORS[(S.fileSeq-1)%FILE_COLORS.length] };
   for(let i=0;i<doc.numPages;i++){
     const page = await doc.getPage(i+1);
@@ -455,11 +467,7 @@ async function openFiles(list, adding){
   const newFiles=order.filter(x=>!x.current);
   const pages=order.flatMap(x=>x.pages);
   if(!adding){
-    S.files=newFiles; S.pages=pages; S.objs=[]; S.sel=null; cancelPlace(); setHl(false);
-    $('empty').style.display='none';
-    $('main').classList.add('hasdoc');
-    document.querySelectorAll('.needdoc').forEach(b=>b.disabled=false);
-    $('thumbList').innerHTML='';
+    showDoc(newFiles, pages);
     await renderAll();
   }else{
     S.files.push(...newFiles);
@@ -470,6 +478,14 @@ async function openFiles(list, adding){
   }
   showSide(); status();
   buildThumbs();
+}
+// 換成新的文件（開啟檔案或專案時）
+function showDoc(files, pages){
+  S.files=files; S.pages=pages; S.objs=[]; S.sel=null; cancelPlace(); setHl(false);
+  $('empty').style.display='none';
+  $('main').classList.add('hasdoc');
+  document.querySelectorAll('.needdoc').forEach(b=>b.disabled=false);
+  $('thumbList').innerHTML=''; $('pages').innerHTML='';
 }
 // 匯出檔名：單一檔案用原檔名，多檔合併用第一個檔名 + 「_合併」
 function baseName(){
@@ -533,9 +549,13 @@ async function miniThumb(P, w){
 const clearDrop = () => document.querySelectorAll('.drop-b,.drop-a').forEach(t=>t.classList.remove('drop-b','drop-a'));
 // 把 block（一頁或一整組）移到 target 頁的前 / 後
 function moveBlock(block, target, before){
-  if(block.includes(target)) return;
-  const a=S.pages.filter(x=>!block.includes(x));
-  a.splice(a.indexOf(target)+(before?0:1),0,...block);
+  // 合併中的兩頁一起移動，也不能插進兩頁之間
+  const set=new Set(block); block.forEach(P=>{ if(P.mate) set.add(P.mate); if(P.mateOf) set.add(P.mateOf); });
+  if(set.has(target)) return;
+  if(before && target.mateOf) target=target.mateOf;
+  if(!before && target.mate) target=target.mate;
+  const moved=S.pages.filter(x=>set.has(x)), a=S.pages.filter(x=>!set.has(x));
+  a.splice(a.indexOf(target)+(before?0:1),0,...moved);
   applyOrder(a);
 }
 function dropTarget(el, onDrop){
@@ -728,8 +748,9 @@ function sideHl(side, o){
 
 async function renderAll(){
   $('pages').innerHTML='';
+  S.pages.forEach(P=>{ if(P.mate) sheetLayout(P); });
   for(const [i,P] of S.pages.entries()){ await renderPage(P); status(`算繪中… ${i+1}/${S.pages.length}`); }
-  relabel(); status();
+  layoutPages(); relabel(); status();
 }
 const refreshAll = () => {
   S.pages.forEach(P=>(P.items||[]).forEach(refreshItem));
@@ -761,7 +782,7 @@ function geomAABB(g){
 }
 
 async function renderPage(P){
-  const vp = P.page.getViewport({scale:S.scale, rotation:viewRot(P)}); P.vp = vp;
+  const vp = P.page.getViewport({scale:pk(P), rotation:viewRot(P)}); P.vp = vp;
   const dpr = window.devicePixelRatio||1;
   // 畫布尺寸取整數個裝置像素，避免被瀏覽器縮放而模糊
   const cw = Math.round(vp.width*dpr), ch = Math.round(vp.height*dpr);
@@ -774,6 +795,7 @@ async function renderPage(P){
   head.innerHTML = `<span class="pl"></span><span style="flex:1"></span>
     <button data-act="rotl" title="此頁逆時針旋轉 90°">⟲</button><button data-act="rotr" title="此頁順時針旋轉 90°">⟳</button>
     <button data-act="up" title="往前移一頁">↑</button><button data-act="down" title="往後移一頁">↓</button>
+    <button data-act="merge" title="和下一頁並排合併成一張">⧉ 與下一頁合併</button>
     <button data-act="export" title="只匯出這一頁">⬇ 匯出此頁</button>
     <button data-act="del" class="danger" title="刪除這一頁">🗑 刪除頁面</button>`;
   head.addEventListener('click',e=>{ const a=e.target.closest('button')?.dataset.act; if(a) pageAction(P,a); });
@@ -783,6 +805,13 @@ async function renderPage(P){
   const ctx = cv.getContext('2d',{willReadFrequently:true});
   await P.page.render({canvasContext:ctx, viewport:vp, transform: dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
   if(!P.items) P.items = buildItems(P);
+  if(P.pendingEdits){                                   // 開啟專案：套回原有文字的修改
+    for(const e of P.pendingEdits){
+      const it=P.items.find(i=>i.ri===e.ri); if(!it) continue;
+      it.font0={...it.font}; Object.assign(it, e, {font:fixFont(e.font), colorSet:true});
+    }
+    delete P.pendingEdits;
+  }
   await ensureColors(P, ctx, dpr);
   for(const it of P.items){ it.el = makeItemEl(it, P); ov.append(it.el); refreshItem(it); }
   S.objs.filter(o=>o.P===P).forEach(o=>o.type==='hl' ? mountHl(o) : mountObj(o));
@@ -800,7 +829,7 @@ function buildItems(P){
     if(!(asc>0.4 && asc<1.4)) asc = 0.88;
     if(!(desc<0 && desc>-0.6)) desc = -0.22;
     const size = Math.hypot(t[2],t[3]) || Math.hypot(t[0],t[1]);
-    out.push({ id:`f${P.file.id}p${P.src}_${idx}`, P, str:r.str, text:r.str, t, w:r.width, size, fsz:size, fontName:r.fontName,
+    out.push({ id:`f${P.file.id}p${P.src}_${idx}`, ri:idx, P, str:r.str, text:r.str, t, w:r.width, size, fsz:size, fontName:r.fontName,
       asc, desc, ca:asc, cd:desc, font:fontInfo(P, r.fontName, r.str), st:stats(r.str), align:'left',
       deleted:false, color:[0,0,0], bg:[255,255,255], colorSet:false });
   });
@@ -850,46 +879,237 @@ function sampleColors(P, ctx, dpr, vp){
   }
 }
 
+/* ---------- 兩頁合一（像列印的「每張 2 頁」）----------
+   兩頁仍是獨立頁面（可繼續編輯），只是畫面上並排在同一張紙；匯出時才真正合成一頁。
+   P.mate = 下一頁（P 為左 / 上半），Q.mateOf = P */
+const SHEET_M = 14.17, SHEET_G = 14.17;          // 邊界與中間間距：5mm
+const pk = P => S.scale*(P.fit||1);              // 這一頁在畫面上的縮放比例
+function sheetLayout(P){
+  const Q=P.mate, w0=P.vp1.width, h0=P.vp1.height;
+  const SW=h0, SH=w0, side=h0>=w0;               // 直式兩頁 → 橫式一張左右並排；橫式兩頁 → 直式一張上下排
+  const cw = side ? (SW-2*SHEET_M-SHEET_G)/2 : SW-2*SHEET_M;
+  const ch = side ? SH-2*SHEET_M : (SH-2*SHEET_M-SHEET_G)/2;
+  [P,Q].forEach((X,i)=>{
+    const cx = SHEET_M + (side ? i*(cw+SHEET_G) : 0), cy = SHEET_M + (side ? 0 : i*(ch+SHEET_G));
+    const f=Math.min(cw/X.vp1.width, ch/X.vp1.height);
+    X.fit=f; X.cell={x:cx+(cw-X.vp1.width*f)/2, y:cy+(ch-X.vp1.height*f)/2};
+  });
+  P.sheetDim={w:SW, h:SH};
+}
+const snapPx = v => { const d=window.devicePixelRatio||1; return Math.round(v*d)/d; };
+function sheetEl(P){
+  const Q=P.mate, k=S.scale;
+  if(!P.sheet){
+    const sh=document.createElement('div'); sh.className='sheet';
+    sh.innerHTML=`<div class="pghead"><span class="pl"></span><span style="flex:1"></span>
+      <button data-sa="up" title="往前移">↑</button><button data-sa="down" title="往後移">↓</button>
+      <button data-sa="swap" title="兩頁位置對調">⇄ 對調</button>
+      <button data-sa="split" title="拆回兩個獨立頁面">✂ 取消合併</button>
+      <button data-sa="export" title="只匯出這一張">⬇ 匯出此張</button></div><div class="sheetin"></div>`;
+    sh.querySelector('.pghead').addEventListener('click',e=>{ const a=e.target.closest('button')?.dataset.sa; if(a) sheetAction(sh._P,a); });
+    P.sheet=sh;
+  }
+  const sh=P.sheet, inner=sh.querySelector('.sheetin'); sh._P=P;
+  Object.assign(inner.style,{width:snapPx(P.sheetDim.w*k)+'px', height:snapPx(P.sheetDim.h*k)+'px'});
+  // 只保留這兩頁目前的元素（重繪後舊的元素要移除）
+  if(inner.children.length!==2 || inner.children[0]!==P.el || inner.children[1]!==Q.el) inner.replaceChildren(P.el, Q.el);
+  for(const X of [P,Q]){
+    Object.assign(X.el.style,{position:'absolute', left:snapPx(X.cell.x*k)+'px', top:snapPx(X.cell.y*k)+'px'});
+  }
+  return sh;
+}
+// 依 S.pages 順序擺放頁面與合併的紙張
+function layoutPages(){
+  const box=$('pages');
+  for(let i=0;i<S.pages.length;i++){
+    const P=S.pages[i];
+    if(P.mate){ box.append(sheetEl(P)); i++; continue; }
+    if(!P.el) continue;
+    if(P.el.parentElement?.classList.contains('sheetin')) Object.assign(P.el.style,{position:'',left:'',top:''});
+    box.append(P.el);
+  }
+  box.querySelectorAll('.sheet').forEach(sh=>{ if(!sh._P?.mate || sh._P.sheet!==sh) sh.remove(); });
+}
+// 頁面單位：合併的兩頁算一個
+function units(){
+  const u=[];
+  for(let i=0;i<S.pages.length;i++){
+    const P=S.pages[i];
+    if(P.mate && S.pages[i+1]===P.mate){ u.push([P,P.mate]); i++; } else u.push([P]);
+  }
+  return u;
+}
+function moveUnit(P, d){
+  const u=units(), i=u.findIndex(x=>x.includes(P)), j=i+d;
+  if(j<0 || j>=u.length) return;
+  [u[i],u[j]]=[u[j],u[i]];
+  applyOrder(u.flat());
+  (P.mateOf||P).sheet ? (P.mateOf||P).sheet.scrollIntoView({block:'nearest'}) : P.el?.scrollIntoView({block:'nearest'});
+}
+// 只拆開配對關係，回傳兩頁（之後需要以原比例重繪）
+function breakPair(P){
+  const A=P.mateOf||P, B=A.mate; if(!B) return [];
+  A.sheet?.remove(); A.sheet=null;
+  delete A.mate; delete B.mateOf; delete A.fit; delete B.fit; delete A.cell; delete B.cell;
+  return [A,B];
+}
+async function rerender(list){
+  for(const X of list) if(X.el && S.pages.includes(X)) await renderPage(X);
+  layoutPages(); layoutThumbs(); relabel(); showSide(); status();
+}
+async function pairPages(P, Q){
+  if(!P || !Q || P.mate || P.mateOf || Q.mate || Q.mateOf) return;
+  P.mate=Q; Q.mateOf=P; sheetLayout(P);
+  await rerender([P,Q]);
+}
+async function unpair(P){ await rerender(breakPair(P)); }
+async function toggleAllPairs(){
+  const any=S.pages.some(P=>P.mate);
+  const touched = any ? S.pages.filter(P=>P.mate).flatMap(breakPair) : [];
+  if(!any){
+    for(let i=0;i+1<S.pages.length;i+=2){ const P=S.pages[i], Q=S.pages[i+1]; P.mate=Q; Q.mateOf=P; sheetLayout(P); touched.push(P,Q); }
+  }
+  for(const [i,X] of touched.entries()){ if(X.el) await renderPage(X); status(`重新排版… ${i+1}/${touched.length}`); }
+  layoutPages(); layoutThumbs(); relabel(); showSide(); status();
+}
+async function sheetAction(P, a){
+  if(a==='up') moveUnit(P,-1);
+  else if(a==='down') moveUnit(P,1);
+  else if(a==='split') unpair(P);
+  else if(a==='export') exportPdf([P,P.mate]);
+  else if(a==='swap'){
+    const Q=P.mate; breakPair(P);
+    const arr=S.pages.slice(), i=arr.indexOf(P); arr[i]=Q; arr[i+1]=P; S.pages=arr;
+    Q.mate=P; P.mateOf=Q; sheetLayout(Q);
+    await rerender([Q,P]);
+  }
+}
+// 排序後若配對的兩頁不再相鄰，就自動拆開
+function fixPairs(){
+  const broken=[];
+  S.pages.forEach((P,i)=>{ if(P.mate && S.pages[i+1]!==P.mate) broken.push(...breakPair(P)); });
+  S.pages.forEach(P=>{ if(P.mateOf && !S.pages.includes(P.mateOf)) broken.push(...breakPair(P)); });
+  if(broken.length) rerender(broken);
+}
+
+/* ---------- 專案檔：PDF、圖片與所有編輯存成一個 JSON ---------- */
+const toB64 = bytes => new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result.slice(fr.result.indexOf(',')+1)); fr.readAsDataURL(new Blob([bytes])); });
+const fromB64 = async b64 => new Uint8Array(await (await fetch('data:application/octet-stream;base64,'+b64)).arrayBuffer());
+const ITEM_FIELDS = ['text','deleted','fsz','align','styled','font','color','bg','ca','cd'];
+async function saveProject(){
+  if(!hasDoc()) return;
+  status('儲存專案中…');
+  try{
+    const files=[...new Set(S.pages.map(P=>P.file))], fi=new Map(files.map((f,i)=>[f,i])), pi=new Map(S.pages.map((P,i)=>[P,i]));
+    const data={
+      app:'pdf-editor-project', version:1, savedAt:new Date().toISOString(), scale:S.scale,
+      files: await Promise.all(files.map(async f=>({name:f.name, data:await toB64(f.bytes)}))),
+      pages: S.pages.map(P=>({ file:fi.get(P.file), src:P.src, rot:P.rot||0, mate:!!P.mate,
+        edits:(P.items||[]).filter(isChanged).map(it=>Object.fromEntries([['ri',it.ri], ...ITEM_FIELDS.map(k=>[k,it[k]])])) })),
+      objs: await Promise.all(S.objs.map(async o=>{
+        const {P, el, lines, editing, bytes, url, ...rest}=o, r={...rest, page:pi.get(P)};
+        if(o.type==='sig') r.bytes=await toB64(o.bytes);
+        return r;
+      }))
+    };
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
+    a.download=`${baseName()}_專案.json`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    toast('已儲存專案檔。之後用「📁 開啟專案」選這個檔案，就能從目前的狀態繼續編輯。');
+  }catch(e){ console.error(e); alert('儲存專案失敗：'+e.message); }
+  status();
+}
+// 專案裡用到、但這次沒有載入的自訂字型 → 改用預設字型
+function fixFont(f){
+  if(!f) return f;
+  if(!FONTS[f.cjkKey]) f.cjkKey='jhenghei';
+  if(f.latKey!=='same' && !FONTS[f.latKey]) f.latKey='arial';
+  return f;
+}
+async function openProject(file){
+  try{
+    status('開啟專案中…');
+    const j=JSON.parse(await file.text());
+    if(j.app!=='pdf-editor-project') throw new Error('這不是 PDF 編輯器的專案檔');
+    const files=[];
+    for(const [i,jf] of j.files.entries()){
+      status(`開啟專案中… 檔案 ${i+1}/${j.files.length}`);
+      files.push(await loadPdfBytes(await fromB64(jf.data), jf.name));
+    }
+    const pages=j.pages.map(jp=>{
+      const P=files[jp.file].pages[jp.src];
+      P.rot=jp.rot||0; P.vp1=P.page.getViewport({scale:1, rotation:viewRot(P)});
+      P.pendingEdits=jp.edits||[];
+      return P;
+    });
+    j.pages.forEach((jp,i)=>{ if(jp.mate && pages[i+1]){ pages[i].mate=pages[i+1]; pages[i+1].mateOf=pages[i]; } });
+    const objs=[];
+    for(const jo of j.objs){
+      const o={...jo, P:pages[jo.page]}; delete o.page;
+      if(!o.P) continue;
+      if(o.type==='sig'){ o.bytes=await fromB64(jo.bytes); o.url=`data:image/${o.imgType==='jpg'?'jpeg':'png'};base64,${jo.bytes}`; }
+      if(o.type==='text') fixFont(o.font);
+      objs.push(o);
+    }
+    S.scale=j.scale||S.scale; $('zoom').value=String(S.scale);
+    showDoc(files, pages);
+    S.objs=objs;
+    await renderAll();
+    showSide(); status(); buildThumbs();
+  }catch(e){ console.error(e); alert('無法開啟專案：'+e.message); status(); }
+}
+
 /* ---------- 頁面管理：排序 / 刪除 / 單頁匯出 ---------- */
 const pageNo = P => S.pages.indexOf(P)+1;
 function relabel(){
-  const n=S.pages.length;
+  const n=S.pages.length, U=units();
   S.pages.forEach((P,i)=>{
     if(P.label){
       P.label.textContent=`第 ${i+1} 頁`+(P.rot?`（已旋轉 ${P.rot>180?P.rot-360:P.rot}°）`:'');
       if(S.files.length>1){ const t=document.createElement('span'); t.className='plf'; t.style.color=P.file.color;
         t.textContent=` · ${P.file.name} p.${P.src+1}`; P.label.append(t); }
     }
+    const u=U.findIndex(x=>x.includes(P));
     if(P.el){
-      P.el.querySelector('[data-act=up]').disabled = i===0;
-      P.el.querySelector('[data-act=down]').disabled = i===n-1;
+      P.el.querySelector('[data-act=up]').disabled = u===0;
+      P.el.querySelector('[data-act=down]').disabled = u===U.length-1;
       P.el.querySelector('[data-act=del]').disabled = n===1;
+      const nx=S.pages[i+1];
+      P.el.querySelector('[data-act=merge]').disabled = !nx || !!nx.mate || !!nx.mateOf;
     }
-    if(P.thumbN) P.thumbN.textContent=i+1;
+    if(P.mate && P.sheet){
+      const h=P.sheet.querySelector('.pghead');
+      h.querySelector('.pl').textContent=`第 ${i+1}–${i+2} 頁 · 兩頁合一`;
+      h.querySelector('[data-sa=up]').disabled = u===0;
+      h.querySelector('[data-sa=down]').disabled = u===U.length-1;
+    }
+    if(P.thumbN) P.thumbN.textContent = (i+1) + (P.mate||P.mateOf ? ' ⧉' : '');
+    P.thumb?.classList.toggle('pa', !!P.mate);
+    P.thumb?.classList.toggle('pb', !!P.mateOf);
   });
+  $('bPair').textContent = S.pages.some(P=>P.mate) ? '⧉ 取消全部合併' : '⧉ 整份兩頁合一';
 }
 function applyOrder(order){
   S.pages=order;
-  for(const P of order){ if(P.el) $('pages').append(P.el); }
+  fixPairs(); layoutPages();
   layoutThumbs(); relabel(); showSide(); status();
-}
-function movePage(P, to){
-  const a=S.pages.filter(x=>x!==P); a.splice(to,0,P); applyOrder(a);
-  P.el?.scrollIntoView({block:'nearest'});
 }
 function deletePage(P){
   if(S.pages.length<=1) return alert('至少要保留一頁');
   if(!confirm(`確定要刪除第 ${pageNo(P)} 頁？\n此頁上的修改、簽名、文字框與符號也會一併移除。`)) return;
   if(S.sel?.P===P) S.sel=null;
+  const other=breakPair(P).filter(x=>x!==P);
   S.pages=S.pages.filter(x=>x!==P);
   S.objs=S.objs.filter(o=>o.P!==P);
   P.el?.remove(); P.thumb?.remove(); P.thumb=null;
-  layoutThumbs(); relabel(); showSide(); status();
+  if(other.length) rerender(other); else { layoutPages(); layoutThumbs(); relabel(); showSide(); status(); }
 }
 function pageAction(P, act){
   const i=S.pages.indexOf(P);
-  if(act==='up' && i>0) movePage(P,i-1);
-  else if(act==='down' && i<S.pages.length-1) movePage(P,i+1);
+  if(act==='up') moveUnit(P,-1);
+  else if(act==='down') moveUnit(P,1);
+  else if(act==='merge') pairPages(P, S.pages[i+1]);
   else if(act==='export') exportPdf([P]);
   else if(act==='del') deletePage(P);
   else if(act==='rotl') rotatePages([P],-90);
@@ -908,10 +1128,13 @@ async function rotatePages(list, d){
       if(o.type==='sig') o.rot=normAngle((o.rot||0)+d);
     }
     P.tm=null;
-    if(P.el) await renderPage(P);
     renderThumb(P);
   }
-  relabel(); showSide(); status();
+  // 合併中的頁面旋轉後要重新排版，另一半也一起重繪
+  const redo=new Set(list);
+  S.pages.forEach(P=>{ if(P.mate && (redo.has(P)||redo.has(P.mate))){ sheetLayout(P); redo.add(P); redo.add(P.mate); } });
+  for(const P of redo) if(P.el) await renderPage(P);
+  layoutPages(); relabel(); showSide(); status();
 }
 /* ---------- 文字繪製（預覽） ---------- */
 function cssFont(it, kind, fs){
@@ -1047,7 +1270,7 @@ function layoutText(o){
 }
 
 function posObj(o){
-  const k=S.scale;
+  const k=pk(o.P);
   Object.assign(o.el.style,{left:o.x*k+'px',top:o.y*k+'px',width:o.w*k+'px',height:o.h*k+'px',
     transform:o.rot?`rotate(${o.rot}deg)`:''});
 }
@@ -1065,7 +1288,7 @@ function drawObj(o){
 function drawTextObj(o, body){
   body.innerHTML='';
   if(!o.text){ body.innerHTML='<span class="ph">雙擊輸入文字</span>'; return; }
-  const k=S.scale, dpr=window.devicePixelRatio||1, fs=o.size*k;
+  const k=pk(o.P), dpr=window.devicePixelRatio||1, fs=o.size*k;
   const r=body.getBoundingClientRect();
   const left=Math.round(r.left*dpr)/dpr-r.left, top=Math.round(r.top*dpr)/dpr-r.top;
   const c=document.createElement('canvas');
@@ -1089,7 +1312,7 @@ function mountObj(o){
   el.addEventListener('pointerdown',e=>{
     if(o.editing || e.target.closest('.obj-del')) return;
     e.preventDefault(); e.stopPropagation();
-    const k=S.scale, rs=e.target.classList.contains('obj-rs'), rot=e.target.classList.contains('obj-rot');
+    const k=pk(o.P), rs=e.target.classList.contains('obj-rs'), rot=e.target.classList.contains('obj-rot');
     const sx=e.clientX, sy=e.clientY, s0={x:o.x,y:o.y,w:o.w,h:o.h};
     const snap = !rs && !rot ? snapTargets(o) : null;
     el.setPointerCapture(e.pointerId);
@@ -1184,7 +1407,7 @@ function findCell(P, cx, cy){
     y0: t ? t.pos+t.t/2 : vl ? vl.from : 0,  y1: b ? b.pos-b.t/2 : vl ? vl.to : P.vp1.height };
 }
 function flashRect(P, R){
-  const k=S.scale, el=document.createElement('div'); el.className='cellflash';
+  const k=pk(P), el=document.createElement('div'); el.className='cellflash';
   Object.assign(el.style,{left:R.x0*k+'px',top:R.y0*k+'px',width:(R.x1-R.x0)*k+'px',height:(R.y1-R.y0)*k+'px'});
   P.overlay.append(el);
   setTimeout(()=>el.style.opacity='0',700); setTimeout(()=>el.remove(),1400);
@@ -1230,7 +1453,7 @@ function snapTargets(o){
 function applySnap(o, T){
   hideGuides(o.P);
   if(!T) return;
-  const thr=6/S.scale, b=bbox(o);
+  const thr=6/pk(o.P), b=bbox(o);
   const best=(edges,targets)=>{ let r=null; for(const e of edges) for(const t of targets){ const d=t-e; if(Math.abs(d)<thr && (!r || Math.abs(d)<Math.abs(r.d))) r={d,t}; } return r; };
   const bx=best([b.x,b.cx,b.x+b.w],T.xs), by=best([b.y,b.cy,b.y+b.h],T.ys);
   if(bx){ o.x+=bx.d; showGuide(o.P,'v',bx.t); }
@@ -1238,7 +1461,7 @@ function applySnap(o, T){
 }
 function showGuide(P, dir, pos){
   const g=document.createElement('div'); g.className='guide '+dir;
-  g.style[dir==='v'?'left':'top']=pos*S.scale+'px';
+  g.style[dir==='v'?'left':'top']=pos*pk(P)+'px';
   P.overlay.append(g);
 }
 const hideGuides = P => P.overlay.querySelectorAll('.guide').forEach(g=>g.remove());
@@ -1287,7 +1510,7 @@ function removeObj(o){
 }
 function editText(o){
   select(o); o.editing=true;
-  const k=S.scale, body=o.el.querySelector('.obj-body'); body.innerHTML='';
+  const k=pk(o.P), body=o.el.querySelector('.obj-body'); body.innerHTML='';
   const ta=document.createElement('textarea'); ta.className='tb-edit'; ta.value=o.text;
   Object.assign(ta.style,{font:cssFont(o,'cjk',o.size*k), lineHeight:lineH(o)*k+'px', textAlign:o.align,
     color:rgbCss(o.color), padding:TB_PAD*k+'px'});
@@ -1344,7 +1567,7 @@ function cancelPlace(){
 function onPageClick(e,P){
   const p=S.pending;
   if(!p){ select(null); return; }
-  const r=P.overlay.getBoundingClientRect(), x=(e.clientX-r.left)/S.scale, y=(e.clientY-r.top)/S.scale;
+  const r=P.overlay.getBoundingClientRect(), x=(e.clientX-r.left)/pk(P), y=(e.clientY-r.top)/pk(P);
   let o;
   if(p.type==='sig'){ let w=Math.min(p.w0, P.vp1.width*0.5), h=w*p.ratio; if(h>P.vp1.height*0.5){ h=P.vp1.height*0.5; w=h/p.ratio; } o={type:'sig', P, x:x-w/2, y:y-h/2, w, h, ratio:p.ratio, url:p.url, bytes:p.bytes, imgType:p.imgType}; }
   else if(p.type==='mark'){ const s=p.size||12; o={type:'mark', shape:p.shape, P, x:x-s/2, y:y-s/2, w:s, h:s, color:p.color||[0,0,0]}; }
@@ -1377,6 +1600,8 @@ function sideHelp(side){
     <p><b>新增內容</b><br>• 文字框：按「𝐓 文字框」再點頁面，可選頁面字體、標楷體、微軟正黑體<br>• 符號：勾勾 / 方塊 / 圓點，可連續點多個，Esc 結束<br>• 圖片 / 簽名：PNG、JPG 等圖檔或手寫簽名，可拖曳移動、拉右下角縮放</p>
     <p><b>螢光筆</b><br>• 按「🖍 螢光筆」後在文字上拖曳 → 自動上整齊的螢光<br>• 從空白處拖曳 → 框選任意區域（掃描檔也可用）<br>• 黑色文字不會被蓋住；點一下螢光可改色或刪除</p>
     <p><b>多個 PDF</b><br>• 開啟時可一次選多個，先排好檔案順序再合併<br>• 「➕ 新增 PDF」把其他檔案加進目前的文件<br>• 左側縮圖依檔案分組：拖檔名移動整組，或拖單頁</p>
+    <p><b>兩頁合一</b><br>• 每頁上方「⧉ 與下一頁合併」，或工具列「⧉ 整份兩頁合一」<br>• 直式兩頁 → 一張橫式（像列印的每張 2 頁），合併後仍可編輯，也能隨時取消</p>
+    <p><b>專案</b><br>• 「💾 儲存專案」把 PDF 與所有編輯存成 .json<br>• 「📁 開啟專案」或拖入 .json，從上次的狀態繼續</p>
     <p><b>頁面</b><br>• 左側縮圖可拖曳排序<br>• 每頁上方可旋轉（⟲ ⟳）、上下移動、單獨匯出、刪除<br>• 工具列「全部左轉 / 右轉」旋轉整份文件，匯出後會保留</p>
     ${hasDoc()?`<p>目前：${S.pages.length} 頁、修改 ${countEdits()} 處、新增物件 ${S.objs.length} 個。</p>`:''}</div>`;
 }
@@ -1702,19 +1927,37 @@ async function exportPdf(only){
     for(const f of files) saved.set(f, await editFile(f, list.filter(P=>P.file===f)));
     let out;
     const f0=files[0];
-    if(files.length===1 && list.length===f0.doc.numPages && list.every((P,i)=>P.src===i)) out=saved.get(f0);
+    // 匯出範圍內相鄰且已合併的兩頁
+    const paired=new Set(); list.forEach((P,i)=>{ if(P.mate && list[i+1]===P.mate){ paired.add(P); paired.add(P.mate); } });
+    if(files.length===1 && !paired.size && list.length===f0.doc.numPages && list.every((P,i)=>P.src===i)) out=saved.get(f0);
     else{   // 有合併、刪頁、排序或單頁匯出時，依目前順序重組頁面
-      const res=await PDFDocument.create(), copied=new Map();
+      const res=await PDFDocument.create(), copied=new Map(), midPage=new Map();
       for(const f of files){
         const mid=await PDFDocument.load(saved.get(f),{ignoreEncryption:true}), ps=list.filter(P=>P.file===f);
-        (await res.copyPages(mid, ps.map(P=>P.src))).forEach((pg,i)=>copied.set(ps[i],pg));
+        const singles=ps.filter(P=>!paired.has(P));
+        (await res.copyPages(mid, singles.map(P=>P.src))).forEach((pg,i)=>copied.set(singles[i],pg));
+        ps.filter(P=>paired.has(P)).forEach(P=>midPage.set(P, mid.getPage(P.src)));
       }
-      list.forEach(P=>res.addPage(copied.get(P)));
+      for(let i=0;i<list.length;i++){
+        const P=list[i];
+        if(!paired.has(P)){ res.addPage(copied.get(P)); continue; }
+        // 兩頁合一：內嵌頁面（文字仍是向量），依畫面上的位置縮放；/Rotate 用旋轉內容來呈現
+        const sheet=res.addPage([P.sheetDim.w, P.sheetDim.h]);
+        for(const X of [P, P.mate]){
+          const src=midPage.get(X), cb=src.getCropBox(), R=viewRot(X), s=X.fit, W0=cb.width, H0=cb.height;
+          const emb=await res.embedPage(src, {left:cb.x, bottom:cb.y, right:cb.x+W0, top:cb.y+H0});
+          const vh=(R%180 ? W0 : H0)*s, tx=X.cell.x, ty=P.sheetDim.h-(X.cell.y+vh);
+          const [x,y] = R===90 ? [tx, ty+W0*s] : R===180 ? [tx+W0*s, ty+H0*s] : R===270 ? [tx+H0*s, ty] : [tx, ty];
+          sheet.drawPage(emb, {x, y, xScale:s, yScale:s, rotate:degrees(-R)});
+        }
+        i++;
+      }
       out=await res.save();
     }
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([out],{type:'application/pdf'}));
-    a.download = Array.isArray(only) && only.length===1 ? `${baseName()}_第${pageNo(only[0])}頁.pdf` : `${baseName()}_edited.pdf`;
+    a.download = !Array.isArray(only) ? `${baseName()}_edited.pdf`
+      : only.length===1 ? `${baseName()}_第${pageNo(only[0])}頁.pdf` : `${baseName()}_第${pageNo(only[0])}-${pageNo(only[only.length-1])}頁.pdf`;
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     if(missing.size) toast(`無法讀取字型：${[...missing].join('、')}。<br>已改用替代方式輸出（英數用 PDF 內建字型、中文用高解析圖像）。<br>請使用 Chrome / Edge，並在詢問時允許存取「字型」；或確認電腦有安裝該字型。`);
@@ -1744,6 +1987,10 @@ $('fFont').onchange=e=>{ if(e.target.files[0]) addFont(e.target.files[0]); e.tar
 $('bExport').onclick=()=>exportPdf();
 $('bRotL').onclick=()=>rotatePages(S.pages,-90);
 $('bRotR').onclick=()=>rotatePages(S.pages,90);
+$('bPair').onclick=()=>toggleAllPairs();
+$('bSaveProj').onclick=()=>saveProject();
+$('bOpenProj').onclick=()=>$('fProj').click();
+$('fProj').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) openProject(f); };
 $('marks').onchange=e=>$('viewer').classList.toggle('marks',e.target.checked);
 $('zoom').onchange=async e=>{ S.scale=+e.target.value; if(hasDoc()) await renderAll(); };
 document.addEventListener('keydown',e=>{
@@ -1762,6 +2009,8 @@ viewer.addEventListener('drop',e=>{
   if(S.drag) return;
   e.preventDefault(); $('empty').classList.remove('drag');
   const f=[...e.dataTransfer.files];
+  const proj=f.find(x=>/\.json$/i.test(x.name));
+  if(proj) return openProject(proj);
   const pdfs=f.filter(x=>/pdf$/i.test(x.type)||/\.pdf$/i.test(x.name));
   const img=f.find(x=>/^image\//.test(x.type));
   if(pdfs.length) openFiles(pdfs, hasDoc()); else if(img && hasDoc()) loadSigFile(img);
